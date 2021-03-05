@@ -45,7 +45,13 @@ const (
 type Job struct {
 	sync.Mutex
 
-	ID   string
+	// ID of the job. It must be unique or the last job will replace the
+	// previous job with the same ID.
+	// If ID is empty, it will generated from Name by replacing
+	// non-alphanumeric character with '-'.
+	ID string
+
+	// Name of job for readibility.
 	Name string `ini:"::name"`
 
 	//
@@ -152,7 +158,9 @@ func (job *Job) Stop() {
 // init initialize the job, compute the last run and the next run.
 //
 func (job *Job) init(serverAddress string) (err error) {
-	job.generateID()
+	if len(job.ID) == 0 {
+		job.generateID()
+	}
 
 	err = job.initHttpUrl(serverAddress)
 	if err != nil {
