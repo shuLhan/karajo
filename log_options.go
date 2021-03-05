@@ -5,7 +5,7 @@
 package karajo
 
 //
-// LogOptions define the log directory and optional log file suffix for each
+// LogOptions define the log directory and optional log file prefix for each
 // job.
 //
 type LogOptions struct {
