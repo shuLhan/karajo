@@ -107,8 +107,8 @@
 								${job.Name}
 
 								<span class="actions">
-									<button onclick="showAttr(this, '${idAttrs}')">Attributes</button>
-									<button onclick="showLogs(this, '${job.ID}', '${idLogs}')">Logs</button>
+									<button onclick="showAttr('${job.ID}', '${idAttrs}')">Attributes</button>
+									<button onclick="showLogs('${job.ID}', '${idLogs}')">Logs</button>
 								</span>
 							</div>
 
@@ -136,16 +136,28 @@
 				}, 1000)
 			}
 
-			function showAttr(elAction, idAttr) {
-				let elAttr = document.getElementById(idAttr)
-				if (elAttr.style.display === "block") {
-					elAttr.style.display = "none"
+			async function showAttr(jobID, idAttr) {
+				let el = document.getElementById(idAttr)
+				let job = _jobs[jobID]
+
+				if (el.style.display === "block") {
+					el.style.display = "none"
+					window.clearInterval(job.interval)
+					console.log(`${job.ID}: pooling job stopped.`)
 				} else {
-					elAttr.style.display = "block"
+					el.style.display = "block"
+
+					await getJob(el, jobID)
+
+					console.log(`${job.ID}: started pooling job every ${job.Delay / 1e9} seconds.`)
+
+					job.intervalJob = setInterval(() => {
+						getJob(el, jobID)
+					}, job.Delay / 1e6)
 				}
 			}
 
-			async function showLogs(elAction, jobID, idLogs) {
+			async function showLogs(jobID, idLogs) {
 				let el = document.getElementById(idLogs)
 				let job = _jobs[jobID]
 
@@ -164,6 +176,24 @@
 						getJobLogs(el, jobID)
 					}, job.Delay / 1e6)
 				}
+			}
+
+			async function getJob(el, id) {
+				let fres = await fetch("/karajo/api/job?id=" + id)
+				let res = await fres.json()
+				if (res.code !== 200) {
+					console.error(res.message)
+					return
+				}
+
+				let job = res.data
+					el.innerHTML = `
+						<div>HTTP URL: ${job.HttpUrl}</div>
+						<div>Delay: ${job.Delay / 1e9}s</div>
+						<div>Maximum requests: ${job.MaxRequests}</div>
+						<div>Last run: ${job.LastRun}</div>
+						<div>Next run: ${job.NextRun}</div>
+					`
 			}
 
 			async function getJobLogs(el, id) {

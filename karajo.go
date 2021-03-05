@@ -33,6 +33,7 @@ import (
 
 const (
 	apiEnvironment = "/karajo/api/environment"
+	apiJob         = "/karajo/api/job"
 	apiJobLogs     = "/karajo/api/job/logs"
 
 	apiTestJobFail    = "/karajo/test/job/fail"
@@ -92,6 +93,16 @@ func (k *Karajo) registerApis() (err error) {
 		RequestType:  libhttp.RequestTypeNone,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         k.apiEnvironmentGet,
+	})
+	if err != nil {
+		return err
+	}
+	err = k.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodGet,
+		Path:         apiJob,
+		RequestType:  libhttp.RequestTypeQuery,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         k.apiJob,
 	})
 	if err != nil {
 		return err
@@ -169,13 +180,33 @@ func (k *Karajo) apiEnvironmentGet(epr *libhttp.EndpointRequest) ([]byte, error)
 	return json.Marshal(res)
 }
 
+//
+// apiJob API to get job detail and its status.
+// The api accept query parameter job "id".
+//
+func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) ([]byte, error) {
+	res := &libhttp.EndpointResponse{}
+	id := epr.HttpRequest.Form.Get(paramNameID)
+	job := k.env.jobs[id]
+	if job == nil {
+		res.Code = http.StatusBadRequest
+		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
+		return nil, res
+	}
+
+	res.Code = http.StatusOK
+	res.Data = job
+
+	return json.Marshal(res)
+}
+
 func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	res := &libhttp.EndpointResponse{}
 	id := epr.HttpRequest.Form.Get(paramNameID)
 	job := k.env.jobs[id]
 	if job == nil {
 		res.Code = http.StatusBadRequest
-		res.Message = fmt.Sprintf("invalid or empty parameter id: %s", id)
+		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
 		return nil, res
 	}
 
