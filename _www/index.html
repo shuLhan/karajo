@@ -6,6 +6,10 @@
 		<link rel="icon" type="image/png" href="/favicon.png" />
 		<title>karajo</title>
 		<style>
+			#timer {
+				font-size: 12px;
+				float: right;
+			}
 			.name {
 				padding: 5px;
 			}
@@ -46,7 +50,10 @@
 		</style>
 	</head>
 	<body onload="main()">
-		<h2>Jobs</h2>
+		<h2>
+			Jobs
+			<span id="timer"> </span>
+		</h2>
 		<div id="jobs"></div>
 		<div id="out"></div>
 		<div id="err"></div>
@@ -57,6 +64,8 @@
 			let _jobs = {}
 
 			async function main() {
+				runTimer()
+
 				let wout = document.getElementById("out")
 				let werr = document.getElementById("err")
 
@@ -116,6 +125,14 @@
 					`
 				}
 				document.getElementById("jobs").innerHTML = out
+			}
+
+			function runTimer() {
+				let elTimer = document.getElementById("timer")
+
+				setInterval(() => {
+					elTimer.innerHTML = new Date().toUTCString()
+				}, 1000)
 			}
 
 			function showAttr(elAction, idAttr) {
