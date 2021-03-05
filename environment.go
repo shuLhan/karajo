@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/shuLhan/share/lib/ini"
@@ -52,8 +53,7 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 	}
 
 	env = &Environment{
-		file:        file,
-		fileLastRun: file + defFileLastRunSuffix,
+		file: file,
 	}
 
 	err = cfg.Unmarshal(env)
@@ -65,6 +65,8 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 }
 
 func (env *Environment) init() (err error) {
+	logp := "init"
+
 	gob.Register(Job{})
 
 	if len(env.ListenAddress) == 0 {
@@ -74,16 +76,26 @@ func (env *Environment) init() (err error) {
 		env.HttpTimeout = defHttpTimeout
 	}
 
+	if len(env.file) > 0 {
+		env.fileLastRun = env.file + defFileLastRunSuffix
+	} else {
+		wd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("%s: %w", logp, err)
+		}
+		env.fileLastRun = filepath.Join(wd, defFileLastRunSuffix)
+	}
+
 	prevJobs, err := env.loadJobs()
 	if err != nil {
-		return fmt.Errorf("init: %w", err)
+		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
 	for _, job := range env.Jobs {
 		err = job.init(env.ListenAddress)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %w", logp, err)
 		}
 
 		env.jobs[job.ID] = job
