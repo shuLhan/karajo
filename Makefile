@@ -3,10 +3,11 @@
 ## found in the LICENSE file.
 
 .PHONY: build test run
+.FORCE:
 
 all: build test
 
-memfs_www.go:
+memfs_www.go: .FORCE
 	go run ./internal/cmd/gen-www
 
 build: memfs_www.go
