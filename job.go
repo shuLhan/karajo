@@ -107,14 +107,15 @@ type Job struct {
 
 func (job *Job) Start() (err error) {
 	job.NumRequests = 0
-	mlog.Outf("job %s: %s: %+v\n", job.Name, job.HttpUrl, job)
+	mlog.Outf("%s: starting ...\n", job.ID)
+	mlog.Outf("  %s: %+v\n", job)
 
 	lastRunTs := job.LastRun.Unix()
 	nextSeconds := lastRunTs % int64(job.Delay.Seconds())
 
 	firstTimer := time.Duration(nextSeconds) * time.Second
 	job.NextRun = time.Now().Add(firstTimer).UTC()
-	mlog.Outf("%s: running the first job in %s ...\n", job.Name, firstTimer)
+	mlog.Outf("%s: running the first job in %s ...\n", job.ID, firstTimer)
 
 	t := time.NewTimer(firstTimer)
 	ever := true
@@ -130,7 +131,7 @@ func (job *Job) Start() (err error) {
 	}
 
 	job.NextRun = job.LastRun.Add(job.Delay).UTC()
-	mlog.Outf("%s: running the next job at %s ...\n", job.Name,
+	mlog.Outf("%s: running the next job at %s ...\n", job.ID,
 		job.NextRun.Format(defTimeLayout))
 
 	tick := time.NewTicker(job.Delay)
@@ -139,7 +140,7 @@ func (job *Job) Start() (err error) {
 		case <-tick.C:
 			job.execute()
 			job.NextRun = job.LastRun.Add(job.Delay).UTC()
-			mlog.Outf("%s: running the next job at %s\n", job.Name,
+			mlog.Outf("%s: running the next job at %s\n", job.ID,
 				job.NextRun.Format(defTimeLayout))
 		case <-job.done:
 			return nil
@@ -214,8 +215,8 @@ func (job *Job) initHttpUrl(serverAddress string) (err error) {
 	} else {
 		httpUrl, err := url.Parse(job.HttpUrl)
 		if err != nil {
-			return fmt.Errorf("job %s: invalid http_url %q: %w",
-				job.Name, job.HttpUrl, err)
+			return fmt.Errorf("%s: invalid http_url %q: %w",
+				job.ID, job.HttpUrl, err)
 		}
 
 		port := httpUrl.Port()
@@ -243,8 +244,7 @@ func (job *Job) initHttpHeaders() (err error) {
 	for _, h := range job.HttpHeaders {
 		kv := strings.SplitN(h, ":", 2)
 		if len(kv) != 2 {
-			return fmt.Errorf("job %s: invalid header %q",
-				job.Name, h)
+			return fmt.Errorf("%s: invalid header %q", job.ID, h)
 		}
 
 		job.headers.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
@@ -273,10 +273,10 @@ func (job *Job) execute() {
 	logTime := now.Format(defTimeLayout)
 
 	if !job.increment() {
-		log := fmt.Sprintf("!!! %s %s: maximum requests %d has been reached",
-			logTime, job.Name, job.MaxRequests)
+		log := fmt.Sprintf("%s: !!! maximum requests %d has been reached",
+			job.ID, job.MaxRequests)
 		mlog.Errf(log)
-		job.logs.Push(log)
+		job.logs.Push(logTime + " " + log)
 		return
 	}
 	defer job.decrement()
@@ -284,26 +284,26 @@ func (job *Job) execute() {
 	httpRes, resBody, err := job.httpc.Get(nil, job.requestUri, nil)
 
 	if err != nil {
-		log := fmt.Sprintf("!!! %s %s: %s", logTime, job.Name, err)
+		log := fmt.Sprintf("%s: !!! %s", job.ID, err)
 		mlog.Errf(log)
-		job.logs.Push(log)
+		job.logs.Push(logTime + " " + log)
 		job.LastStatus = JobStatusFailed
 		job.LastRun = now
 		return
 	}
 
 	if httpRes.StatusCode != http.StatusOK {
-		log := fmt.Sprintf("!!! %s %s: %s", logTime, job.Name, httpRes.Status)
+		log := fmt.Sprintf("%s: !!! %s", job.ID, httpRes.Status)
 		mlog.Errf(log)
-		job.logs.Push(log)
+		job.logs.Push(logTime + " " + log)
 		job.LastStatus = JobStatusFailed
 		job.LastRun = now
 		return
 	}
 
-	log := fmt.Sprintf("--- %s %s: %s\n", logTime, job.Name, resBody)
+	log := fmt.Sprintf("%s: >>> %s\n", job.ID, resBody)
 	mlog.Outf(log)
-	job.logs.Push(log)
+	job.logs.Push(logTime + " " + log)
 	job.LastStatus = JobStatusSuccess
 	job.LastRun = now
 }

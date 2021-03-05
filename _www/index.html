@@ -113,6 +113,7 @@
 							</div>
 
 							<div id="${idAttrs}" class="attrs" style="display: none;">
+								<div>ID: ${job.ID}</div>
 								<div>HTTP URL: ${job.HttpUrl}</div>
 								<div>Delay: ${job.Delay / 1e9}s</div>
 								<div>Number of requests: ${job.NumRequests}</div>
@@ -189,13 +190,14 @@
 
 				let job = res.data
 				el.innerHTML = `
-						<div>HTTP URL: ${job.HttpUrl}</div>
-						<div>Delay: ${job.Delay / 1e9}s</div>
-						<div>Number of requests: ${job.NumRequests}</div>
-						<div>Maximum requests: ${job.MaxRequests}</div>
-						<div>Last run: ${job.LastRun}</div>
-						<div>Next run: ${job.NextRun}</div>
-					`
+					<div>ID: ${job.ID}</div>
+					<div>HTTP URL: ${job.HttpUrl}</div>
+					<div>Delay: ${job.Delay / 1e9}s</div>
+					<div>Number of requests: ${job.NumRequests}</div>
+					<div>Maximum requests: ${job.MaxRequests}</div>
+					<div>Last run: ${job.LastRun}</div>
+					<div>Next run: ${job.NextRun}</div>
+				`
 			}
 
 			async function getJobLogs(el, id) {
