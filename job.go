@@ -83,7 +83,9 @@ type Job struct {
 	// MaxRequests maximum number of requests executed by karajo.
 	// If zero, it will set to DefaultMaxRequests.
 	MaxRequests int `ini:"::max_requests"`
-	numRequests int
+
+	// NumRequests record the current number of requests executed.
+	NumRequests int
 	mtxRequests sync.Mutex
 
 	// The last time the job is running, in UTC.
@@ -104,6 +106,7 @@ type Job struct {
 }
 
 func (job *Job) Start() (err error) {
+	job.NumRequests = 0
 	mlog.Outf("job %s: %s: %+v\n", job.Name, job.HttpUrl, job)
 
 	lastRunTs := job.LastRun.Unix()
@@ -150,6 +153,7 @@ func (job *Job) Start() (err error) {
 // Stop the job.
 //
 func (job *Job) Stop() {
+	mlog.Outf("%s: stopping job ...\n", job.ID)
 	job.done <- true
 }
 
@@ -250,8 +254,8 @@ func (job *Job) initHttpHeaders() (err error) {
 
 func (job *Job) increment() (ok bool) {
 	job.mtxRequests.Lock()
-	job.numRequests++
-	if job.numRequests <= job.MaxRequests {
+	if job.NumRequests+1 <= job.MaxRequests {
+		job.NumRequests++
 		ok = true
 	}
 	job.mtxRequests.Unlock()
@@ -260,7 +264,7 @@ func (job *Job) increment() (ok bool) {
 
 func (job *Job) decrement() {
 	job.mtxRequests.Lock()
-	job.numRequests--
+	job.NumRequests--
 	job.mtxRequests.Unlock()
 }
 
