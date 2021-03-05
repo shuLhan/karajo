@@ -29,7 +29,8 @@ const (
 type Environment struct {
 	ListenAddress string `ini:"karajo::listen_address"`
 
-	// HttpTimeout define the HTTP timeout when executing each jobs.
+	// HttpTimeout define the HTTP client timeout when executing each
+	// jobs.
 	// This field is optional, default to 5 minutes.
 	HttpTimeout time.Duration `ini:"karajo::http_timeout"`
 
@@ -93,7 +94,7 @@ func (env *Environment) init() (err error) {
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
 	for _, job := range env.Jobs {
-		err = job.init(env.ListenAddress)
+		err = job.init(env.ListenAddress, env.HttpTimeout)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}

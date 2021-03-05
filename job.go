@@ -157,7 +157,7 @@ func (job *Job) Stop() {
 //
 // init initialize the job, compute the last run and the next run.
 //
-func (job *Job) init(serverAddress string) (err error) {
+func (job *Job) init(serverAddress string, clientTimeout time.Duration) (err error) {
 	if len(job.ID) == 0 {
 		job.generateID()
 	}
@@ -173,6 +173,7 @@ func (job *Job) init(serverAddress string) (err error) {
 	}
 
 	job.httpc = libhttp.NewClient(job.baseUri, job.headers, job.HttpInsecure)
+	job.httpc.Client.Timeout = clientTimeout
 	job.logs = clise.New(defJobLogsSize)
 
 	if job.Delay <= defJobDelay {
