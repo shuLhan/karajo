@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -24,6 +25,12 @@ const (
 	JobStatusFailed  = 2
 )
 
+// DefaultMaxRequests define maximum number of requests that can be
+// executed simultaneously.
+// This is to prevent the karajo server consume resources on the local
+// server and on the remote server.
+const DefaultMaxRequests = 1
+
 const (
 	defJobDelay    = 30 * time.Second
 	defJobLogsSize = 20
@@ -36,6 +43,8 @@ const (
 // time for future run.
 //
 type Job struct {
+	sync.Mutex
+
 	ID   string
 	Name string `ini:"::name"`
 
@@ -66,6 +75,11 @@ type Job struct {
 	// should be run on single program.
 	//
 	Delay time.Duration `ini:"::delay"`
+
+	// MaxRequests maximum number of requests executed by karajo.
+	// If zero, it will set to DefaultMaxRequests.
+	MaxRequests int `ini:"::max_requests"`
+	numRequests int
 
 	// The last time the job is running, in UTC.
 	LastRun time.Time
@@ -156,6 +170,9 @@ func (job *Job) init(serverAddress string) (err error) {
 	if job.Delay <= defJobDelay {
 		job.Delay = defJobDelay
 	}
+	if job.MaxRequests == 0 {
+		job.MaxRequests = DefaultMaxRequests
+	}
 
 	job.done = make(chan bool)
 
@@ -223,16 +240,43 @@ func (job *Job) initHttpHeaders() (err error) {
 	return nil
 }
 
+func (job *Job) increment() (ok bool) {
+	job.Lock()
+	job.numRequests++
+	if job.numRequests <= job.MaxRequests {
+		ok = true
+	}
+	job.Unlock()
+	return ok
+}
+
+func (job *Job) decrement() {
+	job.Lock()
+	job.numRequests--
+	job.Unlock()
+}
+
 func (job *Job) execute() {
+	now := time.Now().UTC()
+	logTime := now.Format(defTimeLayout)
+
+	if !job.increment() {
+		log := fmt.Sprintf("!!! %s %s: maximum requests %d has been reached",
+			logTime, job.Name, job.MaxRequests)
+		mlog.Errf(log)
+		job.logs.Push(log)
+		return
+	}
+	defer job.decrement()
+
 	httpRes, resBody, err := job.httpc.Get(nil, job.requestUri, nil)
-	job.LastRun = time.Now().UTC()
-	logTime := job.LastRun.Format(defTimeLayout)
 
 	if err != nil {
 		log := fmt.Sprintf("!!! %s %s: %s", logTime, job.Name, err)
 		mlog.Errf(log)
 		job.logs.Push(log)
 		job.LastStatus = JobStatusFailed
+		job.LastRun = now
 		return
 	}
 
@@ -241,6 +285,7 @@ func (job *Job) execute() {
 		mlog.Errf(log)
 		job.logs.Push(log)
 		job.LastStatus = JobStatusFailed
+		job.LastRun = now
 		return
 	}
 
@@ -248,4 +293,5 @@ func (job *Job) execute() {
 	mlog.Outf(log)
 	job.logs.Push(log)
 	job.LastStatus = JobStatusSuccess
+	job.LastRun = now
 }
