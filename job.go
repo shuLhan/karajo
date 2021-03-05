@@ -67,10 +67,10 @@ type Job struct {
 	//
 	Delay time.Duration `ini:"::delay"`
 
-	//
 	// The last time the job is running, in UTC.
-	//
 	LastRun time.Time
+	// The next time the job will running, in UTC.
+	NextRun time.Time
 
 	// The last status of execute, 0 for success and 1 for fail.
 	LastStatus int
@@ -91,6 +91,7 @@ func (job *Job) Start() (err error) {
 	nextSeconds := lastRunTs % int64(job.Delay.Seconds())
 
 	firstTimer := time.Duration(nextSeconds) * time.Second
+	job.NextRun = time.Now().Add(firstTimer).UTC()
 	mlog.Outf("%s: running the first job in %s ...\n", job.Name, firstTimer)
 
 	t := time.NewTimer(firstTimer)
@@ -106,16 +107,18 @@ func (job *Job) Start() (err error) {
 		}
 	}
 
+	job.NextRun = job.LastRun.Add(job.Delay).UTC()
 	mlog.Outf("%s: running the next job at %s ...\n", job.Name,
-		job.LastRun.Add(job.Delay).UTC())
+		job.NextRun.Format(defTimeLayout))
 
 	tick := time.NewTicker(job.Delay)
 	for {
 		select {
 		case <-tick.C:
 			job.execute()
+			job.NextRun = job.LastRun.Add(job.Delay).UTC()
 			mlog.Outf("%s: running the next job at %s\n", job.Name,
-				job.LastRun.Add(job.Delay).UTC())
+				job.NextRun.Format(defTimeLayout))
 		case <-job.done:
 			return nil
 		}
