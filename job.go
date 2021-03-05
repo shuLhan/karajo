@@ -43,8 +43,6 @@ const (
 // time for future run.
 //
 type Job struct {
-	sync.Mutex
-
 	// ID of the job. It must be unique or the last job will replace the
 	// previous job with the same ID.
 	// If ID is empty, it will generated from Name by replacing
@@ -86,6 +84,7 @@ type Job struct {
 	// If zero, it will set to DefaultMaxRequests.
 	MaxRequests int `ini:"::max_requests"`
 	numRequests int
+	mtxRequests sync.Mutex
 
 	// The last time the job is running, in UTC.
 	LastRun time.Time
@@ -250,19 +249,19 @@ func (job *Job) initHttpHeaders() (err error) {
 }
 
 func (job *Job) increment() (ok bool) {
-	job.Lock()
+	job.mtxRequests.Lock()
 	job.numRequests++
 	if job.numRequests <= job.MaxRequests {
 		ok = true
 	}
-	job.Unlock()
+	job.mtxRequests.Unlock()
 	return ok
 }
 
 func (job *Job) decrement() {
-	job.Lock()
+	job.mtxRequests.Lock()
 	job.numRequests--
-	job.Unlock()
+	job.mtxRequests.Unlock()
 }
 
 func (job *Job) execute() {
