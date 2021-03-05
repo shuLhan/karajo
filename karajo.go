@@ -162,16 +162,16 @@ func (k *Karajo) Stop() (err error) {
 	return k.Server.Stop(5 * time.Second)
 }
 
-func (k *Karajo) apiEnvironmentGet(_ http.ResponseWriter, _ *http.Request, _ []byte) ([]byte, error) {
-	res := &libhttp.GenericResponse{}
+func (k *Karajo) apiEnvironmentGet(epr *libhttp.EndpointRequest) ([]byte, error) {
+	res := &libhttp.EndpointResponse{}
 	res.Code = http.StatusOK
 	res.Data = k.env
 	return json.Marshal(res)
 }
 
-func (k *Karajo) apiJobLogs(_ http.ResponseWriter, httpreq *http.Request, _ []byte) ([]byte, error) {
-	res := &libhttp.GenericResponse{}
-	id := httpreq.Form.Get(paramNameID)
+func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
+	res := &libhttp.EndpointResponse{}
+	id := epr.HttpRequest.Form.Get(paramNameID)
 	job := k.env.jobs[id]
 	if job == nil {
 		res.Code = http.StatusBadRequest
@@ -185,15 +185,15 @@ func (k *Karajo) apiJobLogs(_ http.ResponseWriter, httpreq *http.Request, _ []by
 	return json.Marshal(res)
 }
 
-func (k *Karajo) apiTestJobFail(_ http.ResponseWriter, httpreq *http.Request, _ []byte) ([]byte, error) {
-	res := &libhttp.GenericResponse{}
+func (k *Karajo) apiTestJobFail(_ *libhttp.EndpointRequest) ([]byte, error) {
+	res := &libhttp.EndpointResponse{}
 	res.Code = http.StatusBadRequest
 	res.Message = "The job has failed"
 	return nil, res
 }
 
-func (k *Karajo) apiTestJobSuccess(_ http.ResponseWriter, httpreq *http.Request, _ []byte) ([]byte, error) {
-	res := &libhttp.GenericResponse{}
+func (k *Karajo) apiTestJobSuccess(_ *libhttp.EndpointRequest) ([]byte, error) {
+	res := &libhttp.EndpointResponse{}
 	res.Code = http.StatusOK
 	res.Message = "The job has been run successfully"
 	return json.Marshal(res)
