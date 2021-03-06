@@ -184,7 +184,7 @@ func (k *Karajo) apiEnvironmentGet(epr *libhttp.EndpointRequest) ([]byte, error)
 // apiJob API to get job detail and its status.
 // The api accept query parameter job "id".
 //
-func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) ([]byte, error) {
+func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	res := &libhttp.EndpointResponse{}
 	id := epr.HttpRequest.Form.Get(paramNameID)
 	job := k.env.jobs[id]
@@ -197,7 +197,11 @@ func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) ([]byte, error) {
 	res.Code = http.StatusOK
 	res.Data = job
 
-	return json.Marshal(res)
+	job.mtxRequests.Lock()
+	resbody, err = json.Marshal(res)
+	job.mtxRequests.Unlock()
+
+	return resbody, err
 }
 
 func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
