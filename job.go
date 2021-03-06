@@ -106,15 +106,14 @@ type Job struct {
 }
 
 func (job *Job) Start() (err error) {
+	now := time.Now().UTC().Round(time.Second)
 	job.NumRequests = 0
+
 	mlog.Outf("%s: starting ...\n", job.ID)
 	mlog.Outf("  %s: %+v\n", job)
 
-	lastRunTs := job.LastRun.Unix()
-	nextSeconds := lastRunTs % int64(job.Delay.Seconds())
-
-	firstTimer := time.Duration(nextSeconds) * time.Second
-	job.NextRun = time.Now().Add(firstTimer).UTC()
+	firstTimer := job.computeFirstTimer(now)
+	job.NextRun = now.Add(firstTimer)
 	mlog.Outf("%s: running the first job in %s ...\n", job.ID, firstTimer)
 
 	t := time.NewTimer(firstTimer)
@@ -130,7 +129,7 @@ func (job *Job) Start() (err error) {
 		}
 	}
 
-	job.NextRun = job.LastRun.Add(job.Delay).UTC()
+	job.NextRun = job.LastRun.Add(job.Delay)
 	mlog.Outf("%s: running the next job at %s ...\n", job.ID,
 		job.NextRun.Format(defTimeLayout))
 
@@ -139,7 +138,7 @@ func (job *Job) Start() (err error) {
 		select {
 		case <-tick.C:
 			job.execute()
-			job.NextRun = job.LastRun.Add(job.Delay).UTC()
+			job.NextRun = job.LastRun.Add(job.Delay)
 			mlog.Outf("%s: running the next job at %s\n", job.ID,
 				job.NextRun.Format(defTimeLayout))
 		case <-job.done:
@@ -269,7 +268,7 @@ func (job *Job) decrement() {
 }
 
 func (job *Job) execute() {
-	now := time.Now().UTC()
+	now := time.Now().UTC().Round(time.Second)
 	logTime := now.Format(defTimeLayout)
 
 	if !job.increment() {
@@ -306,4 +305,19 @@ func (job *Job) execute() {
 	job.logs.Push(logTime + " " + log)
 	job.LastStatus = JobStatusSuccess
 	job.LastRun = now
+}
+
+//
+// computeFirstTimer compute the duration when the job will be running based
+// on last time run and delay.
+//
+// If the `(last_run + delay) < now` then it will return 0; otherwise it will
+// return `(last_run + delay) - now`
+//
+func (job *Job) computeFirstTimer(now time.Time) time.Duration {
+	lastDelay := job.LastRun.Add(job.Delay)
+	if lastDelay.Before(now) {
+		return 0
+	}
+	return lastDelay.Sub(now)
 }
