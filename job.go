@@ -6,8 +6,11 @@ package karajo
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -101,6 +104,8 @@ type Job struct {
 
 	// logs contains 100 last jobs output.
 	logs *clise.Clise
+	mlog *mlog.MultiLogger
+	flog *os.File
 
 	done chan bool
 }
@@ -109,12 +114,12 @@ func (job *Job) Start() (err error) {
 	now := time.Now().UTC().Round(time.Second)
 	job.NumRequests = 0
 
-	mlog.Outf("%s: starting ...\n", job.ID)
-	mlog.Outf("  %s: %+v\n", job)
+	job.mlog.Outf("starting ...\n")
+	job.mlog.Outf("  %+v\n", job)
 
 	firstTimer := job.computeFirstTimer(now)
 	job.NextRun = now.Add(firstTimer)
-	mlog.Outf("%s: running the first job in %s ...\n", job.ID, firstTimer)
+	job.mlog.Outf("running the first job in %s ...\n", firstTimer)
 
 	t := time.NewTimer(firstTimer)
 	ever := true
@@ -130,8 +135,7 @@ func (job *Job) Start() (err error) {
 	}
 
 	job.NextRun = job.LastRun.Add(job.Delay)
-	mlog.Outf("%s: running the next job at %s ...\n", job.ID,
-		job.NextRun.Format(defTimeLayout))
+	job.mlog.Outf("running the next job at %s ...\n", job.NextRun.Format(defTimeLayout))
 
 	tick := time.NewTicker(job.Delay)
 	for {
@@ -139,8 +143,7 @@ func (job *Job) Start() (err error) {
 		case <-tick.C:
 			job.execute()
 			job.NextRun = job.LastRun.Add(job.Delay)
-			mlog.Outf("%s: running the next job at %s\n", job.ID,
-				job.NextRun.Format(defTimeLayout))
+			job.mlog.Outf("running the next job at %s\n", job.NextRun.Format(defTimeLayout))
 		case <-job.done:
 			return nil
 		}
@@ -153,16 +156,29 @@ func (job *Job) Start() (err error) {
 // Stop the job.
 //
 func (job *Job) Stop() {
-	mlog.Outf("%s: stopping job ...\n", job.ID)
+	job.mlog.Outf("stopping job ...\n")
 	job.done <- true
+
+	job.mlog.Flush()
+	if job.flog != nil {
+		err := job.flog.Close()
+		if err != nil {
+			log.Printf("Stop %s: %s", job.ID, err)
+		}
+	}
 }
 
 //
 // init initialize the job, compute the last run and the next run.
 //
-func (job *Job) init(serverAddress string, clientTimeout time.Duration) (err error) {
+func (job *Job) init(serverAddress string, clientTimeout time.Duration, logOpts LogOptions) (err error) {
 	if len(job.ID) == 0 {
 		job.generateID()
+	}
+
+	err = job.initLogger(logOpts)
+	if err != nil {
+		return err
 	}
 
 	err = job.initHttpUrl(serverAddress)
@@ -205,6 +221,36 @@ func (job *Job) generateID() {
 		}
 	}
 	job.ID = string(id)
+}
+
+//
+// initLogger initialize the job logs location.
+// By default all logs are written to os.Stdout and os.Stderr.
+//
+// If the Dir field on LogOptions is set, then all logs will written to file
+// named "LogOptions.FilenamePrefix + job.ID" in those directory.
+//
+func (job *Job) initLogger(logOpts LogOptions) (err error) {
+	job.mlog = mlog.NewMultiLogger(defTimeLayout, job.ID+":", nil, nil)
+	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter("stderr", os.Stderr))
+	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter("stdout", os.Stdout))
+
+	if len(logOpts.Dir) == 0 {
+		return nil
+	}
+
+	logFile := logOpts.FilenamePrefix + job.ID
+	logPath := filepath.Join(logOpts.Dir, logFile)
+	job.flog, err = os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("initLogger %s: %w", logPath, err)
+	}
+
+	nw := mlog.NewNamedWriter(logFile, job.flog)
+	job.mlog.RegisterErrorWriter(nw)
+	job.mlog.RegisterOutputWriter(nw)
+
+	return nil
 }
 
 func (job *Job) initHttpUrl(serverAddress string) (err error) {
@@ -272,10 +318,9 @@ func (job *Job) execute() {
 	logTime := now.Format(defTimeLayout)
 
 	if !job.increment() {
-		log := fmt.Sprintf("%s: !!! maximum requests %d has been reached",
-			job.ID, job.MaxRequests)
-		mlog.Errf(log)
-		job.logs.Push(logTime + " " + log)
+		log := fmt.Sprintf("!!! maximum requests %d has been reached", job.MaxRequests)
+		job.mlog.Errf(log)
+		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		return
 	}
 	defer job.decrement()
@@ -283,26 +328,26 @@ func (job *Job) execute() {
 	httpRes, resBody, err := job.httpc.Get(nil, job.requestUri, nil)
 
 	if err != nil {
-		log := fmt.Sprintf("%s: !!! %s", job.ID, err)
-		mlog.Errf(log)
-		job.logs.Push(logTime + " " + log)
+		log := fmt.Sprintf("!!! %s", err)
+		job.mlog.Errf(log)
+		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.LastStatus = JobStatusFailed
 		job.LastRun = now
 		return
 	}
 
 	if httpRes.StatusCode != http.StatusOK {
-		log := fmt.Sprintf("%s: !!! %s", job.ID, httpRes.Status)
-		mlog.Errf(log)
-		job.logs.Push(logTime + " " + log)
+		log := fmt.Sprintf("!!! %s", httpRes.Status)
+		job.mlog.Errf(log)
+		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.LastStatus = JobStatusFailed
 		job.LastRun = now
 		return
 	}
 
-	log := fmt.Sprintf("%s: >>> %s\n", job.ID, resBody)
-	mlog.Outf(log)
-	job.logs.Push(logTime + " " + log)
+	log := fmt.Sprintf(">>> %s\n", resBody)
+	job.mlog.Outf(log)
+	job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 	job.LastStatus = JobStatusSuccess
 	job.LastRun = now
 }

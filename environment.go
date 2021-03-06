@@ -94,7 +94,7 @@ func (env *Environment) init() (err error) {
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
 	for _, job := range env.Jobs {
-		err = job.init(env.ListenAddress, env.HttpTimeout)
+		err = job.init(env.ListenAddress, env.HttpTimeout, env.LogOptions)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
