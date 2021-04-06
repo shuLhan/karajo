@@ -50,6 +50,6 @@ func TestJob_computeFirstTimer(t *testing.T) {
 
 	for _, c := range cases {
 		got := c.job.computeFirstTimer(now)
-		test.Assert(t, c.desc, c.exp, got, true)
+		test.Assert(t, c.desc, c.exp, got)
 	}
 }

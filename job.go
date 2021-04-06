@@ -325,7 +325,7 @@ func (job *Job) execute() {
 	}
 	defer job.decrement()
 
-	httpRes, resBody, err := job.httpc.Get(nil, job.requestUri, nil)
+	httpRes, resBody, err := job.httpc.Get(job.requestUri, nil, nil)
 
 	if err != nil {
 		log := fmt.Sprintf("!!! %s", err)
