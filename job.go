@@ -6,7 +6,6 @@ package karajo
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -163,7 +162,7 @@ func (job *Job) Stop() {
 	if job.flog != nil {
 		err := job.flog.Close()
 		if err != nil {
-			log.Printf("Stop %s: %s", job.ID, err)
+			mlog.Errf("Stop %s: %s", job.ID, err)
 		}
 	}
 }
