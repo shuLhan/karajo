@@ -54,6 +54,8 @@ type Karajo struct {
 // New create and initialize Karajo from configuration file.
 //
 func New(env *Environment) (k *Karajo, err error) {
+	mlog.SetPrefix("karajo: ")
+
 	k = &Karajo{
 		env: env,
 	}
