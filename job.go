@@ -118,8 +118,7 @@ func (job *Job) Start() (err error) {
 	now := time.Now().UTC().Round(time.Second)
 	job.NumRequests = 0
 
-	job.mlog.Outf("starting ...\n")
-	job.mlog.Outf("  %+v\n", job)
+	job.mlog.Outf("starting job: %+v\n", job)
 
 	firstTimer := job.computeFirstTimer(now)
 	job.NextRun = now.Add(firstTimer)
