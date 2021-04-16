@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/shuLhan/share/lib/debug"
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
@@ -67,7 +66,7 @@ func New(env *Environment) (k *Karajo, err error) {
 	serverOpts := libhttp.ServerOptions{
 		Options: memfs.Options{
 			Root:        "_www",
-			Development: debug.Value >= 2,
+			Development: env.isDevelopment,
 		},
 		Memfs:   memfsWww,
 		Address: k.env.ListenAddress,
@@ -118,7 +117,7 @@ func (k *Karajo) registerApis() (err error) {
 		return err
 	}
 
-	if debug.Value >= 1 {
+	if k.env.isDevelopment {
 		// Endpoints for testing the jobs.
 		err = k.RegisterEndpoint(&libhttp.Endpoint{
 			Method:       libhttp.RequestMethodGet,
