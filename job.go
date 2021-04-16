@@ -72,6 +72,11 @@ type Job struct {
 	//
 	HttpInsecure bool `ini:"::http_insecure"`
 
+	// HttpTimeout custom HTTP timeout for this job.  If its zero, it will
+	// set from the Environment.HttpTimeout.
+	// To make job run without timeout, set the value to negative.
+	HttpTimeout time.Duration
+
 	//
 	// Delay when job will be repeatedly executed.
 	// This field is required, if not set or invalid it will set to 10
@@ -191,7 +196,16 @@ func (job *Job) init(serverAddress string, clientTimeout time.Duration, logOpts 
 	}
 
 	job.httpc = libhttp.NewClient(job.baseUri, job.headers, job.HttpInsecure)
-	job.httpc.Client.Timeout = clientTimeout
+
+	if job.HttpTimeout > 0 {
+		job.httpc.Client.Timeout = job.HttpTimeout
+	} else if job.HttpTimeout == 0 {
+		job.httpc.Client.Timeout = clientTimeout
+	} else {
+		// Negative value means 0 on net/http.Client.
+		job.httpc.Client.Timeout = 0
+	}
+
 	job.logs = clise.New(defJobLogsSize)
 
 	if job.Delay <= defJobDelay {
