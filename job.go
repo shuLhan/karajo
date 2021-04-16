@@ -325,7 +325,6 @@ func (job *Job) execute() {
 	defer job.decrement()
 
 	httpRes, resBody, err := job.httpc.Get(job.requestUri, nil, nil)
-
 	if err != nil {
 		log := fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
@@ -336,7 +335,7 @@ func (job *Job) execute() {
 	}
 
 	if httpRes.StatusCode != http.StatusOK {
-		log := fmt.Sprintf("!!! %s", httpRes.Status)
+		log := fmt.Sprintf("!!! %s: %s", httpRes.Status, resBody)
 		job.mlog.Errf(log)
 		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.LastStatus = JobStatusFailed
