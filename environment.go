@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/shuLhan/share/lib/ini"
+	"github.com/shuLhan/share/lib/mlog"
 )
 
 const (
@@ -116,7 +117,7 @@ func (env *Environment) init() (err error) {
 
 	prevJobs, err := env.loadJobs()
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		mlog.Errf("%s: %s\n", logp, err)
 	}
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
