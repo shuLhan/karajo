@@ -95,25 +95,9 @@
 					let idAttrs = job.ID + "-attrs"
 					let idLogs = job.ID + "-logs"
 
-					let status = ""
-					switch (job.LastStatus) {
-						case 0:
-							status = "started"
-							break
-						case 1:
-							status = "success"
-							break
-						case 2:
-							status = "failed"
-							break
-						case 3:
-							status = "paused"
-							break
-					}
-
 					out += `
 						<div class="job">
-							<div class="name ${status}">
+							<div class="name ${job.LastStatus}">
 								<span class="actions">
 									<button onclick="showAttr('${job.ID}', '${idAttrs}')">Attributes</button>
 									<button onclick="showLogs('${job.ID}', '${idLogs}')">Logs</button>

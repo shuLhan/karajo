@@ -21,10 +21,10 @@ import (
 
 // List of job status.
 const (
-	JobStatusStarted = 0
-	JobStatusSuccess = 1
-	JobStatusFailed  = 2
-	JobStatusPaused  = 3
+	JobStatusStarted = "started"
+	JobStatusSuccess = "success"
+	JobStatusFailed  = "failed"
+	JobStatusPaused  = "paused"
 )
 
 // DefaultMaxRequests define maximum number of requests that can be
@@ -102,8 +102,8 @@ type Job struct {
 	// The next time the job will running, in UTC.
 	NextRun time.Time
 
-	// The last status of execute, 0 for success and 1 for fail.
-	LastStatus int
+	// The last status of the job.
+	LastStatus string
 
 	// httpc define the HTTP client that will execute the http_url.
 	httpc *libhttp.Client
