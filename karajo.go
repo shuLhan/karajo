@@ -4,7 +4,8 @@
 
 //
 // Module karajo implement HTTP workers and manager similar to AppEngine
-// cron.
+// cron, where the job is triggered by calling HTTP GET request to specific
+// URL.
 //
 // karajo has the web user interface (WUI) for monitoring the jobs that run on
 // port 31937 by default and can be configurable.
@@ -23,7 +24,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
+	"unicode"
 
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
@@ -54,8 +57,6 @@ type Karajo struct {
 // New create and initialize Karajo from configuration file.
 //
 func New(env *Environment) (k *Karajo, err error) {
-	mlog.SetPrefix("karajo: ")
-
 	k = &Karajo{
 		env: env,
 	}
@@ -64,6 +65,8 @@ func New(env *Environment) (k *Karajo, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("New: %w", err)
 	}
+
+	mlog.SetPrefix(env.Name + ": ")
 
 	serverOpts := libhttp.ServerOptions{
 		Options: memfs.Options{
@@ -150,7 +153,7 @@ func (k *Karajo) registerApis() (err error) {
 // Start all the jobs and the HTTP server.
 //
 func (k *Karajo) Start() (err error) {
-	mlog.Outf("started the server at %s\n", k.Server.Addr)
+	mlog.Outf("started the karajo server at %s\n", k.Server.Addr)
 
 	for _, job := range k.env.Jobs {
 		go job.Start()
@@ -233,4 +236,20 @@ func (k *Karajo) apiTestJobSuccess(_ *libhttp.EndpointRequest) ([]byte, error) {
 	res.Code = http.StatusOK
 	res.Message = "The job has been run successfully"
 	return json.Marshal(res)
+}
+
+//
+// generateID generate unique job ID based on input string.
+// Any non-alphanumeric characters in input string will be replaced with '-'.
+//
+func generateID(in string) string {
+	id := make([]rune, 0, len(in))
+	for _, r := range strings.ToLower(in) {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			id = append(id, r)
+		} else {
+			id = append(id, '-')
+		}
+	}
+	return string(id)
 }

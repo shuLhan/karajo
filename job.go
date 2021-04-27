@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode"
 
 	"github.com/shuLhan/share/lib/clise"
 	libhttp "github.com/shuLhan/share/lib/http"
@@ -174,17 +173,17 @@ func (job *Job) Stop() {
 //
 // init initialize the job, compute the last run and the next run.
 //
-func (job *Job) init(serverAddress string, clientTimeout time.Duration, logOpts LogOptions) (err error) {
+func (job *Job) init(env *Environment) (err error) {
 	if len(job.ID) == 0 {
-		job.generateID()
+		job.ID = generateID(job.Name)
 	}
 
-	err = job.initLogger(logOpts)
+	err = job.initLogger(env)
 	if err != nil {
 		return err
 	}
 
-	err = job.initHttpUrl(serverAddress)
+	err = job.initHttpUrl(env.ListenAddress)
 	if err != nil {
 		return err
 	}
@@ -199,7 +198,7 @@ func (job *Job) init(serverAddress string, clientTimeout time.Duration, logOpts 
 	if job.HttpTimeout > 0 {
 		job.httpc.Client.Timeout = job.HttpTimeout
 	} else if job.HttpTimeout == 0 {
-		job.httpc.Client.Timeout = clientTimeout
+		job.httpc.Client.Timeout = env.HttpTimeout
 	} else {
 		// Negative value means 0 on net/http.Client.
 		job.httpc.Client.Timeout = 0
@@ -220,39 +219,23 @@ func (job *Job) init(serverAddress string, clientTimeout time.Duration, logOpts 
 }
 
 //
-// generateID generate unique job ID based on job's Name.
-// Any non-alphanumeric characters in job name will be replaced with '-'.
-//
-func (job *Job) generateID() {
-	id := make([]rune, 0, len(job.Name))
-	for _, r := range strings.ToLower(job.Name) {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			id = append(id, r)
-		} else {
-			id = append(id, '-')
-		}
-	}
-	job.ID = string(id)
-}
-
-//
 // initLogger initialize the job logs location.
 // By default all logs are written to os.Stdout and os.Stderr.
 //
 // If the Dir field on LogOptions is set, then all logs will written to file
 // named "LogOptions.FilenamePrefix + job.ID" in those directory.
 //
-func (job *Job) initLogger(logOpts LogOptions) (err error) {
+func (job *Job) initLogger(env *Environment) (err error) {
 	job.mlog = mlog.NewMultiLogger(defTimeLayout, job.ID+":", nil, nil)
 	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter("stderr", os.Stderr))
 	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter("stdout", os.Stdout))
 
-	if len(logOpts.Dir) == 0 {
+	if len(env.DirLogs) == 0 {
 		return nil
 	}
 
-	logFile := logOpts.FilenamePrefix + job.ID
-	logPath := filepath.Join(logOpts.Dir, logFile)
+	logFile := env.name + "-" + job.ID
+	logPath := filepath.Join(env.DirLogs, logFile)
 	job.flog, err = os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("initLogger %s: %w", logPath, err)

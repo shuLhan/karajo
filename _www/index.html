@@ -51,7 +51,7 @@
 	</head>
 	<body onload="main()">
 		<h2>
-			Jobs
+			<span id="title">Karajo</span>
 			<span id="timer"> </span>
 		</h2>
 		<div id="jobs"></div>
@@ -61,6 +61,7 @@
 		<div class="footer">Powered by <a href="https://sr.ht/~shulhan/karajo" target="_blank">Karajo</a></div>
 
 		<script>
+			let _env = {}
 			let _jobs = {}
 
 			async function main() {
@@ -78,6 +79,9 @@
 					werr.innerHTML = res.message
 					return
 				}
+
+				_env = res.data
+				setTitle()
 
 				let jobs = res.data.Jobs
 				let out = ""
@@ -128,6 +132,11 @@
 					`
 				}
 				document.getElementById("jobs").innerHTML = out
+			}
+
+			function setTitle() {
+				document.title = _env.Name
+				document.getElementById("title").innerHTML = _env.Name
 			}
 
 			function runTimer() {

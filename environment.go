@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	defEnvName           = "karajo"
 	defListenAddress     = ":31937"
 	defHttpTimeout       = 5 * time.Minute
 	defFileLastRunSuffix = ".lastrun"
@@ -29,16 +30,29 @@ const (
 // Environment contains configuration for HTTP server, logs, and list of jobs.
 //
 type Environment struct {
+	// Name of the service.
+	// The Name will be used for title on the web user interface, as log
+	// prefix, for file prefix on the jobs state, and as file prefix on
+	// log files.
+	// If this value is empty, it will be set to "karajo".
+	Name string `ini:"karajo::name"`
+	name string
+
 	ListenAddress string `ini:"karajo::listen_address"`
 
-	// HttpTimeout define the HTTP client timeout when executing each
-	// jobs.
+	// HttpTimeout define the defaukt HTTP client timeout when executing
+	// each jobs.
 	// This field is optional, default to 5 minutes.
 	HttpTimeout time.Duration `ini:"karajo::http_timeout"`
 
-	LogOptions LogOptions `ini:"karajo:log"`
-	Jobs       []*Job     `ini:"karajo:job"`
-	jobs       map[string]*Job
+	// DirLogs contains path to the directory where log for each jobs will
+	// be stored.
+	// If this value is empty, all job logs will be written to stdout and
+	// stderr.
+	DirLogs string `ini:"karajo::dir_logs"`
+
+	Jobs []*Job `ini:"karajo:job"`
+	jobs map[string]*Job
 
 	file        string
 	fileLastRun string
@@ -78,6 +92,11 @@ func (env *Environment) init() (err error) {
 
 	gob.Register(Job{})
 
+	if len(env.Name) == 0 {
+		env.Name = defEnvName
+	}
+	env.name = generateID(env.Name)
+
 	if len(env.ListenAddress) == 0 {
 		env.ListenAddress = defListenAddress
 	}
@@ -92,7 +111,7 @@ func (env *Environment) init() (err error) {
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
-		env.fileLastRun = filepath.Join(wd, defFileLastRunSuffix)
+		env.fileLastRun = filepath.Join(wd, env.name+"-"+defFileLastRunSuffix)
 	}
 
 	prevJobs, err := env.loadJobs()
@@ -102,7 +121,7 @@ func (env *Environment) init() (err error) {
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
 	for _, job := range env.Jobs {
-		err = job.init(env.ListenAddress, env.HttpTimeout, env.LogOptions)
+		err = job.init(env)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}

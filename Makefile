@@ -17,4 +17,4 @@ test:
 	go test -race ./...
 
 run:
-	DEBUG=2 go run -race ./cmd/karajo -config karajo_test.conf
+	KARAJO_DEVELOPMENT=1 go run -race ./cmd/karajo -config karajo_test.conf
