@@ -22,13 +22,6 @@
 			.name.success {
 				background: lightgreen;
 			}
-			.job > .name > .actions {
-				float: right;
-			}
-			.actions > span {
-				margin-right: 1em;
-			}
-
 			.attrs {
 				padding: 1em;
 				border-left: 1px solid lightgray;
@@ -46,6 +39,13 @@
 			.footer {
 				margin: 1em auto;
 				text-align: center;
+			}
+			@media only screen and (max-width: 400px) {
+				.actions > button {
+					display: block;
+					width: calc(100%);
+					margin-bottom: 6px;
+				}
 			}
 		</style>
 	</head>
@@ -108,12 +108,12 @@
 					out += `
 						<div class="job">
 							<div class="name ${status}">
-								${job.Name}
-
 								<span class="actions">
 									<button onclick="showAttr('${job.ID}', '${idAttrs}')">Attributes</button>
 									<button onclick="showLogs('${job.ID}', '${idLogs}')">Logs</button>
 								</span>
+								&nbsp;
+								${job.Name}
 							</div>
 
 							<div id="${idAttrs}" class="attrs" style="display: none;">
