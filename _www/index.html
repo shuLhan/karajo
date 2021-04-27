@@ -22,6 +22,9 @@
 			.name.success {
 				background: lightgreen;
 			}
+			.name.paused {
+				background: lightgrey;
+			}
 			.attrs {
 				padding: 1em;
 				border-left: 1px solid lightgray;
@@ -102,6 +105,9 @@
 							break
 						case 2:
 							status = "failed"
+							break
+						case 3:
+							status = "paused"
 							break
 					}
 
@@ -200,7 +206,7 @@
 				}
 
 				let job = res.data
-				el.innerHTML = `
+				let w = `
 					<div>${job.Description}</div>
 					<br/>
 					<div>ID: ${job.ID}</div>
@@ -210,7 +216,21 @@
 					<div>Maximum requests: ${job.MaxRequests}</div>
 					<div>Last run: ${job.LastRun}</div>
 					<div>Next run: ${job.NextRun}</div>
+					<div>Is pausing: ${job.IsPausing}</div>
+					<br/>
+					<div class="actions">
 				`
+
+				if (job.IsPausing) {
+					w += `<button onclick="jobResume('${job.ID}')">Resume</button>`
+				} else {
+					w += `<button onclick="jobPause('${job.ID}')">Pause</button>`
+				}
+
+				w += `
+					</div>
+				`
+				el.innerHTML = w
 			}
 
 			async function getJobLogs(el, id) {
@@ -230,6 +250,28 @@
 				}
 				el.innerHTML = out
 				el.scrollTop = el.scrollHeight
+			}
+
+			async function jobPause(id) {
+				let fres = await fetch("/karajo/api/job/pause/" + id, {
+					method: "POST"
+				})
+				let res = await fres.json()
+				if (res.code !== 200) {
+					console.error(res.message)
+					return
+				}
+			}
+
+			async function jobResume(id) {
+				let fres = await fetch("/karajo/api/job/resume/" + id, {
+					method: "POST"
+				})
+				let res = await fres.json()
+				if (res.code !== 200) {
+					console.error(res.message)
+					return
+				}
 			}
 		</script>
 	</body>

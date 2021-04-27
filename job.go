@@ -24,6 +24,7 @@ const (
 	JobStatusStarted = 0
 	JobStatusSuccess = 1
 	JobStatusFailed  = 2
+	JobStatusPaused  = 3
 )
 
 // DefaultMaxRequests define maximum number of requests that can be
@@ -44,6 +45,8 @@ const (
 // time for future run.
 //
 type Job struct {
+	locker sync.Mutex
+
 	// ID of the job. It must be unique or the last job will replace the
 	// previous job with the same ID.
 	// If ID is empty, it will generated from Name by replacing
@@ -93,7 +96,6 @@ type Job struct {
 
 	// NumRequests record the current number of requests executed.
 	NumRequests int
-	mtxRequests sync.Mutex
 
 	// The last time the job is running, in UTC.
 	LastRun time.Time
@@ -112,6 +114,9 @@ type Job struct {
 	flog *os.File
 
 	done chan bool
+
+	// IsPausing if its true, the job execution will be skipped.
+	IsPausing bool
 }
 
 func (job *Job) Start() (err error) {
@@ -147,6 +152,7 @@ func (job *Job) Start() (err error) {
 			job.execute()
 			job.NextRun = job.LastRun.Add(job.Delay)
 			job.mlog.Outf("running the next job at %s\n", job.NextRun.Format(defTimeLayout))
+
 		case <-job.done:
 			return nil
 		}
@@ -294,24 +300,33 @@ func (job *Job) initHttpHeaders() (err error) {
 }
 
 func (job *Job) increment() (ok bool) {
-	job.mtxRequests.Lock()
+	job.locker.Lock()
 	if job.NumRequests+1 <= job.MaxRequests {
 		job.NumRequests++
 		ok = true
 	}
-	job.mtxRequests.Unlock()
+	job.locker.Unlock()
 	return ok
 }
 
 func (job *Job) decrement() {
-	job.mtxRequests.Lock()
+	job.locker.Lock()
 	job.NumRequests--
-	job.mtxRequests.Unlock()
+	job.locker.Unlock()
 }
 
 func (job *Job) execute() {
 	now := time.Now().UTC().Round(time.Second)
 	logTime := now.Format(defTimeLayout)
+
+	if job.isPausing() {
+		msg := "paused\n"
+		job.mlog.Outf(msg)
+		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, msg))
+		job.LastStatus = JobStatusPaused
+		job.LastRun = now
+		return
+	}
 
 	if !job.increment() {
 		log := fmt.Sprintf("!!! maximum requests %d has been reached", job.MaxRequests)
@@ -360,4 +375,26 @@ func (job *Job) computeFirstTimer(now time.Time) time.Duration {
 		return 0
 	}
 	return lastDelay.Sub(now)
+}
+
+func (job *Job) pause() {
+	job.mlog.Outf("pausing...\n")
+	job.locker.Lock()
+	job.IsPausing = true
+	job.locker.Unlock()
+}
+
+func (job *Job) resume() {
+	job.mlog.Outf("resuming...\n")
+	job.locker.Lock()
+	job.IsPausing = false
+	job.LastStatus = JobStatusStarted
+	job.locker.Unlock()
+}
+
+func (job *Job) isPausing() (b bool) {
+	job.locker.Lock()
+	b = job.IsPausing
+	job.locker.Unlock()
+	return b
 }

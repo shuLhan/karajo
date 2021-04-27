@@ -131,6 +131,8 @@ func (env *Environment) init() (err error) {
 		prevJob := prevJobs[job.ID]
 		if prevJob != nil {
 			job.LastRun = prevJob.LastRun
+			job.LastStatus = prevJob.LastStatus
+			job.IsPausing = prevJob.IsPausing
 		}
 	}
 

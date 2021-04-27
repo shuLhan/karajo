@@ -37,6 +37,8 @@ const (
 	apiEnvironment = "/karajo/api/environment"
 	apiJob         = "/karajo/api/job"
 	apiJobLogs     = "/karajo/api/job/logs"
+	apiJobPause    = "/karajo/api/job/pause/:id"
+	apiJobResume   = "/karajo/api/job/resume/:id"
 
 	apiTestJobFail    = "/karajo/test/job/fail"
 	apiTestJobSuccess = "/karajo/test/job/success"
@@ -121,6 +123,26 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
+	err = k.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         apiJobPause,
+		RequestType:  libhttp.RequestTypeNone,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         k.apiJobPause,
+	})
+	if err != nil {
+		return err
+	}
+	err = k.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         apiJobResume,
+		RequestType:  libhttp.RequestTypeNone,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         k.apiJobResume,
+	})
+	if err != nil {
+		return err
+	}
 
 	if k.env.isDevelopment {
 		// Endpoints for testing the jobs.
@@ -201,9 +223,9 @@ func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error
 	res.Code = http.StatusOK
 	res.Data = job
 
-	job.mtxRequests.Lock()
+	job.locker.Lock()
 	resbody, err = json.Marshal(res)
-	job.mtxRequests.Unlock()
+	job.locker.Unlock()
 
 	return resbody, err
 }
@@ -220,6 +242,50 @@ func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 
 	res.Code = http.StatusOK
 	res.Data = job.logs.Slice()
+
+	return json.Marshal(res)
+}
+
+//
+// apiJobPause HTTP API to pause executing the job.
+//
+func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) ([]byte, error) {
+	res := &libhttp.EndpointResponse{}
+
+	id := epr.HttpRequest.Form.Get(paramNameID)
+	job := k.env.jobs[id]
+	if job == nil {
+		res.Code = http.StatusBadRequest
+		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
+		return nil, res
+	}
+
+	job.pause()
+
+	res.Code = http.StatusOK
+	res.Data = job
+
+	return json.Marshal(res)
+}
+
+//
+// apiJobResume HTTP API to resume executing the job.
+//
+func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) ([]byte, error) {
+	res := &libhttp.EndpointResponse{}
+
+	id := epr.HttpRequest.Form.Get(paramNameID)
+	job := k.env.jobs[id]
+	if job == nil {
+		res.Code = http.StatusBadRequest
+		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
+		return nil, res
+	}
+
+	job.resume()
+
+	res.Code = http.StatusOK
+	res.Data = job
 
 	return json.Marshal(res)
 }
