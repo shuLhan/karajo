@@ -51,7 +51,8 @@ type Job struct {
 	ID string
 
 	// Name of job for readibility.
-	Name string `ini:"::name"`
+	Name        string `ini:"::name"`
+	Description string `ini:"::description"`
 
 	//
 	// The HTTP URL where the job will be executed.

@@ -117,6 +117,8 @@
 							</div>
 
 							<div id="${idAttrs}" class="attrs" style="display: none;">
+								<div>${job.Description}</div>
+								<br/>
 								<div>ID: ${job.ID}</div>
 								<div>HTTP URL: ${job.HttpUrl}</div>
 								<div>Delay: ${job.Delay / 1e9}s</div>
@@ -162,7 +164,7 @@
 
 					console.log(`${job.ID}: started pooling job every ${job.Delay / 1e9} seconds.`)
 
-					job.intervalJob = setInterval(() => {
+					job.interval = setInterval(() => {
 						getJob(el, jobID)
 					}, job.Delay / 1e6)
 				}
@@ -199,6 +201,8 @@
 
 				let job = res.data
 				el.innerHTML = `
+					<div>${job.Description}</div>
+					<br/>
 					<div>ID: ${job.ID}</div>
 					<div>HTTP URL: ${job.HttpUrl}</div>
 					<div>Delay: ${job.Delay / 1e9}s</div>
