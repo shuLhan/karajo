@@ -24,9 +24,16 @@ This section has the following format,
 
 ```
 [karajo]
+name = <string>
 listen_address = [<ip>:<port>]
 http_timeout = [<duration>]
+dir_logs = <path>
 ```
+
+The "name" option define the name of the service.
+It will be used for title on the web user interface, as log prefix, for file
+prefix on the jobs state, and as file prefix on log files.
+If this value is empty, it will be set to "karajo".
 
 The "listen_address" define the address for WUI, default to ":31937".
 
@@ -35,22 +42,9 @@ The "http_timeout" define the HTTP timeout when executing the job, default to
 The value of this option is using the Go time.Duration format, for example,
 30s for 30 seconds, 1m for 1 minute.
 
-
-### karajo logs
-
-This section has the following format,
-
-```
-[karajo "logs"]
-dir = <path>
-filename_prefix = <string>
-```
-
-The "dir" option define the path to directory where each log from job will be
-stored.
-
-The "filename_prefix" option define the default prefix to be added to the log
-file.
+The "dir_logs" option define the path to directory where each log from job
+will be stored.
+If this value is empty, all job logs will be written to stdout and stderr.
 
 By default, each job has its own log file using the job name and ".log" as
 suffix in the filename.
@@ -63,6 +57,7 @@ This section has the following format,
 ```
 [karajo "job"]
 name = <string>
+description = <string>
 http_url = <URL>
 http_header = <string ":" string>
 http_insecure = <bool>
@@ -71,6 +66,9 @@ delay = <duration>
 
 The "name" option define the job name.
 Each job must have unique name or only the first one will be processed.
+
+The "description" field define the job description.
+It could be plain text or simple HTML.
 
 The "http_url" define the HTTP URL where the job will be executed.
 This field is required.
