@@ -112,7 +112,7 @@ func (env *Environment) init() (err error) {
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
-		env.fileLastRun = filepath.Join(wd, env.name+"-"+defFileLastRunSuffix)
+		env.fileLastRun = filepath.Join(wd, env.name+defFileLastRunSuffix)
 	}
 
 	prevJobs, err := env.loadJobs()
