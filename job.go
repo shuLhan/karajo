@@ -202,14 +202,13 @@ func (job *Job) init(env *Environment) (err error) {
 
 	job.httpc = libhttp.NewClient(job.baseUri, job.headers, job.HttpInsecure)
 
-	if job.HttpTimeout > 0 {
-		job.httpc.Client.Timeout = job.HttpTimeout
-	} else if job.HttpTimeout == 0 {
-		job.httpc.Client.Timeout = env.HttpTimeout
-	} else {
+	if job.HttpTimeout == 0 {
+		job.HttpTimeout = env.HttpTimeout
+	} else if job.HttpTimeout < 0 {
 		// Negative value means 0 on net/http.Client.
-		job.httpc.Client.Timeout = 0
+		job.HttpTimeout = 0
 	}
+	job.httpc.Client.Timeout = job.HttpTimeout
 
 	job.logs = clise.New(defJobLogsSize)
 
