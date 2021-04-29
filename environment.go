@@ -184,3 +184,21 @@ func (env *Environment) saveJobs() (err error) {
 
 	return nil
 }
+
+//
+// lock all the jobs.
+//
+func (env *Environment) lock() {
+	for _, job := range env.jobs {
+		job.locker.Lock()
+	}
+}
+
+//
+// unlock all the jobs.
+//
+func (env *Environment) unlock() {
+	for _, job := range env.jobs {
+		job.locker.Unlock()
+	}
+}

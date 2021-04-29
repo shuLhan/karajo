@@ -68,7 +68,7 @@ func New(env *Environment) (k *Karajo, err error) {
 		return nil, fmt.Errorf("New: %w", err)
 	}
 
-	mlog.SetPrefix(env.Name + ": ")
+	mlog.SetPrefix(env.Name + ":")
 
 	serverOpts := libhttp.ServerOptions{
 		Options: memfs.Options{
@@ -199,11 +199,16 @@ func (k *Karajo) Stop() (err error) {
 	return k.Server.Stop(5 * time.Second)
 }
 
-func (k *Karajo) apiEnvironmentGet(epr *libhttp.EndpointRequest) ([]byte, error) {
+func (k *Karajo) apiEnvironmentGet(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	res := &libhttp.EndpointResponse{}
 	res.Code = http.StatusOK
 	res.Data = k.env
-	return json.Marshal(res)
+
+	k.env.lock()
+	resbody, err = json.Marshal(res)
+	k.env.unlock()
+
+	return resbody, err
 }
 
 //
