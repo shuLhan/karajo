@@ -34,6 +34,8 @@ import (
 )
 
 const (
+	Version = "0.1.0"
+
 	apiEnvironment = "/karajo/api/environment"
 	apiJob         = "/karajo/api/job"
 	apiJobLogs     = "/karajo/api/job/logs"

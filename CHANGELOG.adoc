@@ -1,0 +1,12 @@
+= karajo changelog
+
+== karajo v0.1.0
+
+The first release of karajo, programmable HTTP workers with web interface.
+
+Features,
+
+* Running job on specific interval
+* Preserve the job states on restart
+* Able to pause and resume specific job
+* HTTP APIs to programmatically interact with karajo
