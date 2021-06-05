@@ -98,7 +98,7 @@ func (k *Karajo) registerApis() (err error) {
 		Path:         apiEnvironment,
 		RequestType:  libhttp.RequestTypeNone,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiEnvironmentGet,
+		Call:         k.apiEnvironment,
 	})
 	if err != nil {
 		return err
@@ -199,7 +199,7 @@ func (k *Karajo) Stop() (err error) {
 	return k.Server.Stop(5 * time.Second)
 }
 
-func (k *Karajo) apiEnvironmentGet(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	res := &libhttp.EndpointResponse{}
 	res.Code = http.StatusOK
 	res.Data = k.env
