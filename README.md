@@ -61,7 +61,7 @@ description = <string>
 http_url = <URL>
 http_header = <string ":" string>
 http_insecure = <bool>
-delay = <duration>
+interval = <duration>
 ```
 
 The "name" option define the job name.
@@ -80,7 +80,8 @@ This option can be declared more than one.
 The "http_insecure" option can be set to true if the "http_url" is HTTPS with
 unknown certificate authority.
 
-The "delay" option define when job will be repeatedly executed.
+The "interval" option define the duration when job will be repeatedly
+executed.
 This field is required, if not set or invalid it will set to 30 seconds.
 If one have job that need to run less than 30 seconds, it should be run on
 single program.

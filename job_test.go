@@ -13,39 +13,39 @@ import (
 
 func TestJob_computeFirstTimer(t *testing.T) {
 	now := time.Date(2021, 3, 6, 14, 0, 0, 0, time.UTC)
-	delay := 30 * time.Second
+	interval := 30 * time.Second
 
 	cases := []struct {
 		desc string
 		job  Job
 		exp  time.Duration
 	}{{
-		desc: "Last run is -2*delay ",
+		desc: "Last run is -2*interval ",
 		job: Job{
-			LastRun: now.Add(-2 * delay),
-			Delay:   delay,
+			LastRun:  now.Add(-2 * interval),
+			Interval: interval,
 		},
 	}, {
 		desc: "Last run is now",
 		job: Job{
-			LastRun: now.UTC(),
-			Delay:   delay,
+			LastRun:  now.UTC(),
+			Interval: interval,
 		},
-		exp: delay,
+		exp: interval,
 	}, {
-		desc: "Last run is half-delay ago",
+		desc: "Last run is half-interval ago",
 		job: Job{
-			LastRun: now.Add(-1 * (delay / 2)),
-			Delay:   delay,
+			LastRun:  now.Add(-1 * (interval / 2)),
+			Interval: interval,
 		},
-		exp: delay / 2,
+		exp: interval / 2,
 	}, {
 		desc: "Last run > now?",
 		job: Job{
-			LastRun: now.Add(1 * delay),
-			Delay:   delay,
+			LastRun:  now.Add(1 * interval),
+			Interval: interval,
 		},
-		exp: 2 * delay,
+		exp: 2 * interval,
 	}}
 
 	for _, c := range cases {

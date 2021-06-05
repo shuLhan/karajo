@@ -111,7 +111,7 @@
 								<br/>
 								<div>ID: ${job.ID}</div>
 								<div>HTTP URL: ${job.HttpUrl}</div>
-								<div>Delay: ${job.Delay / 1e9}s</div>
+								<div>Interval: ${job.Interval / 1e9}s</div>
 								<div>Number of requests: ${job.NumRequests}</div>
 								<div>Maximum requests: ${job.MaxRequests}</div>
 								<div>Last run: ${job.LastRun}</div>
@@ -152,11 +152,11 @@
 
 					await getJob(el, jobID)
 
-					console.log(`${job.ID}: started pooling job every ${job.Delay / 1e9} seconds.`)
+					console.log(`${job.ID}: started pooling job every ${job.Interval / 1e9} seconds.`)
 
 					job.interval = setInterval(() => {
 						getJob(el, jobID)
-					}, job.Delay / 1e6)
+					}, job.Interval / 1e6)
 				}
 			}
 
@@ -173,11 +173,11 @@
 
 					await getJobLogs(el, jobID)
 
-					console.log(`${job.ID}: started pooling logs every ${job.Delay / 1e9} seconds.`)
+					console.log(`${job.ID}: started pooling logs every ${job.Interval / 1e9} seconds.`)
 
 					job.intervalLogs = setInterval(() => {
 						getJobLogs(el, jobID)
-					}, job.Delay / 1e6)
+					}, job.Interval / 1e6)
 				}
 			}
 
@@ -197,7 +197,7 @@
 					<div>HTTP URL: ${job.HttpUrl}</div>
 					<div>HTTP headers: ${job.HttpHeaders}</div>
 					<div>HTTP timeout: ${job.HttpTimeout/1e9}</div>
-					<div>Delay: ${job.Delay / 1e9}s</div>
+					<div>Interval: ${job.Interval / 1e9}s</div>
 					<div>Number of requests: ${job.NumRequests}</div>
 					<div>Maximum requests: ${job.MaxRequests}</div>
 					<div>Last run: ${job.LastRun}</div>

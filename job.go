@@ -34,7 +34,7 @@ const (
 const DefaultMaxRequests = 1
 
 const (
-	defJobDelay    = 30 * time.Second
+	defJobInterval = 30 * time.Second
 	defJobLogsSize = 20
 	defTimeLayout  = "2006-01-02 15:04:05 MST"
 )
@@ -81,14 +81,14 @@ type Job struct {
 	HttpTimeout time.Duration
 
 	//
-	// Delay when job will be repeatedly executed.
+	// Interval duration when job will be repeatedly executed.
 	// This field is required, if not set or invalid it will set to 10
 	// minutes.
 	//
 	// If one have job that need to run every less than 10 minutes, it
 	// should be run on single program.
 	//
-	Delay time.Duration `ini:"::delay"`
+	Interval time.Duration `ini:"::interval"`
 
 	// MaxRequests maximum number of requests executed by karajo.
 	// If zero, it will set to DefaultMaxRequests.
@@ -142,15 +142,15 @@ func (job *Job) Start() (err error) {
 		}
 	}
 
-	job.NextRun = job.LastRun.Add(job.Delay)
+	job.NextRun = job.LastRun.Add(job.Interval)
 	job.mlog.Outf("running the next job at %s ...\n", job.NextRun.Format(defTimeLayout))
 
-	tick := time.NewTicker(job.Delay)
+	tick := time.NewTicker(job.Interval)
 	for {
 		select {
 		case <-tick.C:
 			job.execute()
-			job.NextRun = job.LastRun.Add(job.Delay)
+			job.NextRun = job.LastRun.Add(job.Interval)
 			job.mlog.Outf("running the next job at %s\n", job.NextRun.Format(defTimeLayout))
 
 		case <-job.done:
@@ -212,8 +212,8 @@ func (job *Job) init(env *Environment) (err error) {
 
 	job.logs = clise.New(defJobLogsSize)
 
-	if job.Delay <= defJobDelay {
-		job.Delay = defJobDelay
+	if job.Interval <= defJobInterval {
+		job.Interval = defJobInterval
 	}
 	if job.MaxRequests == 0 {
 		job.MaxRequests = DefaultMaxRequests
@@ -363,17 +363,17 @@ func (job *Job) execute() {
 
 //
 // computeFirstTimer compute the duration when the job will be running based
-// on last time run and delay.
+// on last time run and interval.
 //
-// If the `(last_run + delay) < now` then it will return 0; otherwise it will
-// return `(last_run + delay) - now`
+// If the `(last_run + interval) < now` then it will return 0; otherwise it will
+// return `(last_run + interval) - now`
 //
 func (job *Job) computeFirstTimer(now time.Time) time.Duration {
-	lastDelay := job.LastRun.Add(job.Delay)
-	if lastDelay.Before(now) {
+	lastInterval := job.LastRun.Add(job.Interval)
+	if lastInterval.Before(now) {
 		return 0
 	}
-	return lastDelay.Sub(now)
+	return lastInterval.Sub(now)
 }
 
 func (job *Job) pause() {
