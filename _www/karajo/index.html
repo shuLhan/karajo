@@ -152,11 +152,11 @@
 
 					await getJob(el, jobID)
 
-					console.log(`${job.ID}: started pooling job every ${job.Interval / 1e9} seconds.`)
+					console.log(`${job.ID}: started pooling job every 10 seconds.`)
 
 					job.interval = setInterval(() => {
 						getJob(el, jobID)
-					}, job.Interval / 1e6)
+					}, 10000)
 				}
 			}
 
@@ -173,11 +173,11 @@
 
 					await getJobLogs(el, jobID)
 
-					console.log(`${job.ID}: started pooling logs every ${job.Interval / 1e9} seconds.`)
+					console.log(`${job.ID}: started pooling logs every 10 seconds.`)
 
 					job.intervalLogs = setInterval(() => {
 						getJobLogs(el, jobID)
-					}, job.Interval / 1e6)
+					}, 10000)
 				}
 			}
 
