@@ -177,11 +177,12 @@ func (k *Karajo) registerApis() (err error) {
 // Start all the jobs and the HTTP server.
 //
 func (k *Karajo) Start() (err error) {
-	mlog.Outf("started the karajo server at %s\n", k.Server.Addr)
+	mlog.Outf("started the karajo server at http://%s\n", k.Server.Addr)
 
 	for _, job := range k.env.Jobs {
 		go job.Start()
 	}
+
 	return k.Server.Start()
 }
 
