@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = mfs.GoGenerate("karajo", "memfsWww", "memfs_www.go", "")
+	err = mfs.GoEmbed("karajo", "memfsWww", "memfs_www.go", "")
 	if err != nil {
 		log.Fatal(err)
 	}
