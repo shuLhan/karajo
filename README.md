@@ -4,7 +4,7 @@ Module karajo implement HTTP workers and manager similar to AppEngine
 cron.
 
 karajo has the web user interface (WUI) for monitoring the jobs that run on
-port 31937 by default and can be configurable.
+URL http://127.0.0.1:31937/karajo by default and can be configurable.
 
 A single instance of karajo is configured through an Environment or ini file
 format.
@@ -315,8 +315,8 @@ Run the `karajo` program,
 $ karajo -config karajo_test.conf
 ```
 
-And then open http://127.0.0.1:31937 in your web browser to see the job status
-and logs.
+And then open http://127.0.0.1:31937/karajo in your web browser to see the job
+status and logs.
 
 
 ## License
