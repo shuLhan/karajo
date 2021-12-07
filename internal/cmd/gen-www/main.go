@@ -13,13 +13,18 @@ import (
 func main() {
 	opts := memfs.Options{
 		Root: "_www",
+		Embed: memfs.EmbedOptions{
+			PackageName: "karajo",
+			VarName:     "memfsWww",
+			GoFileName:  "memfs_www.go",
+		},
 	}
 
 	mfs, err := memfs.New(&opts)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = mfs.GoEmbed("karajo", "memfsWww", "memfs_www.go", "")
+	err = mfs.GoEmbed()
 	if err != nil {
 		log.Fatal(err)
 	}
