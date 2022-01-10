@@ -200,7 +200,12 @@ func (job *Job) init(env *Environment) (err error) {
 		return err
 	}
 
-	job.httpc = libhttp.NewClient(job.baseUri, job.headers, job.HttpInsecure)
+	httpClientOpts := &libhttp.ClientOptions{
+		ServerUrl:     job.baseUri,
+		Headers:       job.headers,
+		AllowInsecure: job.HttpInsecure,
+	}
+	job.httpc = libhttp.NewClient(httpClientOpts)
 
 	if job.HttpTimeout == 0 {
 		job.HttpTimeout = env.HttpTimeout

@@ -73,10 +73,6 @@ func New(env *Environment) (k *Karajo, err error) {
 	mlog.SetPrefix(env.Name + ":")
 
 	serverOpts := libhttp.ServerOptions{
-		Options: memfs.Options{
-			Root:        "_www",
-			Development: env.isDevelopment,
-		},
 		Memfs:   memfsWww,
 		Address: k.env.ListenAddress,
 	}
