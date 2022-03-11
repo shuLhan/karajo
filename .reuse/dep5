@@ -1,0 +1,24 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ciigo
+Upstream-Contact: Shulhan <ms@kilabit.info>
+Source: https://git.sr.ht/~shulhan/ciigo
+
+Files: CHANGELOG.adoc
+Copyright: 2021 Shulhan <ms@kilabit.info>
+License: GPL-3.0-or-later
+
+Files: README.md
+Copyright: 2021 Shulhan <ms@kilabit.info>
+License: GPL-3.0-or-later
+
+Files: _www/karajo/favicon.png
+Copyright: 2021 Shulhan <ms@kilabit.info>
+License: GPL-3.0-or-later
+
+Files: go.mod
+Copyright: 2021 Shulhan <ms@kilabit.info>
+License: GPL-3.0-or-later
+
+Files: go.sum
+Copyright: 2021 Shulhan <ms@kilabit.info>
+License: GPL-3.0-or-later
