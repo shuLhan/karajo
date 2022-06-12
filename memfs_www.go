@@ -69,10 +69,8 @@ func generate__www_karajo_index_html() *memfs.Node {
 	return node
 }
 
-//
 // _memfsWww_getNode is internal function to minimize duplicate node
 // created on Node.AddChild() and on generatedPathNode.Set().
-//
 func _memfsWww_getNode(mfs *memfs.MemFS, path string, fn func() *memfs.Node) (node *memfs.Node) {
 	node = mfs.PathNodes.Get(path)
 	if node != nil {

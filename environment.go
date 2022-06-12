@@ -26,9 +26,7 @@ const (
 	envKarajoDevelopment = "KARAJO_DEVELOPMENT"
 )
 
-//
 // Environment contains configuration for HTTP server, logs, and list of jobs.
-//
 type Environment struct {
 	// Name of the service.
 	// The Name will be used for title on the web user interface, as log
@@ -64,9 +62,7 @@ type Environment struct {
 	isDevelopment bool
 }
 
-//
 // LoadEnvironment load the configuration from the ini file format.
-//
 func LoadEnvironment(file string) (env *Environment, err error) {
 	logp := "LoadEnvironment"
 
@@ -141,9 +137,7 @@ func (env *Environment) init() (err error) {
 	return nil
 }
 
-//
 // loadJobs load previous saved job from file.
-//
 func (env *Environment) loadJobs() (lastJobs map[string]*Job, err error) {
 	b, err := ioutil.ReadFile(env.fileLastRun)
 	if err != nil {
@@ -164,9 +158,7 @@ func (env *Environment) loadJobs() (lastJobs map[string]*Job, err error) {
 	return lastJobs, nil
 }
 
-//
 // saveJobs save all the jobs data into file ending with ".lastrun".
-//
 func (env *Environment) saveJobs() (err error) {
 	var buf bytes.Buffer
 
@@ -184,18 +176,14 @@ func (env *Environment) saveJobs() (err error) {
 	return nil
 }
 
-//
 // lock all the jobs.
-//
 func (env *Environment) lock() {
 	for _, job := range env.jobs {
 		job.locker.Lock()
 	}
 }
 
-//
 // unlock all the jobs.
-//
 func (env *Environment) unlock() {
 	for _, job := range env.jobs {
 		job.locker.Unlock()

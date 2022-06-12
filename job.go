@@ -38,11 +38,9 @@ const (
 	defTimeLayout  = "2006-01-02 15:04:05 MST"
 )
 
-//
 // Job is the worker that will trigger HTTP GET request to the remote job
 // periodically and save the response status to logs and the last execution
 // time for future run.
-//
 type Job struct {
 	locker sync.Mutex
 
@@ -160,9 +158,7 @@ func (job *Job) Start() (err error) {
 	return nil
 }
 
-//
 // Stop the job.
-//
 func (job *Job) Stop() {
 	job.mlog.Outf("stopping job ...\n")
 	job.done <- true
@@ -176,9 +172,7 @@ func (job *Job) Stop() {
 	}
 }
 
-//
 // init initialize the job, compute the last run and the next run.
-//
 func (job *Job) init(env *Environment) (err error) {
 	if len(job.ID) == 0 {
 		job.ID = generateID(job.Name)
@@ -228,13 +222,11 @@ func (job *Job) init(env *Environment) (err error) {
 	return nil
 }
 
-//
 // initLogger initialize the job logs location.
 // By default all logs are written to os.Stdout and os.Stderr.
 //
 // If the Dir field on LogOptions is set, then all logs will written to file
 // named "LogOptions.FilenamePrefix + job.ID" in those directory.
-//
 func (job *Job) initLogger(env *Environment) (err error) {
 	job.mlog = mlog.NewMultiLogger(defTimeLayout, job.ID+":", nil, nil)
 	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter("stderr", os.Stderr))
@@ -365,13 +357,11 @@ func (job *Job) execute() {
 	job.LastRun = now
 }
 
-//
 // computeFirstTimer compute the duration when the job will be running based
 // on last time run and interval.
 //
 // If the `(last_run + interval) < now` then it will return 0; otherwise it will
 // return `(last_run + interval) - now`
-//
 func (job *Job) computeFirstTimer(now time.Time) time.Duration {
 	lastInterval := job.LastRun.Add(job.Interval)
 	if lastInterval.Before(now) {

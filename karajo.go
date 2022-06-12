@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//
 // Module karajo implement HTTP workers and manager similar to AppEngine
 // cron, where the job is triggered by calling HTTP GET request to specific
 // URL.
@@ -16,7 +15,6 @@
 // executed.
 //
 // For more information see the README file in this repository.
-//
 package karajo
 
 import (
@@ -56,9 +54,7 @@ type Karajo struct {
 	env *Environment
 }
 
-//
 // New create and initialize Karajo from configuration file.
-//
 func New(env *Environment) (k *Karajo, err error) {
 	k = &Karajo{
 		env: env,
@@ -168,9 +164,7 @@ func (k *Karajo) registerApis() (err error) {
 	return nil
 }
 
-//
 // Start all the jobs and the HTTP server.
-//
 func (k *Karajo) Start() (err error) {
 	mlog.Outf("started the karajo server at http://%s/karajo\n", k.Server.Addr)
 
@@ -181,9 +175,7 @@ func (k *Karajo) Start() (err error) {
 	return k.Server.Start()
 }
 
-//
 // Stop all the jobs and the HTTP server.
-//
 func (k *Karajo) Stop() (err error) {
 	for _, job := range k.env.Jobs {
 		job.Stop()
@@ -209,10 +201,8 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 	return resbody, err
 }
 
-//
 // apiJob API to get job detail and its status.
 // The api accept query parameter job "id".
-//
 func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	res := &libhttp.EndpointResponse{}
 	id := epr.HttpRequest.Form.Get(paramNameID)
@@ -249,9 +239,7 @@ func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	return json.Marshal(res)
 }
 
-//
 // apiJobPause HTTP API to pause executing the job.
-//
 func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) ([]byte, error) {
 	res := &libhttp.EndpointResponse{}
 
@@ -271,9 +259,7 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) ([]byte, error) {
 	return json.Marshal(res)
 }
 
-//
 // apiJobResume HTTP API to resume executing the job.
-//
 func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) ([]byte, error) {
 	res := &libhttp.EndpointResponse{}
 
@@ -307,10 +293,8 @@ func (k *Karajo) apiTestJobSuccess(_ *libhttp.EndpointRequest) ([]byte, error) {
 	return json.Marshal(res)
 }
 
-//
 // generateID generate unique job ID based on input string.
 // Any non-alphanumeric characters in input string will be replaced with '-'.
-//
 func generateID(in string) string {
 	id := make([]rune, 0, len(in))
 	for _, r := range strings.ToLower(in) {
