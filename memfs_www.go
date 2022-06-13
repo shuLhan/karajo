@@ -16,7 +16,7 @@ func generate__www() *memfs.Node {
 		GenFuncName:     "generate__www",
 	}
 	node.SetMode(2147484141)
-	node.SetModTimeUnix(1625736705, 548625524)
+	node.SetModTimeUnix(1655136515, 10448885)
 	node.SetName("/")
 	node.SetSize(0)
 	node.AddChild(_memfsWww_getNode(memfsWww, "/karajo", generate__www_karajo))

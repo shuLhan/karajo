@@ -7,7 +7,7 @@
 all: build test
 
 memfs_www.go: .FORCE
-	go run ./internal/cmd/gen-www
+	go run ./cmd/karajo embed
 
 build: memfs_www.go
 	go build ./cmd/karajo
