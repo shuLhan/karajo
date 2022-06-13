@@ -15,8 +15,8 @@ build: memfs_www.go
 test:
 	CGO_ENABLED=1 go test -race ./...
 
-run:
-	CGO_ENABLED=1 KARAJO_DEVELOPMENT=1 go run -race ./cmd/karajo -config karajo_test.conf
+dev:
+	CGO_ENABLED=1 go run -race ./cmd/karajo -dev -config karajo_test.conf
 
 ${GOBIN}/mdgo:
 	go install git.sr.ht/~shulhan/mdgo/cmd/mdgo

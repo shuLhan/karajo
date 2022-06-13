@@ -22,8 +22,6 @@ const (
 	defListenAddress     = ":31937"
 	defHttpTimeout       = 5 * time.Minute
 	defFileLastRunSuffix = ".lastrun"
-
-	envKarajoDevelopment = "KARAJO_DEVELOPMENT"
 )
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
@@ -55,11 +53,9 @@ type Environment struct {
 	file        string
 	fileLastRun string
 
-	// isDevelopment will be true if environment variable
-	// KARAJO_DEVELOPMENT is set to non-empty string.
-	// If its true, the assets will be loaded directly from disk instead
-	// from memory (memfs).
-	isDevelopment bool
+	// IsDevelopment if its true, the assets will be loaded directly from
+	// disk instead from memory (memfs).
+	IsDevelopment bool
 }
 
 // LoadEnvironment load the configuration from the ini file format.
@@ -131,8 +127,6 @@ func (env *Environment) init() (err error) {
 			job.IsPausing = prevJob.IsPausing
 		}
 	}
-
-	env.isDevelopment = len(os.Getenv(envKarajoDevelopment)) > 0
 
 	return nil
 }

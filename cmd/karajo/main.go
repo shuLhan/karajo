@@ -31,9 +31,11 @@ func main() {
 		config string
 		cmd    string
 		err    error
+		isDev  bool
 	)
 
 	flag.StringVar(&config, "config", "", "the karajo configuration file")
+	flag.BoolVar(&isDev, "dev", false, "enable development mode")
 	flag.Parse()
 
 	cmd = flag.Arg(0)
@@ -73,6 +75,8 @@ func main() {
 	if err != nil {
 		mlog.Fatalf(err.Error())
 	}
+
+	env.IsDevelopment = isDev
 
 	k, err = karajo.New(env)
 	if err != nil {

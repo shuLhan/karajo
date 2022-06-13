@@ -137,7 +137,7 @@ func (k *Karajo) registerApis() (err error) {
 		return err
 	}
 
-	if k.env.isDevelopment {
+	if k.env.IsDevelopment {
 		// Endpoints for testing the jobs.
 		err = k.RegisterEndpoint(&libhttp.Endpoint{
 			Method:       libhttp.RequestMethodGet,
