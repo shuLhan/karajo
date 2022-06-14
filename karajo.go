@@ -72,6 +72,8 @@ func New(env *Environment) (k *Karajo, err error) {
 		Address: k.env.ListenAddress,
 	}
 
+	memfsWww.Opts.Development = env.IsDevelopment
+
 	k.Server, err = libhttp.NewServer(&serverOpts)
 	if err != nil {
 		return nil, fmt.Errorf("New: %w", err)

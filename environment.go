@@ -36,7 +36,7 @@ type Environment struct {
 
 	ListenAddress string `ini:"karajo::listen_address"`
 
-	// HttpTimeout define the defaukt HTTP client timeout when executing
+	// HttpTimeout define the default HTTP client timeout when executing
 	// each jobs.
 	// This field is optional, default to 5 minutes.
 	HttpTimeout time.Duration `ini:"karajo::http_timeout"`

@@ -119,7 +119,7 @@ func init() {
 			Includes: []string{
 			},
 			Excludes: []string{
-				`.*\.adoc`,
+				`.*\.adoc$`,
 			},
 			Embed: memfs.EmbedOptions{
 				CommentHeader:  `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
