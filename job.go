@@ -42,7 +42,22 @@ const (
 // periodically and save the response status to logs and the last execution
 // time for future run.
 type Job struct {
-	locker sync.Mutex
+	// The next time the job will running, in UTC.
+	NextRun time.Time
+
+	// The last time the job is running, in UTC.
+	LastRun time.Time
+
+	headers http.Header
+
+	done chan bool
+
+	logs *clise.Clise // logs contains 100 last jobs output.
+	mlog *mlog.MultiLogger
+	flog *os.File
+
+	// httpc define the HTTP client that will execute the http_url.
+	httpc *libhttp.Client
 
 	// ID of the job. It must be unique or the last job will replace the
 	// previous job with the same ID.
@@ -62,15 +77,11 @@ type Job struct {
 	baseUri    string
 	requestUri string
 
+	// The last status of the job.
+	LastStatus string
+
 	// Optional HTTP headers for HttpUrl, in the format of "K: V".
 	HttpHeaders []string `ini:"::http_header"`
-	headers     http.Header
-
-	//
-	// HttpInsecure can be set to true if the http_url is HTTPS with
-	// unknown certificate authority.
-	//
-	HttpInsecure bool `ini:"::http_insecure"`
 
 	// HttpTimeout custom HTTP timeout for this job.  If its zero, it will
 	// set from the Environment.HttpTimeout.
@@ -89,28 +100,18 @@ type Job struct {
 
 	// MaxRequests maximum number of requests executed by karajo.
 	// If zero, it will set to DefaultMaxRequests.
-	MaxRequests int `ini:"::max_requests"`
+	MaxRequests int8 `ini:"::max_requests"`
 
 	// NumRequests record the current number of requests executed.
-	NumRequests int
+	NumRequests int8
 
-	// The last time the job is running, in UTC.
-	LastRun time.Time
-	// The next time the job will running, in UTC.
-	NextRun time.Time
+	locker sync.Mutex
 
-	// The last status of the job.
-	LastStatus string
-
-	// httpc define the HTTP client that will execute the http_url.
-	httpc *libhttp.Client
-
-	// logs contains 100 last jobs output.
-	logs *clise.Clise
-	mlog *mlog.MultiLogger
-	flog *os.File
-
-	done chan bool
+	//
+	// HttpInsecure can be set to true if the http_url is HTTPS with
+	// unknown certificate authority.
+	//
+	HttpInsecure bool `ini:"::http_insecure"`
 
 	// IsPausing if its true, the job execution will be skipped.
 	IsPausing bool

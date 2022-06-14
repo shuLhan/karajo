@@ -26,6 +26,8 @@ const (
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
 type Environment struct {
+	jobs map[string]*Job
+
 	// Name of the service.
 	// The Name will be used for title on the web user interface, as log
 	// prefix, for file prefix on the jobs state, and as file prefix on
@@ -36,22 +38,22 @@ type Environment struct {
 
 	ListenAddress string `ini:"karajo::listen_address"`
 
-	// HttpTimeout define the default HTTP client timeout when executing
-	// each jobs.
-	// This field is optional, default to 5 minutes.
-	HttpTimeout time.Duration `ini:"karajo::http_timeout"`
-
 	// DirLogs contains path to the directory where log for each jobs will
 	// be stored.
 	// If this value is empty, all job logs will be written to stdout and
 	// stderr.
 	DirLogs string `ini:"karajo::dir_logs"`
 
-	Jobs []*Job `ini:"karajo:job"`
-	jobs map[string]*Job
-
 	file        string
 	fileLastRun string
+
+	// List of registered Job.
+	Jobs []*Job `ini:"karajo:job"`
+
+	// HttpTimeout define the default HTTP client timeout when executing
+	// each jobs.
+	// This field is optional, default to 5 minutes.
+	HttpTimeout time.Duration `ini:"karajo::http_timeout"`
 
 	// IsDevelopment if its true, the assets will be loaded directly from
 	// disk instead from memory (memfs).

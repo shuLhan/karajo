@@ -14,6 +14,7 @@ build: memfs_www.go
 
 test:
 	CGO_ENABLED=1 go test -race ./...
+	fieldalignment ./...
 
 dev:
 	CGO_ENABLED=1 go run -race ./cmd/karajo -dev -config karajo_test.conf
