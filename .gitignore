@@ -1,6 +1,7 @@
 ## SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 ## SPDX-License-Identifier: GPL-3.0-or-later
-README.html
-karajo
-karajo_test.conf.lastrun
-testdata/logs
+/README.html
+/_www/karajo/doc/index.html
+/karajo
+/karajo_test.conf.lastrun
+/testdata/logs
