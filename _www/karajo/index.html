@@ -2,102 +2,114 @@
 <!-- SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info> -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <html>
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="icon" type="image/png" href="/karajo/favicon.png" />
-		<title>karajo</title>
-		<style>
-			#timer {
-				font-size: 12px;
-				float: right;
-			}
-			.name {
-				padding: 5px;
-			}
-			.name.started {
-				background: lightyellow;
-			}
-			.name.failed {
-				background: lightpink;
-			}
-			.name.success {
-				background: lightgreen;
-			}
-			.name.paused {
-				background: lightgrey;
-			}
-			.attrs {
-				padding: 1em;
-				border-left: 1px solid lightgray;
-				border-right: 1px solid lightgray;
-				border-bottom: 1px solid lightgray;
-			}
-			.logs {
-				font-size: 12px;
-				height: 18em;
-				overflow: auto;
-				font-family: monospace;
-				background-color: lightgray;
-				padding: 1em;
-			}
-			.footer {
-				margin: 1em auto;
-				text-align: center;
-			}
-			@media only screen and (max-width: 400px) {
-				.actions > button {
-					display: block;
-					width: calc(100%);
-					margin-bottom: 6px;
-				}
-			}
-		</style>
-	</head>
-	<body onload="main()">
-		<h2>
-			<span id="title">Karajo</span>
-			<span id="timer"> </span>
-		</h2>
-		<div id="jobs"></div>
-		<div id="out"></div>
-		<div id="err"></div>
 
-		<div class="footer">Powered by <a href="https://sr.ht/~shulhan/karajo" target="_blank">Karajo</a></div>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="/karajo/favicon.png" />
+    <title>karajo</title>
+    <style>
+        #timer {
+            font-size: 12px;
+            float: right;
+        }
 
-		<script>
-			let _env = {}
-			let _jobs = {}
+        .name {
+            padding: 5px;
+        }
 
-			async function main() {
-				runTimer()
+        .name.started {
+            background: lightyellow;
+        }
 
-				let wout = document.getElementById("out")
-				let werr = document.getElementById("err")
+        .name.failed {
+            background: lightpink;
+        }
 
-				wout.innerHTML = ""
-				werr.innerHTML = ""
+        .name.success {
+            background: lightgreen;
+        }
 
-				let fres = await fetch("/karajo/api/environment")
-				let res = await fres.json()
-				if (res.code != 200) {
-					werr.innerHTML = res.message
-					return
-				}
+        .name.paused {
+            background: lightgrey;
+        }
 
-				_env = res.data
-				setTitle()
+        .attrs {
+            padding: 1em;
+            border-left: 1px solid lightgray;
+            border-right: 1px solid lightgray;
+            border-bottom: 1px solid lightgray;
+        }
 
-				let jobs = res.data.Jobs
-				let out = ""
-				for (let x = 0; x < jobs.length; x++) {
-					let job = jobs[x]
-					_jobs[job.ID] = job
+        .logs {
+            font-size: 12px;
+            height: 18em;
+            overflow: auto;
+            font-family: monospace;
+            background-color: lightgray;
+            padding: 1em;
+        }
 
-					let idAttrs = job.ID + "-attrs"
-					let idLogs = job.ID + "-logs"
+        .footer {
+            margin: 1em auto;
+            text-align: center;
+        }
 
-					out += `
+        @media only screen and (max-width: 400px) {
+            .actions>button {
+                display: block;
+                width: calc(100%);
+                margin-bottom: 6px;
+            }
+        }
+    </style>
+</head>
+
+<body onload="main()">
+    <h2>
+        <span id="title">Karajo</span>
+        <span><a href="/karajo/doc/">Documentation</a></span>
+        <span id="timer"> </span>
+    </h2>
+    <div id="jobs"></div>
+    <div id="out"></div>
+    <div id="err"></div>
+
+    <div class="footer">Powered by <a href="https://sr.ht/~shulhan/karajo" target="_blank">Karajo</a></div>
+
+    <script>
+        let _env = {}
+        let _jobs = {}
+
+        async function main() {
+            runTimer()
+
+            let wout = document.getElementById("out")
+            let werr = document.getElementById("err")
+
+            wout.innerHTML = ""
+            werr.innerHTML = ""
+
+            let fres = await fetch("/karajo/api/environment")
+            let res = await fres.json()
+            if (res.code != 200) {
+                werr.innerHTML = res.message
+                return
+            }
+
+            _env = res.data
+            setTitle()
+
+            let jobs = res.data.Jobs
+            let out = ""
+            for (let x = 0; x < jobs.length; x++) {
+                let job = jobs[x]
+                _jobs[job.ID] = job
+
+                let idAttrs = job.ID + "-attrs"
+                let idLogs = job.ID + "-logs"
+
+                out += `
 						<div class="job">
 							<div class="name ${job.LastStatus}">
 								<span class="actions">
@@ -124,75 +136,75 @@
 							</div>
 						</div>
 					`
-				}
-				document.getElementById("jobs").innerHTML = out
-			}
+            }
+            document.getElementById("jobs").innerHTML = out
+        }
 
-			function setTitle() {
-				document.title = _env.Name
-				document.getElementById("title").innerHTML = _env.Name
-			}
+        function setTitle() {
+            document.title = _env.Name
+            document.getElementById("title").innerHTML = _env.Name
+        }
 
-			function runTimer() {
-				let elTimer = document.getElementById("timer")
+        function runTimer() {
+            let elTimer = document.getElementById("timer")
 
-				setInterval(() => {
-					elTimer.innerHTML = new Date().toUTCString()
-				}, 1000)
-			}
+            setInterval(() => {
+                elTimer.innerHTML = new Date().toUTCString()
+            }, 1000)
+        }
 
-			async function showAttr(jobID, idAttr) {
-				let el = document.getElementById(idAttr)
-				let job = _jobs[jobID]
+        async function showAttr(jobID, idAttr) {
+            let el = document.getElementById(idAttr)
+            let job = _jobs[jobID]
 
-				if (el.style.display === "block") {
-					el.style.display = "none"
-					window.clearInterval(job.interval)
-					console.log(`${job.ID}: pooling job stopped.`)
-				} else {
-					el.style.display = "block"
+            if (el.style.display === "block") {
+                el.style.display = "none"
+                window.clearInterval(job.interval)
+                console.log(`${job.ID}: pooling job stopped.`)
+            } else {
+                el.style.display = "block"
 
-					await getJob(el, jobID)
+                await getJob(el, jobID)
 
-					console.log(`${job.ID}: started pooling job every 10 seconds.`)
+                console.log(`${job.ID}: started pooling job every 10 seconds.`)
 
-					job.interval = setInterval(() => {
-						getJob(el, jobID)
-					}, 10000)
-				}
-			}
+                job.interval = setInterval(() => {
+                    getJob(el, jobID)
+                }, 10000)
+            }
+        }
 
-			async function showLogs(jobID, idLogs) {
-				let el = document.getElementById(idLogs)
-				let job = _jobs[jobID]
+        async function showLogs(jobID, idLogs) {
+            let el = document.getElementById(idLogs)
+            let job = _jobs[jobID]
 
-				if (el.style.display === "block") {
-					el.style.display = "none"
-					window.clearInterval(job.intervalLogs)
-					console.log(`${job.ID}: pooling logs stopped.`)
-				} else {
-					el.style.display = "block"
+            if (el.style.display === "block") {
+                el.style.display = "none"
+                window.clearInterval(job.intervalLogs)
+                console.log(`${job.ID}: pooling logs stopped.`)
+            } else {
+                el.style.display = "block"
 
-					await getJobLogs(el, jobID)
+                await getJobLogs(el, jobID)
 
-					console.log(`${job.ID}: started pooling logs every 10 seconds.`)
+                console.log(`${job.ID}: started pooling logs every 10 seconds.`)
 
-					job.intervalLogs = setInterval(() => {
-						getJobLogs(el, jobID)
-					}, 10000)
-				}
-			}
+                job.intervalLogs = setInterval(() => {
+                    getJobLogs(el, jobID)
+                }, 10000)
+            }
+        }
 
-			async function getJob(el, id) {
-				let fres = await fetch("/karajo/api/job?id=" + id)
-				let res = await fres.json()
-				if (res.code !== 200) {
-					console.error(res.message)
-					return
-				}
+        async function getJob(el, id) {
+            let fres = await fetch("/karajo/api/job?id=" + id)
+            let res = await fres.json()
+            if (res.code !== 200) {
+                console.error(res.message)
+                return
+            }
 
-				let job = res.data
-				let w = `
+            let job = res.data
+            let w = `
 					<div>${job.Description}</div>
 					<br/>
 					<div>ID: ${job.ID}</div>
@@ -209,58 +221,59 @@
 					<div class="actions">
 				`
 
-				if (job.IsPausing) {
-					w += `<button onclick="jobResume('${job.ID}')">Resume</button>`
-				} else {
-					w += `<button onclick="jobPause('${job.ID}')">Pause</button>`
-				}
+            if (job.IsPausing) {
+                w += `<button onclick="jobResume('${job.ID}')">Resume</button>`
+            } else {
+                w += `<button onclick="jobPause('${job.ID}')">Pause</button>`
+            }
 
-				w += `
+            w += `
 					</div>
 				`
-				el.innerHTML = w
-			}
+            el.innerHTML = w
+        }
 
-			async function getJobLogs(el, id) {
-				let fres = await fetch("/karajo/api/job/logs?id=" + id)
-				let res = await fres.json()
-				if (res.code !== 200) {
-					console.error(res.message)
-					return
-				}
+        async function getJobLogs(el, id) {
+            let fres = await fetch("/karajo/api/job/logs?id=" + id)
+            let res = await fres.json()
+            if (res.code !== 200) {
+                console.error(res.message)
+                return
+            }
 
-				let logs = res.data
-				let out = ""
-				for (let x = 0; x < logs.length; x++) {
-					out += `
+            let logs = res.data
+            let out = ""
+            for (let x = 0; x < logs.length; x++) {
+                out += `
 						<p>${logs[x]}</p>
 					`
-				}
-				el.innerHTML = out
-				el.scrollTop = el.scrollHeight
-			}
+            }
+            el.innerHTML = out
+            el.scrollTop = el.scrollHeight
+        }
 
-			async function jobPause(id) {
-				let fres = await fetch("/karajo/api/job/pause/" + id, {
-					method: "POST"
-				})
-				let res = await fres.json()
-				if (res.code !== 200) {
-					console.error(res.message)
-					return
-				}
-			}
+        async function jobPause(id) {
+            let fres = await fetch("/karajo/api/job/pause/" + id, {
+                method: "POST"
+            })
+            let res = await fres.json()
+            if (res.code !== 200) {
+                console.error(res.message)
+                return
+            }
+        }
 
-			async function jobResume(id) {
-				let fres = await fetch("/karajo/api/job/resume/" + id, {
-					method: "POST"
-				})
-				let res = await fres.json()
-				if (res.code !== 200) {
-					console.error(res.message)
-					return
-				}
-			}
-		</script>
-	</body>
+        async function jobResume(id) {
+            let fres = await fetch("/karajo/api/job/resume/" + id, {
+                method: "POST"
+            })
+            let res = await fres.json()
+            if (res.code !== 200) {
+                console.error(res.message)
+                return
+            }
+        }
+    </script>
+</body>
+
 </html>
