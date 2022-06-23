@@ -71,9 +71,12 @@ type Environment struct {
 
 // LoadEnvironment load the configuration from the ini file format.
 func LoadEnvironment(file string) (env *Environment, err error) {
-	logp := "LoadEnvironment"
+	var (
+		logp = "LoadEnvironment"
+		cfg  *ini.Ini
+	)
 
-	cfg, err := ini.Open(file)
+	cfg, err = ini.Open(file)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}

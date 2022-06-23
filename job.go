@@ -247,26 +247,30 @@ func (job *Job) initHttpUrl(serverAddress string) (err error) {
 	if job.HttpUrl[0] == '/' {
 		job.baseUri = fmt.Sprintf("http://%s", serverAddress)
 		job.requestUri = job.HttpUrl
-	} else {
-		httpUrl, err := url.Parse(job.HttpUrl)
-		if err != nil {
-			return fmt.Errorf("%s: invalid http_url %q: %w",
-				job.ID, job.HttpUrl, err)
-		}
-
-		port := httpUrl.Port()
-		if len(port) == 0 {
-			if httpUrl.Scheme == "https" {
-				port = "443"
-			} else {
-				port = "80"
-			}
-		}
-
-		job.baseUri = fmt.Sprintf("%s://%s:%s", httpUrl.Scheme,
-			httpUrl.Hostname(), port)
-		job.requestUri = httpUrl.RequestURI()
+		return nil
 	}
+
+	var (
+		httpUrl *url.URL
+		port    string
+	)
+
+	httpUrl, err = url.Parse(job.HttpUrl)
+	if err != nil {
+		return fmt.Errorf("%s: invalid http_url %q: %w", job.ID, job.HttpUrl, err)
+	}
+
+	port = httpUrl.Port()
+	if len(port) == 0 {
+		if httpUrl.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+
+	job.baseUri = fmt.Sprintf("%s://%s:%s", httpUrl.Scheme, httpUrl.Hostname(), port)
+	job.requestUri = httpUrl.RequestURI()
 
 	return nil
 }
@@ -276,8 +280,13 @@ func (job *Job) initHttpHeaders() (err error) {
 		job.headers = make(http.Header, len(job.HttpHeaders))
 	}
 
-	for _, h := range job.HttpHeaders {
-		kv := strings.SplitN(h, ":", 2)
+	var (
+		h  string
+		kv []string
+	)
+
+	for _, h = range job.HttpHeaders {
+		kv = strings.SplitN(h, ":", 2)
 		if len(kv) != 2 {
 			return fmt.Errorf("%s: invalid header %q", job.ID, h)
 		}
@@ -304,8 +313,15 @@ func (job *Job) decrement() {
 }
 
 func (job *Job) execute() {
-	now := time.Now().UTC().Round(time.Second)
-	logTime := now.Format(defTimeLayout)
+	var (
+		now     = time.Now().UTC().Round(time.Second)
+		logTime = now.Format(defTimeLayout)
+
+		httpRes *http.Response
+		log     string
+		err     error
+		resBody []byte
+	)
 
 	if job.isPaused() {
 		job.mlog.Outf(JobStatusPaused)
@@ -315,16 +331,16 @@ func (job *Job) execute() {
 	}
 
 	if !job.increment() {
-		log := fmt.Sprintf("!!! maximum requests %d has been reached", job.MaxRequests)
+		log = fmt.Sprintf("!!! maximum requests %d has been reached", job.MaxRequests)
 		job.mlog.Errf(log)
 		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		return
 	}
 	defer job.decrement()
 
-	httpRes, resBody, err := job.httpc.Get(job.requestUri, nil, nil)
+	httpRes, resBody, err = job.httpc.Get(job.requestUri, nil, nil)
 	if err != nil {
-		log := fmt.Sprintf("!!! %s", err)
+		log = fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
 		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.Status = JobStatusFailed
@@ -333,7 +349,7 @@ func (job *Job) execute() {
 	}
 
 	if httpRes.StatusCode != http.StatusOK {
-		log := fmt.Sprintf("!!! %s: %s", httpRes.Status, resBody)
+		log = fmt.Sprintf("!!! %s: %s", httpRes.Status, resBody)
 		job.mlog.Errf(log)
 		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.Status = JobStatusFailed
@@ -341,7 +357,7 @@ func (job *Job) execute() {
 		return
 	}
 
-	log := fmt.Sprintf(">>> %s\n", resBody)
+	log = fmt.Sprintf(">>> %s\n", resBody)
 	job.mlog.Outf(log)
 	job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 	job.Status = JobStatusSuccess
@@ -354,7 +370,7 @@ func (job *Job) execute() {
 // If the `(last_run + interval) < now` then it will return 0; otherwise it will
 // return `(last_run + interval) - now`
 func (job *Job) computeFirstTimer(now time.Time) time.Duration {
-	lastInterval := job.LastRun.Add(job.Interval)
+	var lastInterval time.Time = job.LastRun.Add(job.Interval)
 	if lastInterval.Before(now) {
 		return 0
 	}

@@ -170,7 +170,8 @@ func (k *Karajo) registerApis() (err error) {
 func (k *Karajo) Start() (err error) {
 	mlog.Outf("started the karajo server at http://%s/karajo\n", k.Server.Addr)
 
-	for _, job := range k.env.Jobs {
+	var job *Job
+	for _, job = range k.env.Jobs {
 		go job.Start()
 	}
 
@@ -179,7 +180,9 @@ func (k *Karajo) Start() (err error) {
 
 // Stop all the jobs and the HTTP server.
 func (k *Karajo) Stop() (err error) {
-	for _, job := range k.env.Jobs {
+	var job *Job
+
+	for _, job = range k.env.Jobs {
 		job.Stop()
 	}
 
@@ -192,7 +195,7 @@ func (k *Karajo) Stop() (err error) {
 }
 
 func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
-	res := &libhttp.EndpointResponse{}
+	var res = &libhttp.EndpointResponse{}
 	res.Code = http.StatusOK
 	res.Data = k.env
 
@@ -206,9 +209,12 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 // apiJob API to get job detail and its status.
 // The api accept query parameter job "id".
 func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
-	res := &libhttp.EndpointResponse{}
-	id := epr.HttpRequest.Form.Get(paramNameID)
-	job := k.env.jobs[id]
+	var (
+		res        = &libhttp.EndpointResponse{}
+		id  string = epr.HttpRequest.Form.Get(paramNameID)
+		job *Job   = k.env.jobs[id]
+	)
+
 	if job == nil {
 		res.Code = http.StatusBadRequest
 		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
@@ -226,9 +232,12 @@ func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error
 }
 
 func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
-	res := &libhttp.EndpointResponse{}
-	id := epr.HttpRequest.Form.Get(paramNameID)
-	job := k.env.jobs[id]
+	var (
+		res        = &libhttp.EndpointResponse{}
+		id  string = epr.HttpRequest.Form.Get(paramNameID)
+		job *Job   = k.env.jobs[id]
+	)
+
 	if job == nil {
 		res.Code = http.StatusBadRequest
 		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
@@ -243,10 +252,12 @@ func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 
 // apiJobPause HTTP API to pause executing the job.
 func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) ([]byte, error) {
-	res := &libhttp.EndpointResponse{}
+	var (
+		res        = &libhttp.EndpointResponse{}
+		id  string = epr.HttpRequest.Form.Get(paramNameID)
+		job *Job   = k.env.jobs[id]
+	)
 
-	id := epr.HttpRequest.Form.Get(paramNameID)
-	job := k.env.jobs[id]
 	if job == nil {
 		res.Code = http.StatusBadRequest
 		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
@@ -263,10 +274,12 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) ([]byte, error) {
 
 // apiJobResume HTTP API to resume executing the job.
 func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) ([]byte, error) {
-	res := &libhttp.EndpointResponse{}
+	var (
+		res        = &libhttp.EndpointResponse{}
+		id  string = epr.HttpRequest.Form.Get(paramNameID)
+		job *Job   = k.env.jobs[id]
+	)
 
-	id := epr.HttpRequest.Form.Get(paramNameID)
-	job := k.env.jobs[id]
 	if job == nil {
 		res.Code = http.StatusBadRequest
 		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
@@ -282,14 +295,14 @@ func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) ([]byte, error) {
 }
 
 func (k *Karajo) apiTestJobFail(_ *libhttp.EndpointRequest) ([]byte, error) {
-	res := &libhttp.EndpointResponse{}
+	var res = &libhttp.EndpointResponse{}
 	res.Code = http.StatusBadRequest
 	res.Message = "The job has failed"
 	return nil, res
 }
 
 func (k *Karajo) apiTestJobSuccess(_ *libhttp.EndpointRequest) ([]byte, error) {
-	res := &libhttp.EndpointResponse{}
+	var res = &libhttp.EndpointResponse{}
 	res.Code = http.StatusOK
 	res.Message = "The job has been run successfully"
 	return json.Marshal(res)
@@ -298,8 +311,12 @@ func (k *Karajo) apiTestJobSuccess(_ *libhttp.EndpointRequest) ([]byte, error) {
 // generateID generate unique job ID based on input string.
 // Any non-alphanumeric characters in input string will be replaced with '-'.
 func generateID(in string) string {
-	id := make([]rune, 0, len(in))
-	for _, r := range strings.ToLower(in) {
+	var (
+		id = make([]rune, 0, len(in))
+		r  rune
+	)
+
+	for _, r = range strings.ToLower(in) {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			id = append(id, r)
 		} else {
