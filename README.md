@@ -131,8 +131,7 @@ Job schema,
 	"NumRequests": <number>,
 	"LastRun": <string>,
 	"NextRun": <string>,
-	"LastStatus": <string>,
-	"IsPausing": <boolean>
+	"Status": <string>,
 }
 ```
 
@@ -150,10 +149,8 @@ Job schema,
 * `LastRun`: date and time when the job last run, in the format RFC3339,
 * `NextRun`: date and time when the next job will be executed, in the format
   RFC3339.
-* `LastStatus`: status of the last job running, its either "success" or
-  "failed"
-* `IsPausing`: true if the job is pausing.
-
+* `Status`: status of the last job running, its either "started, "success",
+  "failed", or "paused".
 
 ### Get environment
 
@@ -249,7 +246,7 @@ Parameters,
 
 **Response**
 
-On success it will return the Job schema with field `IsPausing` set to `true`.
+On success it will return the Job schema with field `Status` set to `paused`.
 
 On fail it will return
 
@@ -273,7 +270,7 @@ Parameters,
 **Response**
 
 On success it will return the Job schema related to the ID with field
-`IsPausing` reset back to `false`.
+`Status` reset back to `started`.
 
 
 ## Example

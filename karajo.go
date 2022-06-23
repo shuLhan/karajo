@@ -183,7 +183,7 @@ func (k *Karajo) Stop() (err error) {
 		job.Stop()
 	}
 
-	err = k.env.saveJobs()
+	err = k.env.jobsSave()
 	if err != nil {
 		mlog.Errf("Stop: %s", err)
 	}
@@ -196,9 +196,9 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 	res.Code = http.StatusOK
 	res.Data = k.env
 
-	k.env.lock()
+	k.env.jobsLock()
 	resbody, err = json.Marshal(res)
-	k.env.unlock()
+	k.env.jobsUnlock()
 
 	return resbody, err
 }
@@ -218,9 +218,9 @@ func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error
 	res.Code = http.StatusOK
 	res.Data = job
 
-	job.locker.Lock()
+	job.Lock()
 	resbody, err = json.Marshal(res)
-	job.locker.Unlock()
+	job.Unlock()
 
 	return resbody, err
 }

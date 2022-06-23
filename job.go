@@ -18,14 +18,6 @@ import (
 	"github.com/shuLhan/share/lib/mlog"
 )
 
-// List of job status.
-const (
-	JobStatusStarted = "started"
-	JobStatusSuccess = "success"
-	JobStatusFailed  = "failed"
-	JobStatusPaused  = "paused"
-)
-
 // DefaultMaxRequests define maximum number of requests that can be
 // executed simultaneously.
 // This is to prevent the karajo server consume resources on the local
@@ -42,11 +34,10 @@ const (
 // periodically and save the response status to logs and the last execution
 // time for future run.
 type Job struct {
+	jobState
+
 	// The next time the job will running, in UTC.
 	NextRun time.Time
-
-	// The last time the job is running, in UTC.
-	LastRun time.Time
 
 	headers http.Header
 
@@ -77,8 +68,11 @@ type Job struct {
 	baseUri    string
 	requestUri string
 
-	// The last status of the job.
-	LastStatus string
+	// Path to the job log.
+	pathLog string
+
+	// Path to the last job state.
+	pathState string
 
 	// Optional HTTP headers for HttpUrl, in the format of "K: V".
 	HttpHeaders []string `ini:"::http_header"`
@@ -105,30 +99,33 @@ type Job struct {
 	// NumRequests record the current number of requests executed.
 	NumRequests int8
 
-	locker sync.Mutex
+	sync.Mutex
 
 	//
 	// HttpInsecure can be set to true if the http_url is HTTPS with
 	// unknown certificate authority.
 	//
 	HttpInsecure bool `ini:"::http_insecure"`
-
-	// IsPausing if its true, the job execution will be skipped.
-	IsPausing bool
 }
 
-func (job *Job) Start() (err error) {
-	now := time.Now().UTC().Round(time.Second)
+func (job *Job) Start() {
+	var (
+		now        = time.Now().UTC().Round(time.Second)
+		firstTimer = job.computeFirstTimer(now)
+		ever       = true
+
+		t    *time.Timer
+		tick *time.Ticker
+	)
+
 	job.NumRequests = 0
 
 	job.mlog.Outf("starting job: %+v\n", job)
 
-	firstTimer := job.computeFirstTimer(now)
 	job.NextRun = now.Add(firstTimer)
 	job.mlog.Outf("running the first job in %s ...\n", firstTimer)
 
-	t := time.NewTimer(firstTimer)
-	ever := true
+	t = time.NewTimer(firstTimer)
 	for ever {
 		select {
 		case <-t.C:
@@ -136,14 +133,14 @@ func (job *Job) Start() (err error) {
 			t.Stop()
 			ever = false
 		case <-job.done:
-			return nil
+			return
 		}
 	}
 
 	job.NextRun = job.LastRun.Add(job.Interval)
 	job.mlog.Outf("running the next job at %s ...\n", job.NextRun.Format(defTimeLayout))
 
-	tick := time.NewTicker(job.Interval)
+	tick = time.NewTicker(job.Interval)
 	for {
 		select {
 		case <-tick.C:
@@ -152,11 +149,9 @@ func (job *Job) Start() (err error) {
 			job.mlog.Outf("running the next job at %s\n", job.NextRun.Format(defTimeLayout))
 
 		case <-job.done:
-			return nil
+			return
 		}
 	}
-
-	return nil
 }
 
 // Stop the job.
@@ -165,11 +160,9 @@ func (job *Job) Stop() {
 	job.done <- true
 
 	job.mlog.Flush()
-	if job.flog != nil {
-		err := job.flog.Close()
-		if err != nil {
-			mlog.Errf("Stop %s: %s", job.ID, err)
-		}
+	var err error = job.flog.Close()
+	if err != nil {
+		mlog.Errf("Stop %s: %s", job.ID, err)
 	}
 }
 
@@ -179,7 +172,14 @@ func (job *Job) init(env *Environment) (err error) {
 		job.ID = generateID(job.Name)
 	}
 
+	job.pathLog = filepath.Join(env.dirLogJob, job.ID)
 	err = job.initLogger(env)
+	if err != nil {
+		return err
+	}
+
+	job.pathState = filepath.Join(env.dirRunJob, job.ID)
+	err = job.stateLoad()
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (job *Job) init(env *Environment) (err error) {
 		return err
 	}
 
-	httpClientOpts := &libhttp.ClientOptions{
+	var httpClientOpts = &libhttp.ClientOptions{
 		ServerUrl:     job.baseUri,
 		Headers:       job.headers,
 		AllowInsecure: job.HttpInsecure,
@@ -231,18 +231,12 @@ func (job *Job) initLogger(env *Environment) (err error) {
 	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter("stderr", os.Stderr))
 	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter("stdout", os.Stdout))
 
-	var (
-		logPath = filepath.Join(env.dirLogJob, job.ID)
-
-		nw mlog.NamedWriter
-	)
-
-	job.flog, err = os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	job.flog, err = os.OpenFile(job.pathLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
-		return fmt.Errorf("initLogger %s: %w", logPath, err)
+		return fmt.Errorf("initLogger %s: %w", job.pathLog, err)
 	}
 
-	nw = mlog.NewNamedWriter(job.ID, job.flog)
+	var nw mlog.NamedWriter = mlog.NewNamedWriter(job.ID, job.flog)
 	job.mlog.RegisterErrorWriter(nw)
 	job.mlog.RegisterOutputWriter(nw)
 
@@ -294,30 +288,28 @@ func (job *Job) initHttpHeaders() (err error) {
 }
 
 func (job *Job) increment() (ok bool) {
-	job.locker.Lock()
+	job.Lock()
 	if job.NumRequests+1 <= job.MaxRequests {
 		job.NumRequests++
 		ok = true
 	}
-	job.locker.Unlock()
+	job.Unlock()
 	return ok
 }
 
 func (job *Job) decrement() {
-	job.locker.Lock()
+	job.Lock()
 	job.NumRequests--
-	job.locker.Unlock()
+	job.Unlock()
 }
 
 func (job *Job) execute() {
 	now := time.Now().UTC().Round(time.Second)
 	logTime := now.Format(defTimeLayout)
 
-	if job.isPausing() {
-		msg := "paused\n"
-		job.mlog.Outf(msg)
-		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, msg))
-		job.LastStatus = JobStatusPaused
+	if job.isPaused() {
+		job.mlog.Outf(JobStatusPaused)
+		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, JobStatusPaused))
 		job.LastRun = now
 		return
 	}
@@ -335,7 +327,7 @@ func (job *Job) execute() {
 		log := fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
 		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-		job.LastStatus = JobStatusFailed
+		job.Status = JobStatusFailed
 		job.LastRun = now
 		return
 	}
@@ -344,7 +336,7 @@ func (job *Job) execute() {
 		log := fmt.Sprintf("!!! %s: %s", httpRes.Status, resBody)
 		job.mlog.Errf(log)
 		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-		job.LastStatus = JobStatusFailed
+		job.Status = JobStatusFailed
 		job.LastRun = now
 		return
 	}
@@ -352,7 +344,7 @@ func (job *Job) execute() {
 	log := fmt.Sprintf(">>> %s\n", resBody)
 	job.mlog.Outf(log)
 	job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-	job.LastStatus = JobStatusSuccess
+	job.Status = JobStatusSuccess
 	job.LastRun = now
 }
 
@@ -371,22 +363,55 @@ func (job *Job) computeFirstTimer(now time.Time) time.Duration {
 
 func (job *Job) pause() {
 	job.mlog.Outf("pausing...\n")
-	job.locker.Lock()
-	job.IsPausing = true
-	job.locker.Unlock()
+	job.Lock()
+	job.Status = JobStatusPaused
+	job.Unlock()
 }
 
 func (job *Job) resume() {
 	job.mlog.Outf("resuming...\n")
-	job.locker.Lock()
-	job.IsPausing = false
-	job.LastStatus = JobStatusStarted
-	job.locker.Unlock()
+	job.Lock()
+	job.Status = JobStatusStarted
+	job.Unlock()
 }
 
-func (job *Job) isPausing() (b bool) {
-	job.locker.Lock()
-	b = job.IsPausing
-	job.locker.Unlock()
+// stateLoad load the job state from file Job.pathState.
+func (job *Job) stateLoad() (err error) {
+	var rawState []byte
+
+	rawState, err = os.ReadFile(job.pathState)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	err = job.jobState.unpack(rawState)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// stateSave save the job state into file job.pathState.
+func (job *Job) stateSave() (err error) {
+	var rawState []byte
+
+	rawState, err = job.jobState.pack()
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(job.pathState, rawState, 0600)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (job *Job) isPaused() (b bool) {
+	job.Lock()
+	b = job.Status == JobStatusPaused
+	job.Unlock()
 	return b
 }

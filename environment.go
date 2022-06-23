@@ -4,28 +4,23 @@
 package karajo
 
 import (
-	"bytes"
-	"encoding/gob"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/shuLhan/share/lib/ini"
-	"github.com/shuLhan/share/lib/mlog"
 )
 
 const (
-	defEnvName           = "karajo"
-	defListenAddress     = ":31937"
-	defHttpTimeout       = 5 * time.Minute
-	defFileLastRunSuffix = ".lastrun"
+	defEnvName       = "karajo"
+	defListenAddress = ":31937"
+	defHttpTimeout   = 5 * time.Minute
 )
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
 type Environment struct {
+	// List of Job indexed by ID.
 	jobs map[string]*Job
 
 	// Name of the service.
@@ -59,8 +54,7 @@ type Environment struct {
 	dirRunJob  string
 	dirCurrent string // The current directory where program running.
 
-	file        string
-	fileLastRun string
+	file string
 
 	// List of registered Job.
 	Jobs []*Job `ini:"karajo:job"`
@@ -100,12 +94,8 @@ func (env *Environment) init() (err error) {
 	var (
 		logp = "init"
 
-		prevJobs map[string]*Job
-		job      *Job
-		prevJob  *Job
+		job *Job
 	)
-
-	gob.Register(Job{})
 
 	if len(env.Name) == 0 {
 		env.Name = defEnvName
@@ -119,17 +109,9 @@ func (env *Environment) init() (err error) {
 		env.HttpTimeout = defHttpTimeout
 	}
 
-	env.initDirs()
-
-	if len(env.file) > 0 {
-		env.fileLastRun = env.file + defFileLastRunSuffix
-	} else {
-		env.fileLastRun = filepath.Join(env.dirCurrent, env.name+defFileLastRunSuffix)
-	}
-
-	prevJobs, err = env.loadJobs()
+	err = env.initDirs()
 	if err != nil {
-		mlog.Errf("%s: %s\n", logp, err)
+		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
@@ -140,13 +122,6 @@ func (env *Environment) init() (err error) {
 		}
 
 		env.jobs[job.ID] = job
-
-		prevJob = prevJobs[job.ID]
-		if prevJob != nil {
-			job.LastRun = prevJob.LastRun
-			job.LastStatus = prevJob.LastStatus
-			job.IsPausing = prevJob.IsPausing
-		}
 	}
 
 	return nil
@@ -178,55 +153,29 @@ func (env *Environment) initDirs() (err error) {
 	return nil
 }
 
-// loadJobs load previous saved job from file.
-func (env *Environment) loadJobs() (lastJobs map[string]*Job, err error) {
-	b, err := ioutil.ReadFile(env.fileLastRun)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("loadJobs: %w", err)
+// jobsLock lock all the jobs.
+func (env *Environment) jobsLock() {
+	var job *Job
+	for _, job = range env.jobs {
+		job.Lock()
 	}
-
-	dec := gob.NewDecoder(bytes.NewReader(b))
-
-	lastJobs = make(map[string]*Job)
-	err = dec.Decode(&lastJobs)
-	if err != nil {
-		return nil, fmt.Errorf("loadJobs: %w", err)
-	}
-
-	return lastJobs, nil
 }
 
-// saveJobs save all the jobs data into file ending with ".lastrun".
-func (env *Environment) saveJobs() (err error) {
-	var buf bytes.Buffer
-
-	enc := gob.NewEncoder(&buf)
-	err = enc.Encode(&env.jobs)
-	if err != nil {
-		return fmt.Errorf("saveJobs: %w", err)
+func (env *Environment) jobsSave() (err error) {
+	var job *Job
+	for _, job = range env.jobs {
+		err = job.stateSave()
+		if err != nil {
+			return err
+		}
 	}
-
-	err = ioutil.WriteFile(env.fileLastRun, buf.Bytes(), 0600)
-	if err != nil {
-		return fmt.Errorf("saveJobs: %w", err)
-	}
-
 	return nil
 }
 
-// lock all the jobs.
-func (env *Environment) lock() {
-	for _, job := range env.jobs {
-		job.locker.Lock()
-	}
-}
-
-// unlock all the jobs.
-func (env *Environment) unlock() {
-	for _, job := range env.jobs {
-		job.locker.Unlock()
+// jobsUnlock unlock all the jobs.
+func (env *Environment) jobsUnlock() {
+	var job *Job
+	for _, job = range env.jobs {
+		job.Unlock()
 	}
 }

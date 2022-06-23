@@ -111,7 +111,7 @@
 
                 out += `
 						<div class="job">
-							<div class="name ${job.LastStatus}">
+							<div class="name ${job.Status}">
 								<span class="actions">
 									<button onclick="showAttr('${job.ID}', '${idAttrs}')">Attributes</button>
 									<button onclick="showLogs('${job.ID}', '${idLogs}')">Logs</button>
@@ -216,12 +216,12 @@
 					<div>Maximum requests: ${job.MaxRequests}</div>
 					<div>Last run: ${job.LastRun}</div>
 					<div>Next run: ${job.NextRun}</div>
-					<div>Is pausing: ${job.IsPausing}</div>
+					<div>Status: ${job.Status}</div>
 					<br/>
 					<div class="actions">
 				`
 
-            if (job.IsPausing) {
+            if (job.Status == "paused") {
                 w += `<button onclick="jobResume('${job.ID}')">Resume</button>`
             } else {
                 w += `<button onclick="jobPause('${job.ID}')">Pause</button>`
