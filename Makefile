@@ -17,7 +17,7 @@ test:
 	fieldalignment ./...
 
 dev:
-	CGO_ENABLED=1 go run -race ./cmd/karajo -dev -config karajo_test.conf
+	CGO_ENABLED=1 go run -race ./cmd/karajo -dev -config testdata/karajo.conf
 
 ${GOBIN}/mdgo:
 	go install git.sr.ht/~shulhan/mdgo/cmd/mdgo

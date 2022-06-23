@@ -38,11 +38,26 @@ type Environment struct {
 
 	ListenAddress string `ini:"karajo::listen_address"`
 
-	// DirLogs contains path to the directory where log for each jobs will
-	// be stored.
-	// If this value is empty, all job logs will be written to stdout and
-	// stderr.
-	DirLogs string `ini:"karajo::dir_logs"`
+	// DirBase define the base directory where configuration, job state,
+	// and log stored.
+	// This field is optional, default to current directory.
+	// The structure of directory follow the UNIX system,
+	//
+	//	$DirBase
+	//	|
+	//	+-- /etc/karajo/karajo.conf
+	//	|
+	//	+-- /var/log/karajo/job/$Job.ID
+	//      |
+	//	+-- /var/run/karajo/job/$Job.ID
+	//
+	// Each job log stored under directory /var/log/karajo/job and the job
+	// state under directory /var/run/karajo/job.
+	DirBase    string `ini:"karajo::dir_base"`
+	dirConfig  string
+	dirLogJob  string
+	dirRunJob  string
+	dirCurrent string // The current directory where program running.
 
 	file        string
 	fileLastRun string
@@ -82,7 +97,13 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 }
 
 func (env *Environment) init() (err error) {
-	logp := "init"
+	var (
+		logp = "init"
+
+		prevJobs map[string]*Job
+		job      *Job
+		prevJob  *Job
+	)
 
 	gob.Register(Job{})
 
@@ -98,23 +119,21 @@ func (env *Environment) init() (err error) {
 		env.HttpTimeout = defHttpTimeout
 	}
 
+	env.initDirs()
+
 	if len(env.file) > 0 {
 		env.fileLastRun = env.file + defFileLastRunSuffix
 	} else {
-		wd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
-		}
-		env.fileLastRun = filepath.Join(wd, env.name+defFileLastRunSuffix)
+		env.fileLastRun = filepath.Join(env.dirCurrent, env.name+defFileLastRunSuffix)
 	}
 
-	prevJobs, err := env.loadJobs()
+	prevJobs, err = env.loadJobs()
 	if err != nil {
 		mlog.Errf("%s: %s\n", logp, err)
 	}
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
-	for _, job := range env.Jobs {
+	for _, job = range env.Jobs {
 		err = job.init(env)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
@@ -122,7 +141,7 @@ func (env *Environment) init() (err error) {
 
 		env.jobs[job.ID] = job
 
-		prevJob := prevJobs[job.ID]
+		prevJob = prevJobs[job.ID]
 		if prevJob != nil {
 			job.LastRun = prevJob.LastRun
 			job.LastStatus = prevJob.LastStatus
@@ -130,6 +149,32 @@ func (env *Environment) init() (err error) {
 		}
 	}
 
+	return nil
+}
+
+// initDirs create all job and log directories.
+func (env *Environment) initDirs() (err error) {
+	env.dirCurrent, err = os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	if len(env.DirBase) == 0 {
+		env.DirBase = env.dirCurrent
+	}
+
+	env.dirConfig = filepath.Join(env.DirBase, "etc", defEnvName)
+	env.dirLogJob = filepath.Join(env.DirBase, "var", "log", defEnvName, "job")
+	env.dirRunJob = filepath.Join(env.DirBase, "var", "run", defEnvName, "job")
+
+	err = os.MkdirAll(env.dirLogJob, 0700)
+	if err != nil {
+		return fmt.Errorf("%s: %w", env.dirLogJob, err)
+	}
+	err = os.MkdirAll(env.dirRunJob, 0700)
+	if err != nil {
+		return fmt.Errorf("%s: %w", env.dirRunJob, err)
+	}
 	return nil
 }
 

@@ -1,18 +1,14 @@
 // SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// Module karajo implement HTTP workers and manager similar to AppEngine
-// cron, where the job is triggered by calling HTTP GET request to specific
-// URL.
+// Module karajo implement HTTP workers and manager similar to cron but works
+// only on HTTP.
 //
 // karajo has the web user interface (WUI) for monitoring the jobs that run on
 // port 31937 by default and can be configurable.
 //
-// A single instance of karajo is configured through an Environment or loaded
-// from ini file format.
-// There are three configuration sections, one to configure the server, one to
-// configure the logs, and another one to configure one or more jobs to be
-// executed.
+// A single instance of karajo is configured through code or configuration
+// file using ini file format.
 //
 // For more information see the README file in this repository.
 package karajo
@@ -56,32 +52,36 @@ type Karajo struct {
 
 // New create and initialize Karajo from configuration file.
 func New(env *Environment) (k *Karajo, err error) {
+	var (
+		logp       = "New"
+		serverOpts = libhttp.ServerOptions{
+			Memfs: memfsWww,
+		}
+	)
+
 	k = &Karajo{
 		env: env,
 	}
 
 	err = env.init()
 	if err != nil {
-		return nil, fmt.Errorf("New: %w", err)
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	mlog.SetPrefix(env.Name + ":")
 
-	serverOpts := libhttp.ServerOptions{
-		Memfs:   memfsWww,
-		Address: k.env.ListenAddress,
-	}
+	serverOpts.Address = k.env.ListenAddress
 
 	memfsWww.Opts.Development = env.IsDevelopment
 
 	k.Server, err = libhttp.NewServer(&serverOpts)
 	if err != nil {
-		return nil, fmt.Errorf("New: %w", err)
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	err = k.registerApis()
 	if err != nil {
-		return nil, fmt.Errorf("New: %w", err)
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	return k, nil

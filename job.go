@@ -224,27 +224,25 @@ func (job *Job) init(env *Environment) (err error) {
 }
 
 // initLogger initialize the job logs location.
-// By default all logs are written to os.Stdout and os.Stderr.
-//
-// If the Dir field on LogOptions is set, then all logs will written to file
-// named "LogOptions.FilenamePrefix + job.ID" in those directory.
+// By default all logs are written to os.Stdout and os.Stderr;
+// and then to file named job.ID in Environment.dirLogJob.
 func (job *Job) initLogger(env *Environment) (err error) {
 	job.mlog = mlog.NewMultiLogger(defTimeLayout, job.ID+":", nil, nil)
 	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter("stderr", os.Stderr))
 	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter("stdout", os.Stdout))
 
-	if len(env.DirLogs) == 0 {
-		return nil
-	}
+	var (
+		logPath = filepath.Join(env.dirLogJob, job.ID)
 
-	logFile := env.name + "-" + job.ID
-	logPath := filepath.Join(env.DirLogs, logFile)
+		nw mlog.NamedWriter
+	)
+
 	job.flog, err = os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("initLogger %s: %w", logPath, err)
 	}
 
-	nw := mlog.NewNamedWriter(logFile, job.flog)
+	nw = mlog.NewNamedWriter(job.ID, job.flog)
 	job.mlog.RegisterErrorWriter(nw)
 	job.mlog.RegisterOutputWriter(nw)
 

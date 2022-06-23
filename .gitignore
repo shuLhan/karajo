@@ -3,5 +3,6 @@
 /README.html
 /_www/karajo/doc/index.html
 /karajo
-/karajo_test.conf.lastrun
-/testdata/logs
+/testdata/karajo.conf.lastrun
+/testdata/var
+/tmp.go
