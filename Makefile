@@ -1,13 +1,18 @@
 ## SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 ## SPDX-License-Identifier: GPL-3.0-or-later
 
-.PHONY: all build test run serve-doc
+.PHONY: all lint build test run serve-doc
 .FORCE:
 
-all: build test
+all: lint build test
 
 memfs_www.go: .FORCE
 	go run ./cmd/karajo embed
+
+lint:
+	-fieldalignment ./...
+	-golangci-lint run ./...
+	-reuse lint --quiet
 
 build: memfs_www.go
 	go build ./cmd/karajo
