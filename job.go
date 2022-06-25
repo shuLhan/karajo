@@ -16,6 +16,7 @@ import (
 	"github.com/shuLhan/share/lib/clise"
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/mlog"
+	libhtml "github.com/shuLhan/share/lib/net/html"
 )
 
 // DefaultMaxRequests define maximum number of requests that can be
@@ -169,7 +170,7 @@ func (job *Job) Stop() {
 // init initialize the job, compute the last run and the next run.
 func (job *Job) init(env *Environment) (err error) {
 	if len(job.ID) == 0 {
-		job.ID = generateID(job.Name)
+		job.ID = libhtml.NormalizeForID(job.Name)
 	}
 
 	job.pathLog = filepath.Join(env.dirLogJob, job.ID)

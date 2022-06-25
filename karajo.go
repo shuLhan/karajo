@@ -17,9 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
-	"unicode"
 
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
@@ -306,22 +304,4 @@ func (k *Karajo) apiTestJobSuccess(_ *libhttp.EndpointRequest) ([]byte, error) {
 	res.Code = http.StatusOK
 	res.Message = "The job has been run successfully"
 	return json.Marshal(res)
-}
-
-// generateID generate unique job ID based on input string.
-// Any non-alphanumeric characters in input string will be replaced with '-'.
-func generateID(in string) string {
-	var (
-		id = make([]rune, 0, len(in))
-		r  rune
-	)
-
-	for _, r = range strings.ToLower(in) {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			id = append(id, r)
-		} else {
-			id = append(id, '-')
-		}
-	}
-	return string(id)
 }

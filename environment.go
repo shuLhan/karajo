@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/shuLhan/share/lib/ini"
+	libhtml "github.com/shuLhan/share/lib/net/html"
 )
 
 const (
@@ -103,7 +104,7 @@ func (env *Environment) init() (err error) {
 	if len(env.Name) == 0 {
 		env.Name = defEnvName
 	}
-	env.name = generateID(env.Name)
+	env.name = libhtml.NormalizeForID(env.Name)
 
 	if len(env.ListenAddress) == 0 {
 		env.ListenAddress = defListenAddress
