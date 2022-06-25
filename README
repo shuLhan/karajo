@@ -1,4 +1,9 @@
-# karajo
+= karajo
+Shulhan <ms@kilabit.info>
+14 June 2022
+:toc:
+:sectanchors:
+:sectlinks:
 
 Module karajo implement HTTP workers and manager, similar to cron but works
 only on HTTP.
@@ -16,7 +21,8 @@ Features,
 * Able to pause and resume specific job
 * HTTP APIs to programmatically interact with karajo
 
-## Configuration file format
+[#config]
+== Configuration
 
 This section describe the file format when loading karajo environment from
 file.
@@ -25,17 +31,18 @@ There are three configuration sections: one to configure the server, one to
 configure the logs, and another one to configure one or more jobs to be
 executed.
 
-### karajo server
+[#config_server]
+=== Server
 
 This section has the following format,
 
-```
+----
 [karajo]
 name = <string>
 listen_address = [<ip>:<port>]
 http_timeout = [<duration>]
 dir_base = <path>
-```
+----
 
 The "name" option define the name of the service.
 It will be used for title on the web user interface, as log prefix, for file
@@ -67,12 +74,12 @@ $DirBase
 Each job log stored under directory /var/log/karajo/job and the job state
 under directory /var/run/karajo/job.
 
-
-### karajo job
+[#config_job]
+=== Job
 
 This section has the following format,
 
-```
+----
 [karajo "job"]
 name = <string>
 description = <string>
@@ -80,7 +87,7 @@ http_url = <URL>
 http_header = <string ":" string>
 http_insecure = <bool>
 interval = <duration>
-```
+----
 
 The "name" option define the job name.
 Each job must have unique name or only the first one will be processed.
@@ -105,7 +112,8 @@ If one have job that need to run less than 30 seconds, it should be run on
 single program.
 
 
-## HTTP APIs
+[#http_api]
+== HTTP APIs
 
 The karajo service is a HTTP server.
 Its provide HTTP APIs to interact with the system.
@@ -113,23 +121,24 @@ The following sub-sections describe each HTTP APIs request and response.
 
 All HTTP response is encoded in the JSON format, with the following wrapper,
 
-```
+----
 {
 	"code": <number>,
 	"message": <string>,
 	"data": <array|object>
 }
-```
+----
 
 * `code`: the response code, equal to HTTP status code.
 * `message`: the error message that describe why request is fail.
 * `data`: the dynamic data, specific to each endpoint.
 
-### Schemas
+[#http_api_schemas]
+=== Schemas
 
 Job schema,
 
-```
+----
 {
 	"ID": <string>,
 	"Name": <string>,
@@ -145,7 +154,7 @@ Job schema,
 	"NextRun": <string>,
 	"Status": <string>,
 }
-```
+----
 
 * `ID`: unique job ID
 * `Name`: human representation of job name.
@@ -164,21 +173,23 @@ Job schema,
 * `Status`: status of the last job running, its either "started, "success",
   "failed", or "paused".
 
-### Get environment
+
+[#http_api_environment]
+=== Get environment
 
 Get the current karajo environment.
 
 **Request**
 
-```
+----
 GET /karajo/api/environment
-```
+----
 
 **Response**
 
 On success, it will return the Environment object,
 
-```
+----
 {
 	"Name": <string>,
 	"ListenAddress": <string>,
@@ -186,7 +197,7 @@ On success, it will return the Environment object,
 	"DirLogs": <string>,
 	"Jobs": [<Job>]
 }
-```
+----
 
 * `Name`: the karajo server name.
 * `ListenAddress`: the address where karajo HTTP server listening for request.
@@ -195,15 +206,16 @@ On success, it will return the Environment object,
 * `Jobs`: list of Job.
 
 
-### Get job detail
+[#http_api_job]
+=== Get job detail
 
 HTTP API to get specific job information by its ID.
 
 **Request**
 
-```
+----
 GET /karajo/api/job?id=<string>
-```
+----
 
 Parameters,
 
@@ -218,15 +230,16 @@ On fail, it will return
 * `400`: for invalid or empty job ID
 
 
-### Get job logs
+[#http_api_job_log]
+=== Get job logs
 
 Get the last logs from specific job by its ID.
 
 **Request**
 
-```
+----
 GET /karajo/api/job/logs?id=<string>
-```
+----
 
 Parameters,
 
@@ -242,15 +255,16 @@ On fail, it will return
 * `400`: invalid or empty job ID.
 
 
-### Pause the job
+[#http_api_job_pause]
+=== Pause the job
 
 Pause the job execution by its ID.
 
 **Request**
 
-```
+----
 POST /karajo/api/job/pause/<id>
-```
+----
 
 Parameters,
 
@@ -265,15 +279,16 @@ On fail it will return
 * `400`: invalid or empty job ID.
 
 
-### Resume the job
+[#http_api_job_resume]
+=== Resume the job
 
 HTTP API to resume paused job by its ID.
 
 **Request**
 
-```
+----
 POST /karajo/api/job/resume/<id>
-```
+----
 
 Parameters,
 
@@ -285,51 +300,31 @@ On success it will return the Job schema related to the ID with field
 `Status` reset back to `started`.
 
 
-## Example
+[#example]
+== Example
 
-Given the following karajo configuration file named `karajo_test.conf` with
-content as
+Given the following karajo configuration file named `karajo.conf` inside the
+`testdata` directory:
 
-```
-[karajo]
-name = My worker
-listen_address = 127.0.0.1:31937
-http_timeout = 5m0s
-dir_base = testdata
+----
+include::testdata/karajo.conf[]
+----
 
-[karajo "job"]
-name = Test fail
-description = The job to test what the user interface and logs look likes \
-	if its <b>fail</b>.
-http_url = http://127.0.0.1:31937/karajo/test/job/fail
-http_header = A: B
-http_header = C: D
-http_insecure = false
-interval = 20s
-max_requests = 2
-
-[karajo "job"]
-name = Test success
-description = The job to test what the user interface and logs look likes \
-	if its <i>success</i>.
-http_url = /karajo/test/job/success
-http_header = X: Y
-http_insecure = false
-interval = 20s
-max_requests = 1
-```
+NOTE: For web viewer, see the actual file in testdata/karajo.conf in this
+repository.
 
 Run the `karajo` program,
 
-```
-$ karajo -config karajo_test.conf
-```
+----
+$ karajo -config testdata/karajo.conf
+----
 
 And then open http://127.0.0.1:31937/karajo in your web browser to see the job
 status and logs.
 
 
-## License
+[#license]
+== License
 
 Copyright 2021, M. Shulhan (ms@kilabit.info).
 
@@ -346,3 +341,9 @@ See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+[#links]
+== Links
+
+https://git.sr.ht/~shulhan/karajo[Git repository^].
