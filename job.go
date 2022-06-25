@@ -4,6 +4,7 @@
 package karajo
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -26,9 +27,10 @@ import (
 const DefaultMaxRequests = 1
 
 const (
-	defJobInterval = 30 * time.Second
-	defJobLogSize  = 20
-	defTimeLayout  = "2006-01-02 15:04:05 MST"
+	defJobInterval    = 30 * time.Second
+	defJobLogSize     = 20
+	defJobLogSizeLoad = 2048
+	defTimeLayout     = "2006-01-02 15:04:05 MST"
 )
 
 // Job is the worker that will trigger HTTP GET request to the remote job
@@ -44,7 +46,11 @@ type Job struct {
 
 	done chan bool
 
-	Log  *clise.Clise // Log contains last 100 Job output.
+	// Log contains the Job output.
+	// Upon started it will load several kilobytes lines from previous
+	// log.
+	Log *clise.Clise
+
 	mlog *mlog.MultiLogger
 	flog *os.File
 
@@ -210,8 +216,6 @@ func (job *Job) init(env *Environment) (err error) {
 	}
 	job.httpc.Client.Timeout = job.HttpTimeout
 
-	job.Log = clise.New(defJobLogSize)
-
 	if job.Interval <= defJobInterval {
 		job.Interval = defJobInterval
 	}
@@ -224,20 +228,61 @@ func (job *Job) init(env *Environment) (err error) {
 	return nil
 }
 
-// initLogger initialize the job log location.
+// initLogger initialize the job log and its location.
 // By default log are written to os.Stdout and os.Stderr;
 // and then to file named job.ID in Environment.dirLogJob.
 func (job *Job) initLogger(env *Environment) (err error) {
+	var (
+		logp    = "initLogger"
+		lastLog = make([]byte, defJobLogSizeLoad)
+
+		fi      os.FileInfo
+		nw      mlog.NamedWriter
+		logs    [][]byte
+		logLine []byte
+		readOff int64
+	)
+
+	job.Log = clise.New(defJobLogSize)
+
 	job.mlog = mlog.NewMultiLogger(defTimeLayout, job.ID+":", nil, nil)
 	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter("stderr", os.Stderr))
 	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter("stdout", os.Stdout))
 
-	job.flog, err = os.OpenFile(job.pathLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	job.flog, err = os.OpenFile(job.pathLog, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0600)
 	if err != nil {
-		return fmt.Errorf("initLogger %s: %w", job.pathLog, err)
+		return fmt.Errorf("%s %s: %w", logp, job.pathLog, err)
 	}
 
-	var nw mlog.NamedWriter = mlog.NewNamedWriter(job.ID, job.flog)
+	// Load the last logs.
+
+	fi, err = job.flog.Stat()
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	readOff = fi.Size() - defJobLogSizeLoad
+	if readOff < 0 {
+		readOff = 0
+	}
+
+	_, err = job.flog.ReadAt(lastLog, readOff)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	logs = bytes.Split(lastLog, []byte{'\n'})
+	if len(logs) > 0 {
+		// Skip the first line, since it may not a complete log line.
+		for _, logLine = range logs[1:] {
+			job.Log.Push(string(logLine))
+		}
+	}
+
+	// Forward the log to file.
+
+	nw = mlog.NewNamedWriter(job.ID, job.flog)
+
 	job.mlog.RegisterErrorWriter(nw)
 	job.mlog.RegisterOutputWriter(nw)
 
