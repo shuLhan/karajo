@@ -12,7 +12,7 @@ memfs_www.go: .FORCE
 lint:
 	-fieldalignment ./...
 	-golangci-lint run ./...
-	-reuse lint --quiet
+	-reuse lint
 
 build: memfs_www.go
 	go build ./cmd/karajo
