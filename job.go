@@ -27,12 +27,12 @@ const DefaultMaxRequests = 1
 
 const (
 	defJobInterval = 30 * time.Second
-	defJobLogsSize = 20
+	defJobLogSize  = 20
 	defTimeLayout  = "2006-01-02 15:04:05 MST"
 )
 
 // Job is the worker that will trigger HTTP GET request to the remote job
-// periodically and save the response status to logs and the last execution
+// periodically and save the response status to log and the last execution
 // time for future run.
 type Job struct {
 	jobState
@@ -44,7 +44,7 @@ type Job struct {
 
 	done chan bool
 
-	logs *clise.Clise // logs contains 100 last jobs output.
+	Log  *clise.Clise // Log contains last 100 Job output.
 	mlog *mlog.MultiLogger
 	flog *os.File
 
@@ -210,7 +210,7 @@ func (job *Job) init(env *Environment) (err error) {
 	}
 	job.httpc.Client.Timeout = job.HttpTimeout
 
-	job.logs = clise.New(defJobLogsSize)
+	job.Log = clise.New(defJobLogSize)
 
 	if job.Interval <= defJobInterval {
 		job.Interval = defJobInterval
@@ -224,8 +224,8 @@ func (job *Job) init(env *Environment) (err error) {
 	return nil
 }
 
-// initLogger initialize the job logs location.
-// By default all logs are written to os.Stdout and os.Stderr;
+// initLogger initialize the job log location.
+// By default log are written to os.Stdout and os.Stderr;
 // and then to file named job.ID in Environment.dirLogJob.
 func (job *Job) initLogger(env *Environment) (err error) {
 	job.mlog = mlog.NewMultiLogger(defTimeLayout, job.ID+":", nil, nil)
@@ -326,7 +326,7 @@ func (job *Job) execute() {
 
 	if job.isPaused() {
 		job.mlog.Outf(JobStatusPaused)
-		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, JobStatusPaused))
+		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, JobStatusPaused))
 		job.LastRun = now
 		return
 	}
@@ -334,7 +334,7 @@ func (job *Job) execute() {
 	if !job.increment() {
 		log = fmt.Sprintf("!!! maximum requests %d has been reached", job.MaxRequests)
 		job.mlog.Errf(log)
-		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		return
 	}
 	defer job.decrement()
@@ -343,7 +343,7 @@ func (job *Job) execute() {
 	if err != nil {
 		log = fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
-		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.Status = JobStatusFailed
 		job.LastRun = now
 		return
@@ -352,7 +352,7 @@ func (job *Job) execute() {
 	if httpRes.StatusCode != http.StatusOK {
 		log = fmt.Sprintf("!!! %s: %s", httpRes.Status, resBody)
 		job.mlog.Errf(log)
-		job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.Status = JobStatusFailed
 		job.LastRun = now
 		return
@@ -360,7 +360,7 @@ func (job *Job) execute() {
 
 	log = fmt.Sprintf(">>> %s\n", resBody)
 	job.mlog.Outf(log)
-	job.logs.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+	job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 	job.Status = JobStatusSuccess
 	job.LastRun = now
 }

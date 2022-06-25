@@ -243,7 +243,7 @@ func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	}
 
 	res.Code = http.StatusOK
-	res.Data = job.logs.Slice()
+	res.Data = job.Log
 
 	return json.Marshal(res)
 }
