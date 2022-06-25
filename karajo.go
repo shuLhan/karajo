@@ -30,8 +30,8 @@ const (
 	apiEnvironment = "/karajo/api/environment"
 	apiJob         = "/karajo/api/job"
 	apiJobLogs     = "/karajo/api/job/logs"
-	apiJobPause    = "/karajo/api/job/pause/:id"
-	apiJobResume   = "/karajo/api/job/resume/:id"
+	apiJobPause    = "/karajo/api/job/pause"
+	apiJobResume   = "/karajo/api/job/resume"
 
 	apiTestJobFail    = "/karajo/test/job/fail"
 	apiTestJobSuccess = "/karajo/test/job/success"
@@ -119,7 +119,7 @@ func (k *Karajo) registerApis() (err error) {
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobPause,
-		RequestType:  libhttp.RequestTypeNone,
+		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         k.apiJobPause,
 	})
@@ -129,7 +129,7 @@ func (k *Karajo) registerApis() (err error) {
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobResume,
-		RequestType:  libhttp.RequestTypeNone,
+		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         k.apiJobResume,
 	})

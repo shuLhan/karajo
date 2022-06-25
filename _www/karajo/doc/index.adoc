@@ -303,7 +303,7 @@ On success it will return the Job schema related to the ID with field
 [#example]
 == Example
 
-Given the following karajo configuration file named `karajo_test.conf` with
+Given the following karajo configuration file named `karajo.conf` with
 content as
 
 ----
@@ -311,7 +311,7 @@ content as
 name = My worker
 listen_address = 127.0.0.1:31937
 http_timeout = 5m0s
-dir_logs = testdata/logs
+dir_base = testdata
 
 [karajo "job"]
 name = Test fail
@@ -363,3 +363,9 @@ See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+[#links]
+== Links
+
+https://git.sr.ht/~shulhan/karajo[Git repository^].

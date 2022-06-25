@@ -34,7 +34,7 @@ This section has the following format,
 name = <string>
 listen_address = [<ip>:<port>]
 http_timeout = [<duration>]
-dir_logs = <path>
+dir_base = <path>
 ```
 
 The "name" option define the name of the service.
@@ -49,12 +49,24 @@ The "http_timeout" define the HTTP timeout when executing the job, default to
 The value of this option is using the Go time.Duration format, for example,
 30s for 30 seconds, 1m for 1 minute.
 
-The "dir_logs" option define the path to directory where each log from job
-will be stored.
-If this value is empty, all job logs will be written to stdout and stderr.
+The "dir_base" option define the base directory where configuration, job
+state, and log stored.
+This field is optional, default to current directory.
+The structure of directory follow the UNIX system,
 
-By default, each job has its own log file using the job name and ".log" as
-suffix in the filename.
+----
+$DirBase
+|
++-- /etc/karajo/karajo.conf
+|
++-- /var/log/karajo/job/$Job.ID
+|
++-- /var/run/karajo/job/$Job.ID
+----
+
+Each job log stored under directory /var/log/karajo/job and the job state
+under directory /var/run/karajo/job.
+
 
 ### karajo job
 
@@ -283,7 +295,7 @@ content as
 name = My worker
 listen_address = 127.0.0.1:31937
 http_timeout = 5m0s
-dir_logs = testdata/logs
+dir_base = testdata
 
 [karajo "job"]
 name = Test fail
