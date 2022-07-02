@@ -128,6 +128,13 @@ This option can be declared more than one.
 The "http_insecure" option can be set to true if the "http_url" is HTTPS with
 unknown certificate authority.
 
+Each Job execution send the parameter named `_karajo_epoch` with value is
+current server Unix time.
+If the request type is `query` then the parameter is inside the query URL.
+If the request type is `form` then the parameter is inside the body.
+If the request type is `json` then the parameter is inside the body as JSON
+object, for example `{"_karajo_epoch":1656750073}`.
+
 
 [#http_api]
 == HTTP APIs

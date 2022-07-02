@@ -33,12 +33,21 @@ const (
 	defJobInterval    = 30 * time.Second
 	defJobLogSize     = 20
 	defJobLogSizeLoad = 2048
-	defTimeLayout     = "2006-01-02 15:04:05 MST"
+	defJosParamEpoch  = "_karajo_epoch"
+
+	defTimeLayout = "2006-01-02 15:04:05 MST"
 )
 
 // Job is the worker that trigger HTTP $method request to the remote job
 // periodically and save the response status to log and the last execution
 // time for future run.
+//
+// Each Job execution send the parameter named `_karajo_epoch` with value is
+// current server Unix time.
+// If the request type is `query` then the parameter is inside the query URL.
+// If the request type is `form` then the parameter is inside the body.
+// If the request type is `json` then the parameter is inside the body as JSON
+// object, for example `{"_karajo_epoch":1656750073}`.
 type Job struct {
 	jobState
 
@@ -463,6 +472,8 @@ func (job *Job) execute() {
 		return
 	}
 	defer job.decrement()
+
+	job.params[defJosParamEpoch] = now.Unix()
 
 	switch job.requestType {
 	case libhttp.RequestTypeQuery, libhttp.RequestTypeForm:
