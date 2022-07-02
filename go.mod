@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	git.sr.ht/~shulhan/ciigo v0.8.1
-	github.com/shuLhan/share v0.38.1-0.20220624185204-cc3805f9a967
+	github.com/shuLhan/share v0.38.1-0.20220702080257-3a61112d7a4d
 )
 
 require (
