@@ -21,6 +21,8 @@ const (
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
 type Environment struct {
+	Hooks map[string]*Hook `ini:"hook"`
+
 	// List of Job indexed by ID.
 	jobs map[string]*Job
 
@@ -43,17 +45,29 @@ type Environment struct {
 	//	|
 	//	+-- /etc/karajo/karajo.conf
 	//	|
-	//	+-- /var/log/karajo/job/$Job.ID
+	//	+-- /var/lib/karajo/hook/$Job.ID
+	//	|
+	//	+-- /var/log/karajo +-- /hook/$Hook.id
+	//	|                   |
+	//	|                   +-- /job/$Job.ID
 	//      |
-	//	+-- /var/run/karajo/job/$Job.ID
+	//	+-- /var/run/karajo +-- /hook/$Hook.id
+	//	                    |
+	//	                    +-- /job/$Job.ID
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
 	DirBase    string `ini:"karajo::dir_base"`
 	dirConfig  string
-	dirLogJob  string
-	dirRunJob  string
 	dirCurrent string // The current directory where program running.
+
+	dirLibHook string
+
+	dirLogHook string
+	dirLogJob  string
+
+	dirRunHook string
+	dirRunJob  string
 
 	file string
 
@@ -98,7 +112,9 @@ func (env *Environment) init() (err error) {
 	var (
 		logp = "init"
 
-		job *Job
+		hook *Hook
+		job  *Job
+		name string
 	)
 
 	if len(env.Name) == 0 {
@@ -116,6 +132,13 @@ func (env *Environment) init() (err error) {
 	err = env.initDirs()
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	for name, hook = range env.Hooks {
+		err = hook.init(env, name)
+		if err != nil {
+			return fmt.Errorf("%s: %w", logp, err)
+		}
 	}
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
@@ -143,17 +166,37 @@ func (env *Environment) initDirs() (err error) {
 	}
 
 	env.dirConfig = filepath.Join(env.DirBase, "etc", defEnvName)
-	env.dirLogJob = filepath.Join(env.DirBase, "var", "log", defEnvName, "job")
-	env.dirRunJob = filepath.Join(env.DirBase, "var", "run", defEnvName, "job")
 
+	env.dirLibHook = filepath.Join(env.DirBase, "var", "lib", defEnvName, "hook")
+	err = os.MkdirAll(env.dirLibHook, 0700)
+	if err != nil {
+		return fmt.Errorf("%s: %w", env.dirLibHook, err)
+	}
+
+	env.dirLogHook = filepath.Join(env.DirBase, "var", "log", defEnvName, "hook")
+	err = os.MkdirAll(env.dirLogHook, 0700)
+	if err != nil {
+		return fmt.Errorf("%s: %w", env.dirLogHook, err)
+	}
+
+	env.dirLogJob = filepath.Join(env.DirBase, "var", "log", defEnvName, "job")
 	err = os.MkdirAll(env.dirLogJob, 0700)
 	if err != nil {
 		return fmt.Errorf("%s: %w", env.dirLogJob, err)
 	}
+
+	env.dirRunHook = filepath.Join(env.DirBase, "var", "run", defEnvName, "hook")
+	err = os.MkdirAll(env.dirRunHook, 0700)
+	if err != nil {
+		return fmt.Errorf("%s: %w", env.dirRunHook, err)
+	}
+
+	env.dirRunJob = filepath.Join(env.DirBase, "var", "run", defEnvName, "job")
 	err = os.MkdirAll(env.dirRunJob, 0700)
 	if err != nil {
 		return fmt.Errorf("%s: %w", env.dirRunJob, err)
 	}
+
 	return nil
 }
 

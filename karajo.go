@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"hash"
 	"net/http"
+	"path"
 	"time"
 
 	libhttp "github.com/shuLhan/share/lib/http"
@@ -41,8 +42,7 @@ const (
 	apiJobPause    = "/karajo/api/job/pause"
 	apiJobResume   = "/karajo/api/job/resume"
 
-	apiTestJobFail    = "/karajo/test/job/fail"
-	apiTestJobSuccess = "/karajo/test/job/success"
+	apiHook = "/karajo/hook"
 
 	paramNameID = "id"
 )
@@ -102,6 +102,11 @@ func New(env *Environment) (k *Karajo, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
+	err = k.registerHooks()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", logp, err)
+	}
+
 	return k, nil
 }
 
@@ -157,30 +162,24 @@ func (k *Karajo) registerApis() (err error) {
 		return err
 	}
 
-	if k.env.IsDevelopment {
-		// Endpoints for testing the jobs.
+	return nil
+}
+
+func (k *Karajo) registerHooks() (err error) {
+	var hook *Hook
+
+	for _, hook = range k.env.Hooks {
 		err = k.RegisterEndpoint(&libhttp.Endpoint{
-			Method:       libhttp.RequestMethodGet,
-			Path:         apiTestJobFail,
-			RequestType:  libhttp.RequestTypeQuery,
+			Method:       libhttp.RequestMethodPost,
+			Path:         path.Join(apiHook, hook.Path),
+			RequestType:  libhttp.RequestTypeJSON,
 			ResponseType: libhttp.ResponseTypeJSON,
-			Call:         k.apiTestJobFail,
-		})
-		if err != nil {
-			return err
-		}
-		err = k.RegisterEndpoint(&libhttp.Endpoint{
-			Method:       libhttp.RequestMethodGet,
-			Path:         apiTestJobSuccess,
-			RequestType:  libhttp.RequestTypeQuery,
-			ResponseType: libhttp.ResponseTypeJSON,
-			Call:         k.apiTestJobSuccess,
+			Call:         hook.run,
 		})
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -309,19 +308,5 @@ func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) ([]byte, error) {
 	res.Code = http.StatusOK
 	res.Data = job
 
-	return json.Marshal(res)
-}
-
-func (k *Karajo) apiTestJobFail(_ *libhttp.EndpointRequest) ([]byte, error) {
-	var res = &libhttp.EndpointResponse{}
-	res.Code = http.StatusBadRequest
-	res.Message = "The job has failed"
-	return nil, res
-}
-
-func (k *Karajo) apiTestJobSuccess(_ *libhttp.EndpointRequest) ([]byte, error) {
-	var res = &libhttp.EndpointResponse{}
-	res.Code = http.StatusOK
-	res.Message = "The job has been run successfully"
 	return json.Marshal(res)
 }

@@ -21,6 +21,20 @@ Features,
 * Able to pause and resume specific job
 * HTTP APIs to programmatically interact with karajo
 
+Work flow on karajo,
+
+----
+                +-----+      +-------+
+  INTERNET <--- | Job | ---> | Hook  | <--- INTERNET
+                +-----+      +-------+
+                                 |
+                                 |
+                                 v
+                        +-----------------+
+                        | Commands / Call |
+                        +-----------------+
+----
+
 [#config]
 == Configuration
 
@@ -66,13 +80,56 @@ $DirBase
 |
 +-- /etc/karajo/karajo.conf
 |
-+-- /var/log/karajo/job/$Job.ID
++-- /var/lib/karajo/hook/$Job.ID
 |
-+-- /var/run/karajo/job/$Job.ID
++-- /var/log/karajo +-- /hook/$Hook.id
+|                   |
+|                   +-- /job/$Job.ID
+|
++-- /var/run/karajo +-- /hook/$Hook.id
+                    |
+                    +-- /job/$Job.ID
 ----
 
 Each job log stored under directory /var/log/karajo/job and the job state
 under directory /var/run/karajo/job.
+
+[#config_hook]
+===  Hook
+
+Hook is the HTTP endpoint that run a function or list of commands upon
+receiving request.
+
+The hook configuration have the following format,
+
+----
+[hook "<name>"]
+path = <string>
+secret = <string>
+command = <string>
+...
+command = <string>
+----
+
+The name subsection define the hook name.
+The hook name is used for logging, normalized to ID.
+This field is required and should unique between Hook.
+
+The "path" field set HTTP path where Karajo will listen for request.
+The `path` is automatically prefixed with "/karajo/hook", it is not
+static.
+For example, if it set to "/my", then the actual path would be
+"/karajo/hook/my".
+This field is required and unique between Hook.
+
+The "secret" field define a string to check signature of request.
+Each request sign the body with HMAC + SHA-256 using this secret.
+The signature then sent in HTTP header "X-Karajo-Sign" as hex.
+This field is required.
+
+The "command" field contains list of command to be executed, in order from top
+to bottom.
+
 
 [#config_job]
 === Job
@@ -153,9 +210,9 @@ All HTTP response is encoded in the JSON format, with the following wrapper,
 
 ----
 {
-	"code": <number>,
-	"message": <string>,
-	"data": <array|object>
+        "code": <number>,
+        "message": <string>,
+        "data": <array|object>
 }
 ----
 
@@ -170,19 +227,19 @@ Job schema,
 
 ----
 {
-	"ID": <string>,
-	"Name": <string>,
-	"Description": <string>,
-	"HttpUrl": <string>,
-	"HttpHeaders": [<string>],
-	"HttpInsecure": <boolean>,
-	"HttpTimeout": <number>,
-	"Interval": <number>,
-	"MaxRequest": <number>,
-	"NumRequests": <number>,
-	"LastRun": <string>,
-	"NextRun": <string>,
-	"Status": <string>,
+        "ID": <string>,
+        "Name": <string>,
+        "Description": <string>,
+        "HttpUrl": <string>,
+        "HttpHeaders": [<string>],
+        "HttpInsecure": <boolean>,
+        "HttpTimeout": <number>,
+        "Interval": <number>,
+        "MaxRequest": <number>,
+        "NumRequests": <number>,
+        "LastRun": <string>,
+        "NextRun": <string>,
+        "Status": <string>,
 }
 ----
 
@@ -221,11 +278,11 @@ On success, it will return the Environment object,
 
 ----
 {
-	"Name": <string>,
-	"ListenAddress": <string>,
-	"HttpTimeout": <number>
-	"DirLogs": <string>,
-	"Jobs": [<Job>]
+        "Name": <string>,
+        "ListenAddress": <string>,
+        "HttpTimeout": <number>
+        "DirLogs": <string>,
+        "Jobs": [<Job>]
 }
 ----
 
