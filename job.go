@@ -5,7 +5,9 @@ package karajo
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,13 +29,14 @@ import (
 const DefaultMaxRequests = 1
 
 const (
+	defJobHttpMethod  = http.MethodGet
 	defJobInterval    = 30 * time.Second
 	defJobLogSize     = 20
 	defJobLogSizeLoad = 2048
 	defTimeLayout     = "2006-01-02 15:04:05 MST"
 )
 
-// Job is the worker that will trigger HTTP GET request to the remote job
+// Job is the worker that trigger HTTP $method request to the remote job
 // periodically and save the response status to log and the last execution
 // time for future run.
 type Job struct {
@@ -57,6 +60,8 @@ type Job struct {
 	// httpc define the HTTP client that will execute the http_url.
 	httpc *libhttp.Client
 
+	params map[string]interface{}
+
 	// ID of the job. It must be unique or the last job will replace the
 	// previous job with the same ID.
 	// If ID is empty, it will generated from Name by replacing
@@ -67,13 +72,27 @@ type Job struct {
 	Name        string `ini:"::name"`
 	Description string `ini:"::description"`
 
-	//
+	// HttpMethod to send, accept only GET, POST, PUT, or DELETE.
+	// This field is optional, default to GET.
+	HttpMethod string `ini:"::http_method"`
+
 	// The HTTP URL where the job will be executed.
 	// This field is required.
-	//
 	HttpUrl    string `ini:"::http_url"`
 	baseUri    string
 	requestUri string
+
+	// HttpRequestType define the HTTP request type, accept only:
+	//
+	//   - (empty string): no header Content-Type set.
+	//   - query: no header Content-Type to be set, reserved for future
+	//   use.
+	//   - form: header Content-Type set to
+	//   "application/x-www-form-urlencoded".
+	//   - json: header Content-Type set to "application/json".
+	//
+	// This field is optional, default to empty.
+	HttpRequestType string `ini:"::http_request_type"`
 
 	// Path to the job log.
 	pathLog string
@@ -88,6 +107,9 @@ type Job struct {
 	// set from the Environment.HttpTimeout.
 	// To make job run without timeout, set the value to negative.
 	HttpTimeout time.Duration
+
+	requestMethod libhttp.RequestMethod
+	requestType   libhttp.RequestType
 
 	//
 	// Interval duration when job will be repeatedly executed.
@@ -191,6 +213,16 @@ func (job *Job) init(env *Environment) (err error) {
 		return err
 	}
 
+	err = job.initHttpMethod()
+	if err != nil {
+		return err
+	}
+
+	err = job.initHttpRequestType()
+	if err != nil {
+		return err
+	}
+
 	err = job.initHttpUrl(env.ListenAddress)
 	if err != nil {
 		return err
@@ -200,6 +232,8 @@ func (job *Job) init(env *Environment) (err error) {
 	if err != nil {
 		return err
 	}
+
+	job.params = make(map[string]interface{})
 
 	var httpClientOpts = &libhttp.ClientOptions{
 		ServerUrl:     job.baseUri,
@@ -268,7 +302,9 @@ func (job *Job) initLogger(env *Environment) (err error) {
 
 	_, err = job.flog.ReadAt(lastLog, readOff)
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		if !errors.Is(err, io.EOF) {
+			return fmt.Errorf("%s: %w", logp, err)
+		}
 	}
 
 	logs = bytes.Split(lastLog, []byte{'\n'})
@@ -286,6 +322,48 @@ func (job *Job) initLogger(env *Environment) (err error) {
 	job.mlog.RegisterErrorWriter(nw)
 	job.mlog.RegisterOutputWriter(nw)
 
+	return nil
+}
+
+// initHttpMethod check if defined HTTP method is valid.
+// If its empty, set default to GET, otherwise return an error.
+func (job *Job) initHttpMethod() (err error) {
+	job.HttpMethod = strings.TrimSpace(job.HttpMethod)
+	if len(job.HttpMethod) == 0 {
+		job.HttpMethod = defJobHttpMethod
+		job.requestMethod = libhttp.RequestMethodGet
+		return nil
+	}
+
+	var vstr = strings.ToUpper(job.HttpMethod)
+
+	switch vstr {
+	case http.MethodGet:
+		job.requestMethod = libhttp.RequestMethodGet
+	case http.MethodDelete:
+		job.requestMethod = libhttp.RequestMethodDelete
+	case http.MethodPost:
+		job.requestMethod = libhttp.RequestMethodPost
+	case http.MethodPut:
+		job.requestMethod = libhttp.RequestMethodPut
+	default:
+		return fmt.Errorf("invalid HTTP method %q", vstr)
+	}
+	return nil
+}
+
+func (job *Job) initHttpRequestType() (err error) {
+	var vstr = strings.ToLower(job.HttpRequestType)
+	switch vstr {
+	case "", "query":
+		job.requestType = libhttp.RequestTypeQuery
+	case "form":
+		job.requestType = libhttp.RequestTypeForm
+	case "json":
+		job.requestType = libhttp.RequestTypeJSON
+	default:
+		return fmt.Errorf("invalid HTTP request type %q", vstr)
+	}
 	return nil
 }
 
@@ -363,6 +441,8 @@ func (job *Job) execute() {
 		now     = time.Now().UTC().Round(time.Second)
 		logTime = now.Format(defTimeLayout)
 
+		params  interface{}
+		httpReq *http.Request
 		httpRes *http.Response
 		log     string
 		err     error
@@ -384,7 +464,22 @@ func (job *Job) execute() {
 	}
 	defer job.decrement()
 
-	httpRes, resBody, err = job.httpc.Get(job.requestUri, nil, nil)
+	switch job.requestType {
+	case libhttp.RequestTypeQuery, libhttp.RequestTypeForm:
+		params = job.paramsToUrlValues()
+	case libhttp.RequestTypeJSON:
+		params = job.params
+	}
+
+	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestUri, job.requestType, nil, params)
+	if err != nil {
+		log = fmt.Sprintf("!!! %s", err)
+		job.mlog.Errf(log)
+		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+		return
+	}
+
+	httpRes, resBody, err = job.httpc.Do(httpReq)
 	if err != nil {
 		log = fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
@@ -421,6 +516,20 @@ func (job *Job) computeFirstTimer(now time.Time) time.Duration {
 		return 0
 	}
 	return lastInterval.Sub(now)
+}
+
+// paramsToUrlValues convert the job parameters to url.Values.
+func (job *Job) paramsToUrlValues() url.Values {
+	var (
+		urlValues = url.Values{}
+
+		k string
+		v interface{}
+	)
+	for k, v = range job.params {
+		urlValues.Set(k, fmt.Sprintf("%s", v))
+	}
+	return urlValues
 }
 
 func (job *Job) pause() {

@@ -83,10 +83,13 @@ This section has the following format,
 [karajo "job"]
 name = <string>
 description = <string>
+interval = <duration>
+
+http_method = [GET|POST|PUT|DELETE]
 http_url = <URL>
+http_request_type = [query|form|json]
 http_header = <string ":" string>
 http_insecure = <bool>
-interval = <duration>
 ----
 
 The "name" option define the job name.
@@ -95,8 +98,28 @@ Each job must have unique name or only the first one will be processed.
 The "description" field define the job description.
 It could be plain text or simple HTML.
 
+The "interval" option define the duration when job will be repeatedly
+executed.
+This field is required, if not set or invalid it will set to 30 seconds.
+If one have job that need to run less than 30 seconds, it should be run on
+single program.
+
+The "http_method" define the HTTP method used to request job execution.
+Its accept only GET, POST, PUT, or DELETE.
+This field is optional, default to GET.
+
 The "http_url" define the HTTP URL where the job will be executed.
 This field is required.
+
+The "http_request_type" define the header Content-Type to be set on request.
+Its accept,
+
+* query: no header Content-Type to be set, reserved for future use;
+* form: header Content-Type set to "application/x-www-form-urlencoded";
+* json: header Content-Type set to "application/json".
+
+The type "form" and "json" only applicable if the method is POST or PUT.
+This field is optional, default to query.
 
 The "http_header" option define optional HTTP headers that will send when
 executing the "http_url".
@@ -104,12 +127,6 @@ This option can be declared more than one.
 
 The "http_insecure" option can be set to true if the "http_url" is HTTPS with
 unknown certificate authority.
-
-The "interval" option define the duration when job will be repeatedly
-executed.
-This field is required, if not set or invalid it will set to 30 seconds.
-If one have job that need to run less than 30 seconds, it should be run on
-single program.
 
 
 [#http_api]
