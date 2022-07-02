@@ -5,6 +5,7 @@ package karajo
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -80,6 +81,12 @@ type Job struct {
 	// Name of job for readibility.
 	Name        string `ini:"::name"`
 	Description string `ini:"::description"`
+
+	// Secret define a string to sign the request query or body with
+	// HMAC+SHA-256.
+	// The signature is sent on HTTP header "x-karajo-sign" as hex string.
+	// This field is optional.
+	Secret string `ini:"::secret"`
 
 	// HttpMethod to send, accept only GET, POST, PUT, or DELETE.
 	// This field is optional, default to GET.
@@ -449,13 +456,15 @@ func (job *Job) execute() {
 	var (
 		now     = time.Now().UTC().Round(time.Second)
 		logTime = now.Format(defTimeLayout)
+		headers = http.Header{}
 
 		params  interface{}
 		httpReq *http.Request
 		httpRes *http.Response
 		log     string
+		sign    string
 		err     error
-		resBody []byte
+		payload []byte
 	)
 
 	if job.isPaused() {
@@ -477,12 +486,24 @@ func (job *Job) execute() {
 
 	switch job.requestType {
 	case libhttp.RequestTypeQuery, libhttp.RequestTypeForm:
-		params = job.paramsToUrlValues()
+		params, payload = job.paramsToUrlValues()
+
 	case libhttp.RequestTypeJSON:
-		params = job.params
+		params, payload, err = job.paramsToJson()
+		if err != nil {
+			log = fmt.Sprintf("!!! %s", err)
+			job.mlog.Errf(log)
+			job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+			return
+		}
 	}
 
-	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestUri, job.requestType, nil, params)
+	if len(job.Secret) != 0 {
+		sign = Sign(payload, []byte(job.Secret))
+		headers.Set(HeaderNameXKarajoSign, sign)
+	}
+
+	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestUri, job.requestType, headers, params)
 	if err != nil {
 		log = fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
@@ -490,7 +511,7 @@ func (job *Job) execute() {
 		return
 	}
 
-	httpRes, resBody, err = job.httpc.Do(httpReq)
+	httpRes, payload, err = job.httpc.Do(httpReq)
 	if err != nil {
 		log = fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
@@ -501,7 +522,7 @@ func (job *Job) execute() {
 	}
 
 	if httpRes.StatusCode != http.StatusOK {
-		log = fmt.Sprintf("!!! %s: %s", httpRes.Status, resBody)
+		log = fmt.Sprintf("!!! %s: %s", httpRes.Status, payload)
 		job.mlog.Errf(log)
 		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.Status = JobStatusFailed
@@ -509,7 +530,7 @@ func (job *Job) execute() {
 		return
 	}
 
-	log = fmt.Sprintf(">>> %s\n", resBody)
+	log = fmt.Sprintf(">>> %s\n", payload)
 	job.mlog.Outf(log)
 	job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 	job.Status = JobStatusSuccess
@@ -529,8 +550,16 @@ func (job *Job) computeFirstTimer(now time.Time) time.Duration {
 	return lastInterval.Sub(now)
 }
 
+func (job *Job) paramsToJson() (obj map[string]interface{}, raw []byte, err error) {
+	raw, err = json.Marshal(job.params)
+	if err != nil {
+		return nil, nil, err
+	}
+	return job.params, raw, nil
+}
+
 // paramsToUrlValues convert the job parameters to url.Values.
-func (job *Job) paramsToUrlValues() url.Values {
+func (job *Job) paramsToUrlValues() (url.Values, []byte) {
 	var (
 		urlValues = url.Values{}
 
@@ -540,7 +569,7 @@ func (job *Job) paramsToUrlValues() url.Values {
 	for k, v = range job.params {
 		urlValues.Set(k, fmt.Sprintf("%s", v))
 	}
-	return urlValues
+	return urlValues, []byte(urlValues.Encode())
 }
 
 func (job *Job) pause() {

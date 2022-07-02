@@ -14,8 +14,12 @@
 package karajo
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash"
 	"net/http"
 	"time"
 
@@ -26,6 +30,10 @@ import (
 
 const (
 	Version = "0.1.0"
+
+	// HeaderNameXKarajoSign define the header key for the signature of
+	// body.
+	HeaderNameXKarajoSign = "x-karajo-sign"
 
 	apiEnvironment = "/karajo/api/environment"
 	apiJob         = "/karajo/api/job"
@@ -46,6 +54,18 @@ var (
 type Karajo struct {
 	*libhttp.Server
 	env *Environment
+}
+
+// Sign generate hex string of HMAC + SHA256 of payload using the secret.
+func Sign(payload, secret []byte) (sign string) {
+	var (
+		signer hash.Hash = hmac.New(sha256.New, secret)
+		bsign  []byte
+	)
+	_, _ = signer.Write(payload)
+	bsign = signer.Sum(nil)
+	sign = hex.EncodeToString(bsign)
+	return sign
 }
 
 // New create and initialize Karajo from configuration file.

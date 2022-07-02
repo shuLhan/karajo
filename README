@@ -83,6 +83,7 @@ This section has the following format,
 [karajo "job"]
 name = <string>
 description = <string>
+secret = <string>
 interval = <duration>
 
 http_method = [GET|POST|PUT|DELETE]
@@ -97,6 +98,11 @@ Each job must have unique name or only the first one will be processed.
 
 The "description" field define the job description.
 It could be plain text or simple HTML.
+
+The "secret" option define a string to sign the request query or body with
+HMAC+SHA-256.
+The signature is sent on HTTP header "x-karajo-sign" as hex string.
+This field is optional.
 
 The "interval" option define the duration when job will be repeatedly
 executed.
