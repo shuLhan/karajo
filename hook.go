@@ -56,7 +56,7 @@ type HookHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 // received.
 type Hook struct {
 	// List of log indexed by log number.
-	logs map[int]hookLog
+	Logs map[int]hookLog
 
 	// Call define a function or method to be called, as an
 	// alternative to Commands.
@@ -64,7 +64,15 @@ type Hook struct {
 	// code.
 	Call HookHandler `json:"-" ini:"-"`
 
+	// The id of the hook.
+	// It is normalized from the Name.
+	ID string `ini:"-"`
+
 	Name string `ini:"-"`
+
+	// The description of the hook.
+	// It could be plain text or simple HTML.
+	Description string `ini:"description"`
 
 	// HTTP path where Karajo will listen for request.
 	// The Path is automatically prefixed with "/karajo/hook", it is not
@@ -79,10 +87,6 @@ type Hook struct {
 	// The signature then sent in HTTP header "X-Karajo-Sign" as hex.
 	// This field is required.
 	Secret string `ini:"::secret"`
-
-	// The id of the hook.
-	// It is normalized from the Name.
-	id string
 
 	// dirWork define the directory on the system where all commands
 	// will be executed.
@@ -116,32 +120,32 @@ func (hook *Hook) init(env *Environment, name string) (err error) {
 	}
 
 	hook.Name = name
-	hook.id = libhtml.NormalizeForID(name)
+	hook.ID = libhtml.NormalizeForID(name)
 
 	err = hook.initDirsState(env)
 	if err != nil {
 		return err
 	}
 
-	hook.logs = make(map[int]hookLog)
+	hook.Logs = make(map[int]hookLog)
 
 	return nil
 }
 
 func (hook *Hook) initDirsState(env *Environment) (err error) {
-	hook.dirWork = filepath.Join(env.dirLibHook, hook.id)
+	hook.dirWork = filepath.Join(env.dirLibHook, hook.ID)
 	err = os.MkdirAll(hook.dirWork, 0700)
 	if err != nil {
 		return err
 	}
 
-	hook.dirLog = filepath.Join(env.dirLogHook, hook.id)
+	hook.dirLog = filepath.Join(env.dirLogHook, hook.ID)
 	err = os.MkdirAll(hook.dirLog, 0700)
 	if err != nil {
 		return err
 	}
 
-	hook.pathState = filepath.Join(env.dirRunHook, hook.id)
+	hook.pathState = filepath.Join(env.dirRunHook, hook.ID)
 	err = hook.stateLoad()
 	if err != nil {
 		return err
@@ -176,12 +180,17 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	hook.Lock()
 	defer hook.Unlock()
 
-	hlog = createHookLog(hook.id, hook.dirLog, hook.hookState.logCounter)
+	hlog = createHookLog(hook.ID, hook.dirLog, hook.hookState.logCounter)
 	hook.hookState.logCounter++
+
+	hook.Status = JobStatusSuccess
 
 	// Call the hook.
 	if hook.Call != nil {
 		err = hook.Call(&hlog, epr)
+		if err != nil {
+			hook.Status = JobStatusFailed
+		}
 		return hook.writeResponse(epr, hlog, err)
 	}
 
@@ -201,6 +210,7 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 
 		err = execCmd.Run()
 		if err != nil {
+			hook.Status = JobStatusFailed
 			return hook.writeResponse(epr, hlog, err)
 		}
 	}
@@ -267,7 +277,7 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog hookLog, err 
 		res.Code = http.StatusOK
 	}
 
-	hook.logs[hlog.Counter] = hlog
+	hook.Logs[hlog.Counter] = hlog
 
 	err = hlog.flush()
 	if err != nil {

@@ -10,6 +10,9 @@ import (
 
 // hookState store the current state of a hook.
 type hookState struct {
+	// Status of the last hook.
+	Status string `ini:"-"`
+
 	logCounter int
 }
 
@@ -20,6 +23,8 @@ func (state *hookState) pack() (text []byte, err error) {
 		buf bytes.Buffer
 	)
 
+	buf.WriteString(state.Status)
+	buf.WriteByte('\n')
 	buf.WriteString(strconv.Itoa(state.logCounter))
 	buf.WriteByte('\n')
 
@@ -34,7 +39,12 @@ func (state *hookState) unpack(text []byte) (err error) {
 	if len(fields) == 0 {
 		return nil
 	}
-	state.logCounter, err = strconv.Atoi(string(fields[0]))
+	state.Status = string(fields[0])
+
+	if len(fields) == 1 {
+		return nil
+	}
+	state.logCounter, err = strconv.Atoi(string(fields[1]))
 	if err != nil {
 		return err
 	}

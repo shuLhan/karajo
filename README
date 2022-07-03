@@ -112,6 +112,7 @@ The hook configuration have the following format,
 
 ----
 [hook "<name>"]
+description = <string>
 path = <string>
 secret = <string>
 command = <string>
@@ -122,6 +123,9 @@ command = <string>
 The name subsection define the hook name.
 The hook name is used for logging, normalized to ID.
 This field is required and should unique between Hook.
+
+The "description" field define the hook description.
+It could be plain text or simple HTML.
 
 The "path" field set HTTP path where Karajo will listen for request.
 The `path` is automatically prefixed with "/karajo/hook", it is not
