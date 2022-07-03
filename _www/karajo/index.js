@@ -3,6 +3,7 @@
 
 let _env = {};
 let _jobs = {};
+let _hooks = {};
 
 async function main() {
   runTimer();
@@ -22,6 +23,8 @@ async function main() {
 
   _env = res.data;
   setTitle();
+
+  renderHooks(_env.Hooks);
 
   let jobs = res.data.Jobs;
   let out = "";
@@ -52,7 +55,6 @@ async function main() {
 
   document.getElementById("jobs").innerHTML = out;
 
-  console.log("render job");
   for (var jobID in _jobs) {
     console.log("render job ", _jobs[jobID]);
     renderJob(_jobs[jobID]);
@@ -70,6 +72,18 @@ function runTimer() {
   setInterval(() => {
     elTimer.innerHTML = new Date().toUTCString();
   }, 1000);
+}
+
+async function hookInfo(hookID) {
+  let hook = _hooks[hookID];
+  let el = document.getElementById(hook._idInfo);
+  let delay = 10000;
+
+  if (el.style.display === "block") {
+    el.style.display = "none";
+  } else {
+    el.style.display = "block";
+  }
 }
 
 async function jobInfo(jobID) {
@@ -156,6 +170,85 @@ async function jobResume(id) {
   let job = _jobs[id];
   job = Object.assign(job, res.data);
   renderJob(job);
+}
+
+// renderHooks render single hook.
+function renderHook(hook) {
+  renderHookAttributes(hook);
+  renderHookLogs(hook);
+}
+
+function renderHookAttributes(hook) {
+  let el = document.getElementById(hook._idAttrs);
+  let out = `
+    <div>${hook.Description}</div>
+    <br/>
+    <div>ID: ${hook.ID}</div>
+    <div>Path: ${hook.Path}</div>
+    <div class="hook_commands">
+      Commands:
+  `;
+
+  hook.Commands.forEach(function (cmd, idx, list) {
+    out += `<div> ${idx}: ${cmd} </div>`;
+  });
+
+  out += `
+    </div>
+  `;
+
+  el.innerHTML = out;
+}
+
+function renderHookLogs(hook) {
+  let el = document.getElementById(hook._idLog);
+  let out = "";
+
+  for (let counter in hook.Logs) {
+    let log = hook.Logs[counter];
+    out += `<p>${counter}: ${atob(log.Log)}</p>`;
+  }
+
+  el.innerHTML = out;
+  el.scrollTop = el.scrollHeight;
+}
+
+// renderHooks render list of hooks.
+function renderHooks(hooks) {
+  let el = document.getElementById("hooks");
+  let out = "";
+
+  for (let name in hooks) {
+    let hook = hooks[name];
+
+    hook._idInfo = `hook_${hook.ID}_info`;
+    hook._idAttrs = `hook_${hook.ID}_attrs`;
+    hook._idLog = `hook_${hook.ID}_log`;
+
+    _hooks[hook.ID] = hook;
+
+    out += `
+      <div class="hook">
+        <div id="${hook.ID}" class="name ${hook.Status}">
+          <a href="#${hook.ID}" onclick='hookInfo("${hook.ID}")'>
+            ${hook.Name}
+          </a>
+        </div>
+
+        <div id="${hook._idInfo}" style="display: none;">
+          <div id="${hook._idAttrs}" class="attrs"></div>
+          <div id="${hook._idLog}" class="log"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  el.innerHTML = out;
+
+  for (var id in _hooks) {
+    console.log("render hook:", _hooks[id]);
+    renderHook(_hooks[id]);
+  }
 }
 
 function renderJob(job) {
