@@ -11,6 +11,11 @@ Files: README
 Copyright: 2021 Shulhan <ms@kilabit.info>
 License: GPL-3.0-or-later
 
+Files: _www/karajo/crypto-js.min.js
+Copyright: Copyright (c) 2009-2013 Jeff Mott
+Copyright: Copyright (c) 2013-2016 Evan Vosberg
+License: MIT
+
 Files: _www/karajo/favicon.png
 Copyright: 2021 Shulhan <ms@kilabit.info>
 License: GPL-3.0-or-later

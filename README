@@ -56,6 +56,7 @@ name = <string>
 listen_address = [<ip>:<port>]
 http_timeout = [<duration>]
 dir_base = <path>
+secret = <string>
 ----
 
 The "name" option define the name of the service.
@@ -94,6 +95,13 @@ $DirBase
 Each job log stored under directory /var/log/karajo/job and the job state
 under directory /var/run/karajo/job.
 
+The "secret" field define a string to check signature of request.
+Each request sign the payload (query string or body) with HMAC + SHA-256 using
+this secret.
+The signature then sent in HTTP header "x-karajo-sign" as hex.
+This field is required.
+
+
 [#config_hook]
 ===  Hook
 
@@ -124,7 +132,7 @@ This field is required and unique between Hook.
 
 The "secret" field define a string to check signature of request.
 Each request sign the body with HMAC + SHA-256 using this secret.
-The signature then sent in HTTP header "X-Karajo-Sign" as hex.
+The signature then sent in HTTP header "x-karajo-sign" as hex.
 This field is required.
 
 The "command" field contains list of command to be executed, in order from top
@@ -349,8 +357,13 @@ Pause the job execution by its ID.
 
 **Request**
 
+The request is authorization using signature.
+
+Format,
+
 ----
-POST /karajo/api/job/pause/<id>
+POST /karajo/api/job/pause?id=<id>
+x-karajo-sign: <query signature>
 ----
 
 Parameters,
@@ -373,8 +386,13 @@ HTTP API to resume paused job by its ID.
 
 **Request**
 
+The request is authorization using signature.
+
+Format,
+
 ----
-POST /karajo/api/job/resume/<id>
+POST /karajo/api/job/resume?id=<id>
+x-karajo-sign: <query signature>
 ----
 
 Parameters,

@@ -71,6 +71,16 @@ type Environment struct {
 
 	file string
 
+	// Secret contains string to authorize HTTP API using signature.
+	// The signature is generated from HTTP payload (query or body) with
+	// HMAC+SHA-256.
+	// The signature is read from HTTP header "x-karajo-sign" as hex
+	// string.
+	// This field is optional, if its empty a random secret is generated
+	// before server started and printed to stdout.
+	Secret  string `ini:"karajo::secret"`
+	secretb []byte
+
 	// List of registered Job.
 	Jobs []*Job `ini:"karajo:job"`
 
@@ -128,6 +138,11 @@ func (env *Environment) init() (err error) {
 	if env.HttpTimeout == 0 {
 		env.HttpTimeout = defHttpTimeout
 	}
+
+	if len(env.Secret) == 0 {
+		return fmt.Errorf("%s: empty secret", logp)
+	}
+	env.secretb = []byte(env.Secret)
 
 	err = env.initDirs()
 	if err != nil {

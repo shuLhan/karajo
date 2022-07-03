@@ -16,6 +16,7 @@ func TestLoadEnvironment(t *testing.T) {
 			Name:          "My karajo",
 			ListenAddress: "127.0.0.1:31937",
 			HttpTimeout:   time.Duration(5 * time.Minute),
+			Secret:        "s3cret",
 			DirBase:       "testdata",
 			file:          "testdata/karajo.conf",
 			Hooks: map[string]*Hook{

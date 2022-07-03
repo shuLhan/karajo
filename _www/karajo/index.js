@@ -109,8 +109,18 @@ async function jobRefresh(job) {
 }
 
 async function jobPause(id) {
-  let fres = await fetch("/karajo/api/job/pause?id=" + id, {
+  let secret = document.getElementById("_secret").value;
+  let epoch = parseInt(new Date().valueOf() / 1000);
+  let q = `_karajo_epoch=${epoch}&id=${id}`;
+
+  let hash = CryptoJS.HmacSHA256(q, secret);
+  let sign = hash.toString(CryptoJS.enc.Hex);
+
+  let fres = await fetch("/karajo/api/job/pause?" + q, {
     method: "POST",
+    headers: {
+      "x-karajo-sign": sign,
+    },
   });
   let res = await fres.json();
   if (res.code !== 200) {
@@ -124,8 +134,18 @@ async function jobPause(id) {
 }
 
 async function jobResume(id) {
-  let fres = await fetch("/karajo/api/job/resume?id=" + id, {
+  let secret = document.getElementById("_secret").value;
+  let epoch = parseInt(new Date().valueOf() / 1000);
+  let q = `_karajo_epoch=${epoch}&id=${id}`;
+
+  let hash = CryptoJS.HmacSHA256(q, secret);
+  let sign = hash.toString(CryptoJS.enc.Hex);
+
+  let fres = await fetch("/karajo/api/job/resume?" + q, {
     method: "POST",
+    headers: {
+      "x-karajo-sign": sign,
+    },
   });
   let res = await fres.json();
   if (res.code !== 200) {

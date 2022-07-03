@@ -24,6 +24,7 @@ import (
 	"path"
 	"time"
 
+	liberrors "github.com/shuLhan/share/lib/errors"
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
@@ -49,6 +50,11 @@ const (
 
 var (
 	memfsWww *memfs.MemFS
+
+	errUnauthorized = liberrors.E{
+		Code:    http.StatusUnauthorized,
+		Message: "empty or invalid signature",
+	}
 )
 
 type Karajo struct {
@@ -268,13 +274,21 @@ func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 }
 
 // apiJobPause HTTP API to pause executing the job.
-func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) ([]byte, error) {
+func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
-		res        = &libhttp.EndpointResponse{}
-		id  string = epr.HttpRequest.Form.Get(paramNameID)
-		job *Job   = k.env.jobs[id]
+		res = &libhttp.EndpointResponse{}
+
+		id  string
+		job *Job
 	)
 
+	err = k.httpAuthorize(epr, []byte(epr.HttpRequest.URL.RawQuery))
+	if err != nil {
+		return nil, err
+	}
+
+	id = epr.HttpRequest.Form.Get(paramNameID)
+	job = k.env.jobs[id]
 	if job == nil {
 		res.Code = http.StatusBadRequest
 		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
@@ -290,13 +304,21 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) ([]byte, error) {
 }
 
 // apiJobResume HTTP API to resume executing the job.
-func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) ([]byte, error) {
+func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
-		res        = &libhttp.EndpointResponse{}
-		id  string = epr.HttpRequest.Form.Get(paramNameID)
-		job *Job   = k.env.jobs[id]
+		res = &libhttp.EndpointResponse{}
+
+		id  string
+		job *Job
 	)
 
+	err = k.httpAuthorize(epr, []byte(epr.HttpRequest.URL.RawQuery))
+	if err != nil {
+		return nil, err
+	}
+
+	id = epr.HttpRequest.Form.Get(paramNameID)
+	job = k.env.jobs[id]
 	if job == nil {
 		res.Code = http.StatusBadRequest
 		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
@@ -309,4 +331,24 @@ func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) ([]byte, error) {
 	res.Data = job
 
 	return json.Marshal(res)
+}
+
+// httpAuthorize authorize request by checking the signature.
+func (k *Karajo) httpAuthorize(epr *libhttp.EndpointRequest, payload []byte) (err error) {
+	var (
+		gotSign string
+		expSign string
+	)
+
+	gotSign = epr.HttpRequest.Header.Get(HeaderNameXKarajoSign)
+	if len(gotSign) == 0 {
+		return &errUnauthorized
+	}
+
+	expSign = Sign(payload, k.env.secretb)
+	if expSign != gotSign {
+		return &errUnauthorized
+	}
+
+	return nil
 }
