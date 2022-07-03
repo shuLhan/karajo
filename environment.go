@@ -78,7 +78,7 @@ type Environment struct {
 	// string.
 	// This field is optional, if its empty a random secret is generated
 	// before server started and printed to stdout.
-	Secret  string `ini:"karajo::secret"`
+	Secret  string `ini:"karajo::secret" json:"-"`
 	secretb []byte
 
 	// List of registered Job.

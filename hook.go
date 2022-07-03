@@ -86,7 +86,7 @@ type Hook struct {
 	// Each request sign the body with HMAC + SHA-256 using this secret.
 	// The signature then sent in HTTP header "X-Karajo-Sign" as hex.
 	// This field is required.
-	Secret string `ini:"::secret"`
+	Secret string `ini:"::secret" json:"-"`
 
 	// dirWork define the directory on the system where all commands
 	// will be executed.

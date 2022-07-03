@@ -86,7 +86,7 @@ type Job struct {
 	// HMAC+SHA-256.
 	// The signature is sent on HTTP header "x-karajo-sign" as hex string.
 	// This field is optional.
-	Secret string `ini:"::secret"`
+	Secret string `ini:"::secret" json:"-"`
 
 	// HttpMethod to send, accept only GET, POST, PUT, or DELETE.
 	// This field is optional, default to GET.
