@@ -28,6 +28,14 @@ func TestLoadEnvironment(t *testing.T) {
 						`command-not-found`,
 					},
 				},
+				"test random": &Hook{
+					Description: "Test running command with random exit status",
+					Path:        "/test-random",
+					Secret:      "s3cret",
+					Commands: []string{
+						`rand=$(($RANDOM%2)) && echo $rand && exit $rand`,
+					},
+				},
 				"test success": &Hook{
 					Path:   "/test-success",
 					Secret: "s3cret",
@@ -49,6 +57,14 @@ func TestLoadEnvironment(t *testing.T) {
 					"A: B",
 					"C: D",
 				},
+			}, {
+				Name:            "Test random",
+				Description:     `Test triggering hook /test-random`,
+				Secret:          "s3cret",
+				MaxRequests:     1,
+				HttpMethod:      "POST",
+				HttpUrl:         "/karajo/hook/test-random",
+				HttpRequestType: "json",
 			}, {
 				Name:            "Test success",
 				Description:     "The job to test what the user interface and logs look likes  if its <i>success</i>.",

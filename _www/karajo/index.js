@@ -198,6 +198,10 @@ function renderHookAttributes(hook) {
     <div>
   `;
 
+  if (hook.Logs == null) {
+    return;
+  }
+
   hook.Logs.forEach(function (log, idx, list) {
     out += `<a
       href="/karajo/hook/log?id=${hook.ID}&counter=${log.Counter}"
