@@ -44,6 +44,10 @@ var (
 	}
 )
 
+const (
+	defHookLogRetention = 5
+)
+
 // HookHandler define a function signature for handling Hook using code.
 // The log parameter should be used to log all output and error.
 // The epr parameter contains HTTP request, body, and response writer.
@@ -99,7 +103,8 @@ type Hook struct {
 	// Commands list of command to be executed.
 	Commands []string `ini:"::command"`
 
-	lastCounter int64
+	LogRetention int `ini:"::log_retention"`
+	lastCounter  int64
 
 	sync.Mutex
 }
@@ -123,6 +128,9 @@ func (hook *Hook) init(env *Environment, name string) (err error) {
 
 	hook.Name = name
 	hook.ID = libhtml.NormalizeForID(name)
+	if hook.LogRetention <= 0 {
+		hook.LogRetention = defHookLogRetention
+	}
 
 	err = hook.initDirsState(env)
 	if err != nil {
@@ -190,7 +198,27 @@ func (hook *Hook) initLogs() (err error) {
 		return hook.Logs[x].Counter < hook.Logs[y].Counter
 	})
 
+	hook.logsPrune()
+
 	return nil
+}
+
+func (hook *Hook) logsPrune() {
+	var (
+		hlog     *HookLog
+		totalLog int
+		indexMin int
+	)
+
+	totalLog = len(hook.Logs)
+	if totalLog > hook.LogRetention {
+		// Delete old logs.
+		indexMin = totalLog - hook.LogRetention
+		for _, hlog = range hook.Logs[:indexMin] {
+			_ = os.Remove(hlog.path)
+		}
+		hook.Logs = hook.Logs[indexMin:]
+	}
 }
 
 func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
@@ -219,8 +247,8 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	hook.Lock()
 	defer hook.Unlock()
 
-	hlog = newHookLog(hook.ID, hook.dirLog, hook.lastCounter)
 	hook.lastCounter++
+	hlog = newHookLog(hook.ID, hook.dirLog, hook.lastCounter)
 
 	hook.LastStatus = JobStatusSuccess
 
@@ -284,6 +312,7 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err
 	}
 
 	hook.Logs = append(hook.Logs, hlog)
+	hook.logsPrune()
 
 	err = hlog.flush()
 	if err != nil {
