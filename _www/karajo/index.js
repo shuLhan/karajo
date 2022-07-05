@@ -175,7 +175,6 @@ async function jobResume(id) {
 // renderHooks render single hook.
 function renderHook(hook) {
   renderHookAttributes(hook);
-  renderHookLogs(hook);
 }
 
 function renderHookAttributes(hook) {
@@ -190,27 +189,28 @@ function renderHookAttributes(hook) {
   `;
 
   hook.Commands.forEach(function (cmd, idx, list) {
-    out += `<div> ${idx}: ${cmd} </div>`;
+    out += `<div> ${idx}: <tt>${cmd}</tt> </div>`;
   });
 
   out += `
     </div>
+    <div>Log:</div>
+    <div>
   `;
 
+  hook.Logs.forEach(function (log, idx, list) {
+    out += `<a
+      href="/karajo/hook/log?id=${hook.ID}&counter=${log.Counter}"
+      target="_blank"
+      class="hook-log ${log.Status}"
+    >
+        #${log.Counter}
+    </a>`;
+  });
+
+  out += "</div>";
+
   el.innerHTML = out;
-}
-
-function renderHookLogs(hook) {
-  let el = document.getElementById(hook._idLog);
-  let out = "";
-
-  for (let counter in hook.Logs) {
-    let log = hook.Logs[counter];
-    out += `<p>${counter}: ${atob(log.Log)}</p>`;
-  }
-
-  el.innerHTML = out;
-  el.scrollTop = el.scrollHeight;
 }
 
 // renderHooks render list of hooks.
@@ -237,7 +237,6 @@ function renderHooks(hooks) {
 
         <div id="${hook._idInfo}" style="display: none;">
           <div id="${hook._idAttrs}" class="attrs"></div>
-          <div id="${hook._idLog}" class="log"></div>
         </div>
       </div>
     `;

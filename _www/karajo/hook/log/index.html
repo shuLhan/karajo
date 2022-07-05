@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!-- SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="/karajo/favicon.png" />
+    <title>karajo - hook log</title>
+    <style>
+      .log {
+        font-size: 12px;
+        font-family: monospace;
+        background-color: lightgray;
+        padding: 1em;
+        white-space: pre;
+      }
+
+      .footer {
+        margin: 1em auto;
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body onload="main()">
+    <div id="content"></div>
+    <div class="footer">
+      <div>
+        Powered by
+        <a href="https://sr.ht/~shulhan/karajo" target="_blank">Karajo</a>
+      </div>
+      <div><a href="/karajo/doc/" target="_blank">Documentation</a></div>
+    </div>
+
+    <script>
+      async function main() {
+        let elContent = document.getElementById("content");
+
+        let httpRes = await fetch(
+          "/karajo/api/hook/log" + window.location.search
+        );
+
+        let res = await httpRes.json();
+        if (res.code != 200) {
+          elContent.innerHTML = res.message;
+          return;
+        }
+
+        let log = res.data;
+        let out = "";
+
+        document.title = `${log.HookID} #${log.Counter}`;
+
+        out += `
+            <h2>${document.title}</h2>
+            <div class="log">
+${atob(log.Content)}
+            </div>
+        `;
+
+        elContent.innerHTML = out;
+      }
+    </script>
+  </body>
+</html>

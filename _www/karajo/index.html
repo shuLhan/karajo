@@ -33,21 +33,28 @@
       .name {
         padding: 5px;
       }
-
       .name.started {
         background: lightyellow;
       }
-
       .name.failed {
         background: lightpink;
       }
-
       .name.success {
         background: lightgreen;
       }
-
       .name.paused {
         background: lightgrey;
+      }
+
+      .hook-log {
+        padding: 5px;
+        display: inline-block;
+      }
+      .hook-log.failed {
+        background: lightpink;
+      }
+      .hook-log.success {
+        background: lightgreen;
       }
 
       .attrs {
@@ -64,6 +71,7 @@
         font-family: monospace;
         background-color: lightgray;
         padding: 1em;
+        white-space: pre;
       }
 
       .footer {

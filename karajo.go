@@ -22,6 +22,8 @@ import (
 	"hash"
 	"net/http"
 	"path"
+	"strconv"
+	"strings"
 	"time"
 
 	liberrors "github.com/shuLhan/share/lib/errors"
@@ -43,9 +45,11 @@ const (
 	apiJobPause    = "/karajo/api/job/pause"
 	apiJobResume   = "/karajo/api/job/resume"
 
-	apiHook = "/karajo/hook"
+	apiHook    = "/karajo/hook"
+	apiHookLog = "/karajo/api/hook/log"
 
-	paramNameID = "id"
+	paramNameID      = "id"
+	paramNameCounter = "counter"
 )
 
 var (
@@ -127,6 +131,18 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
+
+	err = k.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodGet,
+		Path:         apiHookLog,
+		RequestType:  libhttp.RequestTypeQuery,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         k.apiHookLog,
+	})
+	if err != nil {
+		return err
+	}
+
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJob,
@@ -227,6 +243,71 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 	k.env.jobsUnlock()
 
 	return resbody, err
+}
+
+// apiHookLog get the hook log by its ID and counter.
+//
+// # Request
+//
+// Format,
+//
+//	GET /karajo/hook/log?id=<hookID>&counter=<counter>
+//
+// # Response
+//
+// If the hookID and counter exist it will return the HookLog object as JSON.
+func (k *Karajo) apiHookLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+	var (
+		res               = &libhttp.EndpointResponse{}
+		id         string = epr.HttpRequest.Form.Get(paramNameID)
+		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
+
+		hook    *Hook
+		hlog    *HookLog
+		counter int64
+	)
+
+	id = strings.ToLower(id)
+	for _, hook = range k.env.Hooks {
+		if hook.ID == id {
+			break
+		}
+	}
+	if hook == nil {
+		res.Code = http.StatusNotFound
+		res.Message = fmt.Sprintf("hook id %s not found", id)
+		return nil, res
+	}
+
+	counter, err = strconv.ParseInt(counterStr, 10, 64)
+	if err != nil {
+		res.Code = http.StatusNotFound
+		res.Message = fmt.Sprintf("log #%s not found", counterStr)
+		return nil, res
+	}
+
+	for _, hlog = range hook.Logs {
+		if hlog.Counter != counter {
+			continue
+		}
+		if len(hlog.Content) == 0 {
+			err = hlog.load()
+			if err != nil {
+				res.Code = http.StatusInternalServerError
+				res.Message = err.Error()
+				return nil, res
+			}
+		}
+
+		res.Code = http.StatusOK
+		res.Data = hlog
+		return json.Marshal(res)
+	}
+
+	res.Code = http.StatusNotFound
+	res.Message = fmt.Sprintf("log #%s not found", counterStr)
+
+	return json.Marshal(res)
 }
 
 // apiJob API to get job detail and its status.

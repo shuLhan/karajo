@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -55,8 +56,8 @@ type HookHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 // and a callback or list of commands to be executed when the request
 // received.
 type Hook struct {
-	// List of log indexed by log number.
-	Logs map[int]hookLog
+	// Cache of log sorted by its counter.
+	Logs []*HookLog
 
 	// Call define a function or method to be called, as an
 	// alternative to Commands.
@@ -127,7 +128,10 @@ func (hook *Hook) init(env *Environment, name string) (err error) {
 		return err
 	}
 
-	hook.Logs = make(map[int]hookLog)
+	err = hook.initLogs()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -154,10 +158,45 @@ func (hook *Hook) initDirsState(env *Environment) (err error) {
 	return nil
 }
 
+// initLogs load the hook logs state, counter and status.
+func (hook *Hook) initLogs() (err error) {
+	var (
+		dir  *os.File
+		hlog *HookLog
+		fi   os.FileInfo
+		fis  []os.FileInfo
+	)
+
+	dir, err = os.Open(hook.dirLog)
+	if err != nil {
+		return err
+	}
+	fis, err = dir.Readdir(0)
+	if err != nil {
+		return err
+	}
+
+	for _, fi = range fis {
+		hlog = parseHookLogName(hook.dirLog, fi.Name())
+		if hlog == nil {
+			// Skip log with invalid file name.
+			continue
+		}
+
+		hook.Logs = append(hook.Logs, hlog)
+	}
+
+	sort.Slice(hook.Logs, func(x, y int) bool {
+		return hook.Logs[x].Counter < hook.Logs[y].Counter
+	})
+
+	return nil
+}
+
 func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
 		execCmd exec.Cmd
-		hlog    hookLog
+		hlog    *HookLog
 		cmd     string
 		expSign string
 		gotSign string
@@ -180,14 +219,14 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	hook.Lock()
 	defer hook.Unlock()
 
-	hlog = createHookLog(hook.ID, hook.dirLog, hook.hookState.logCounter)
+	hlog = newHookLog(hook.ID, hook.dirLog, hook.hookState.logCounter)
 	hook.hookState.logCounter++
 
 	hook.Status = JobStatusSuccess
 
 	// Call the hook.
 	if hook.Call != nil {
-		err = hook.Call(&hlog, epr)
+		err = hook.Call(hlog, epr)
 		if err != nil {
 			hook.Status = JobStatusFailed
 		}
@@ -204,8 +243,8 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 				"-c",
 				cmd,
 			},
-			Stdout: &hlog,
-			Stderr: &hlog,
+			Stdout: hlog,
+			Stderr: hlog,
 		}
 
 		err = execCmd.Run()
@@ -253,7 +292,7 @@ func (hook *Hook) stateSave() (err error) {
 	return nil
 }
 
-func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog hookLog, err error) ([]byte, error) {
+func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err error) ([]byte, error) {
 	var (
 		res = libhttp.EndpointResponse{
 			Data: hlog,
@@ -264,6 +303,7 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog hookLog, err 
 	)
 
 	if err != nil {
+		hlog.Status = JobStatusFailed
 		mlog.Errf("hook: %s: %s", hook.Path, err)
 
 		e, ok = err.(*liberrors.E)
@@ -274,10 +314,11 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog hookLog, err 
 			res.E = *e
 		}
 	} else {
+		hlog.Status = JobStatusSuccess
 		res.Code = http.StatusOK
 	}
 
-	hook.Logs[hlog.Counter] = hlog
+	hook.Logs = append(hook.Logs, hlog)
 
 	err = hlog.flush()
 	if err != nil {

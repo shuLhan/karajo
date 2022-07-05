@@ -235,6 +235,29 @@ All HTTP response is encoded in the JSON format, with the following wrapper,
 [#http_api_schemas]
 === Schemas
 
+[#schema_hook]
+==== HookLog
+
+----
+{
+	"HookID": <string>
+	"Name": <string>
+	"Status": <string>
+	"Content": <base64>
+	"Counter": <number>
+}
+----
+
+* `HookID`: the ID of hook that own the log.
+* `Name`: the Name of log in the format `HookID.Counter.Status`.
+* `Status`: the status of hook, its either "success" or "fail".
+* `Content`: the content of log.
+* `Counter`: the log number.
+
+
+[#http_api_schema_job]
+====  Job
+
 Job schema,
 
 ----
@@ -303,6 +326,29 @@ On success, it will return the Environment object,
 * `HttpTimeout`: default HTTP timeout for job in nano-second.
 * `DirLogs`: the path to directory where the each job logs will be stored.
 * `Jobs`: list of Job.
+
+
+[#http_api_hook_log]
+=== Get hook log
+
+HTTP API to get the hook log by its ID and counter.
+
+**Request**
+
+----
+GET /karajo/api/hook/log?id=<hookID>&counter=<logCounter>
+----
+
+Parameters,
+
+* `hookID`: the hook ID
+* `logCounter`: the log number.
+
+**Response**
+
+On success, it will return the
+link:#HookLog[HookLog]
+object as JSON.
 
 
 [#http_api_job]
