@@ -91,14 +91,15 @@ type Hook struct {
 
 	// dirWork define the directory on the system where all commands
 	// will be executed.
-	dirWork   string
-	dirLog    string
-	pathState string
+	dirWork string
+	dirLog  string
+
+	LastStatus string // The last status of hook.
 
 	// Commands list of command to be executed.
 	Commands []string `ini:"::command"`
 
-	hookState
+	lastCounter int64
 
 	sync.Mutex
 }
@@ -149,12 +150,6 @@ func (hook *Hook) initDirsState(env *Environment) (err error) {
 		return err
 	}
 
-	hook.pathState = filepath.Join(env.dirRunHook, hook.ID)
-	err = hook.stateLoad()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -184,6 +179,11 @@ func (hook *Hook) initLogs() (err error) {
 		}
 
 		hook.Logs = append(hook.Logs, hlog)
+
+		if hlog.Counter > hook.lastCounter {
+			hook.lastCounter = hlog.Counter
+			hook.LastStatus = hlog.Status
+		}
 	}
 
 	sort.Slice(hook.Logs, func(x, y int) bool {
@@ -219,16 +219,16 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	hook.Lock()
 	defer hook.Unlock()
 
-	hlog = newHookLog(hook.ID, hook.dirLog, hook.hookState.logCounter)
-	hook.hookState.logCounter++
+	hlog = newHookLog(hook.ID, hook.dirLog, hook.lastCounter)
+	hook.lastCounter++
 
-	hook.Status = JobStatusSuccess
+	hook.LastStatus = JobStatusSuccess
 
 	// Call the hook.
 	if hook.Call != nil {
 		err = hook.Call(hlog, epr)
 		if err != nil {
-			hook.Status = JobStatusFailed
+			hook.LastStatus = JobStatusFailed
 		}
 		return hook.writeResponse(epr, hlog, err)
 	}
@@ -249,47 +249,12 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 
 		err = execCmd.Run()
 		if err != nil {
-			hook.Status = JobStatusFailed
+			hook.LastStatus = JobStatusFailed
 			return hook.writeResponse(epr, hlog, err)
 		}
 	}
 
 	return hook.writeResponse(epr, hlog, nil)
-}
-
-// stateLoad load the hook state from file pathState.
-func (hook *Hook) stateLoad() (err error) {
-	var rawState []byte
-
-	rawState, err = os.ReadFile(hook.pathState)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
-	err = hook.hookState.unpack(rawState)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// stateSave save the state into file pathState.
-func (hook *Hook) stateSave() (err error) {
-	var rawState []byte
-
-	rawState, err = hook.hookState.pack()
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(hook.pathState, rawState, 0600)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err error) ([]byte, error) {
@@ -321,11 +286,6 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err
 	hook.Logs = append(hook.Logs, hlog)
 
 	err = hlog.flush()
-	if err != nil {
-		mlog.Errf("hook: %s: %s", hook.Path, err)
-	}
-
-	err = hook.stateSave()
 	if err != nil {
 		mlog.Errf("hook: %s: %s", hook.Path, err)
 	}

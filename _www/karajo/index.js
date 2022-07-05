@@ -229,7 +229,7 @@ function renderHooks(hooks) {
 
     out += `
       <div class="hook">
-        <div id="${hook.ID}" class="name ${hook.Status}">
+        <div id="${hook.ID}" class="name ${hook.LastStatus}">
           <a href="#${hook.ID}" onclick='hookInfo("${hook.ID}")'>
             ${hook.Name}
           </a>

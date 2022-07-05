@@ -51,9 +51,7 @@ type Environment struct {
 	//	|                   |
 	//	|                   +-- /job/$Job.ID
 	//      |
-	//	+-- /var/run/karajo +-- /hook/$Hook.id
-	//	                    |
-	//	                    +-- /job/$Job.ID
+	//	+-- /var/run/karajo +-- /job/$Job.ID
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
@@ -66,8 +64,7 @@ type Environment struct {
 	dirLogHook string
 	dirLogJob  string
 
-	dirRunHook string
-	dirRunJob  string
+	dirRunJob string
 
 	file string
 
@@ -198,12 +195,6 @@ func (env *Environment) initDirs() (err error) {
 	err = os.MkdirAll(env.dirLogJob, 0700)
 	if err != nil {
 		return fmt.Errorf("%s: %w", env.dirLogJob, err)
-	}
-
-	env.dirRunHook = filepath.Join(env.DirBase, "var", "run", defEnvName, "hook")
-	err = os.MkdirAll(env.dirRunHook, 0700)
-	if err != nil {
-		return fmt.Errorf("%s: %w", env.dirRunHook, err)
 	}
 
 	env.dirRunJob = filepath.Join(env.DirBase, "var", "run", defEnvName, "job")

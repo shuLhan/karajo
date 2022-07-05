@@ -87,9 +87,7 @@ $DirBase
 |                   |
 |                   +-- /job/$Job.ID
 |
-+-- /var/run/karajo +-- /hook/$Hook.id
-                    |
-                    +-- /job/$Job.ID
++-- /var/run/karajo +-- /job/$Job.ID
 ----
 
 Each job log stored under directory /var/log/karajo/job and the job state
