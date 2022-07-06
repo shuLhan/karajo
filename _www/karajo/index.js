@@ -10,10 +10,19 @@ async function main() {
 
   let wout = document.getElementById("out");
   let werr = document.getElementById("err");
+  let delay = 10000;
 
   wout.innerHTML = "";
   werr.innerHTML = "";
 
+  doRefresh();
+
+  _refreshInterval = setInterval(() => {
+    doRefresh();
+  }, delay);
+}
+
+async function doRefresh() {
   let fres = await fetch("/karajo/api/environment");
   let res = await fres.json();
   if (res.code != 200) {
@@ -25,40 +34,7 @@ async function main() {
   setTitle();
 
   renderHooks(_env.Hooks);
-
-  let jobs = res.data.Jobs;
-  let out = "";
-  for (let x = 0; x < jobs.length; x++) {
-    let job = jobs[x];
-    _jobs[job.ID] = job;
-
-    job._idAttrs = job.ID + "_attrs";
-    job._idInfo = job.ID + "_info";
-    job._idLog = job.ID + "_log";
-    job._idStatus = job.ID + "_status";
-
-    out += `
-      <div class="job">
-        <div id="${job._idStatus}" class="name ${job.Status}">
-          <a href="#${job.ID}" onclick='jobInfo("${job.ID}")'>
-            ${job.Name}
-          </a>
-        </div>
-
-        <div id="${job._idInfo}" style="display: none;">
-          <div id="${job._idAttrs}" class="attrs"></div>
-          <div id="${job._idLog}" class="log"></div>
-        </div>
-      </div>
-    `;
-  }
-
-  document.getElementById("jobs").innerHTML = out;
-
-  for (var jobID in _jobs) {
-    console.log("render job ", _jobs[jobID]);
-    renderJob(_jobs[jobID]);
-  }
+  renderJobs(_env.Jobs);
 }
 
 function setTitle() {
@@ -81,8 +57,10 @@ async function hookInfo(hookID) {
 
   if (el.style.display === "block") {
     el.style.display = "none";
+    hook._display = "none";
   } else {
     el.style.display = "block";
+    hook._display = "block";
   }
 }
 
@@ -93,33 +71,11 @@ async function jobInfo(jobID) {
 
   if (el.style.display === "block") {
     el.style.display = "none";
-    window.clearInterval(job._refreshInterval);
-    console.log(`${job.ID}: pooling job stopped.`);
+    job._display = "none";
   } else {
     el.style.display = "block";
-
-    await jobRefresh(job);
-
-    console.log(
-      `${job.ID}: started pooling job every ${delay / 1000} seconds.`
-    );
-
-    job._refreshInterval = setInterval(() => {
-      jobRefresh(job);
-    }, delay);
+    job._display = "block";
   }
-}
-
-async function jobRefresh(job) {
-  let fres = await fetch("/karajo/api/job?id=" + job.ID);
-  let res = await fres.json();
-  if (res.code !== 200) {
-    console.error(res.message);
-    return;
-  }
-
-  job = Object.assign(job, res.data);
-  renderJob(job);
 }
 
 async function jobPause(id) {
@@ -219,38 +175,50 @@ function renderHookAttributes(hook) {
 
 // renderHooks render list of hooks.
 function renderHooks(hooks) {
-  let el = document.getElementById("hooks");
+  let elHooks = document.getElementById("hooks");
   let out = "";
 
   for (let name in hooks) {
     let hook = hooks[name];
 
+    hook._id = `hook_${hook.ID}`;
     hook._idInfo = `hook_${hook.ID}_info`;
     hook._idAttrs = `hook_${hook.ID}_attrs`;
     hook._idLog = `hook_${hook.ID}_log`;
+    hook._display = "none";
+
+    if (_hooks != null) {
+      let prevHook = _hooks[hook.ID];
+      if (prevHook != null) {
+        hook._display = prevHook._display;
+      }
+    }
 
     _hooks[hook.ID] = hook;
 
-    out += `
-      <div class="hook">
+    let elHook = document.getElementById(hook._id);
+    if (elHook != null) {
+      renderHook(hook);
+      continue;
+    }
+
+    out = `
+      <div id="${hook._id}" class="hook">
         <div id="${hook.ID}" class="name ${hook.LastStatus}">
           <a href="#${hook.ID}" onclick='hookInfo("${hook.ID}")'>
             ${hook.Name}
           </a>
         </div>
 
-        <div id="${hook._idInfo}" style="display: none;">
+        <div id="${hook._idInfo}" style="display: ${hook._display};">
           <div id="${hook._idAttrs}" class="attrs"></div>
         </div>
       </div>
     `;
-  }
 
-  el.innerHTML = out;
+    elHooks.innerHTML += out;
 
-  for (var id in _hooks) {
-    console.log("render hook:", _hooks[id]);
-    renderHook(_hooks[id]);
+    renderHook(hook);
   }
 }
 
@@ -304,4 +272,53 @@ function renderJobLog(job) {
 function renderJobStatus(job) {
   let el = document.getElementById(job._idStatus);
   el.className = `name ${job.Status}`;
+}
+
+function renderJobs(jobs) {
+  let out = "";
+  let elJobs = document.getElementById("jobs");
+
+  for (let x = 0; x < jobs.length; x++) {
+    let job = jobs[x];
+
+    job._id = `job_${job.ID}`;
+    job._idAttrs = job.ID + "_attrs";
+    job._idInfo = job.ID + "_info";
+    job._idLog = job.ID + "_log";
+    job._idStatus = job.ID + "_status";
+    job._display = "none";
+
+    if (_jobs != null) {
+      let prevJob = _jobs[job.ID];
+      if (prevJob != null) {
+        job._display = prevJob._display;
+      }
+    }
+
+    _jobs[job.ID] = job;
+
+    let elJob = document.getElementById(job._id);
+    if (elJob != null) {
+      renderJob(job);
+      continue;
+    }
+
+    out = `
+      <div id="${job._id}" class="job">
+        <div id="${job._idStatus}" class="name ${job.Status}">
+          <a href="#${job.ID}" onclick='jobInfo("${job.ID}")'>
+            ${job.Name}
+          </a>
+        </div>
+
+        <div id="${job._idInfo}" style="display: ${job._display};">
+          <div id="${job._idAttrs}" class="attrs"></div>
+          <div id="${job._idLog}" class="log"></div>
+        </div>
+      </div>
+    `;
+
+    elJobs.innerHTML += out;
+    renderJob(job);
+  }
 }
