@@ -83,6 +83,11 @@ func New(env *Environment) (k *Karajo, err error) {
 	var (
 		logp       = "New"
 		serverOpts = libhttp.ServerOptions{
+			Conn: &http.Server{
+				ReadTimeout:    10 * time.Minute,
+				WriteTimeout:   10 * time.Minute,
+				MaxHeaderBytes: 1 << 20,
+			},
 			Memfs: memfsWww,
 		}
 	)
