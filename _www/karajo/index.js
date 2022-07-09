@@ -205,7 +205,7 @@ function renderHooks(hooks) {
     out = `
       <div id="${hook._id}" class="hook">
         <div id="${hook.ID}" class="name ${hook.LastStatus}">
-          <a href="#${hook.ID}" onclick='hookInfo("${hook.ID}")'>
+          <a href="#${hook._id}" onclick='hookInfo("${hook.ID}")'>
             ${hook.Name}
           </a>
         </div>
@@ -306,7 +306,7 @@ function renderJobs(jobs) {
     out = `
       <div id="${job._id}" class="job">
         <div id="${job._idStatus}" class="name ${job.Status}">
-          <a href="#${job.ID}" onclick='jobInfo("${job.ID}")'>
+          <a href="#${job._id}" onclick='jobInfo("${job.ID}")'>
             ${job.Name}
           </a>
         </div>
