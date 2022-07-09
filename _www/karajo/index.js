@@ -128,7 +128,7 @@ async function jobResume(id) {
   renderJob(job);
 }
 
-// renderHooks render single hook.
+// renderHook render single hook.
 function renderHook(hook) {
   renderHookAttributes(hook);
 }
@@ -278,8 +278,8 @@ function renderJobs(jobs) {
   let out = "";
   let elJobs = document.getElementById("jobs");
 
-  for (let x = 0; x < jobs.length; x++) {
-    let job = jobs[x];
+  for (let name in jobs) {
+    let job = jobs[name];
 
     job._id = `job_${job.ID}`;
     job._idAttrs = job.ID + "_attrs";

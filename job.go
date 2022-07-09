@@ -53,7 +53,7 @@ type Job struct {
 	jobState
 
 	// The next time the job will running, in UTC.
-	NextRun time.Time
+	NextRun time.Time `ini:"-"`
 
 	headers http.Header
 
@@ -76,10 +76,10 @@ type Job struct {
 	// previous job with the same ID.
 	// If ID is empty, it will generated from Name by replacing
 	// non-alphanumeric character with '-'.
-	ID string
+	ID string `ini:"-"`
 
 	// Name of job for readibility.
-	Name        string `ini:"::name"`
+	Name        string `ini:"-"`
 	Description string `ini:"::description"`
 
 	// Secret define a string to sign the request query or body with
@@ -119,10 +119,11 @@ type Job struct {
 	// Optional HTTP headers for HttpUrl, in the format of "K: V".
 	HttpHeaders []string `ini:"::http_header"`
 
-	// HttpTimeout custom HTTP timeout for this job.  If its zero, it will
-	// set from the Environment.HttpTimeout.
+	// HttpTimeout custom HTTP timeout for this job.
+	// This field is option, if not set default to
+	// Environment.HttpTimeout.
 	// To make job run without timeout, set the value to negative.
-	HttpTimeout time.Duration
+	HttpTimeout time.Duration `ini:"::http_timeout"`
 
 	requestMethod libhttp.RequestMethod
 	requestType   libhttp.RequestType
@@ -138,11 +139,11 @@ type Job struct {
 	Interval time.Duration `ini:"::interval"`
 
 	// MaxRequests maximum number of requests executed by karajo.
-	// If zero, it will set to DefaultMaxRequests.
+	// This field is optional default to DefaultMaxRequests.
 	MaxRequests int8 `ini:"::max_requests"`
 
 	// NumRequests record the current number of requests executed.
-	NumRequests int8
+	NumRequests int8 `ini:"-"`
 
 	sync.Mutex
 
@@ -212,9 +213,13 @@ func (job *Job) Stop() {
 }
 
 // init initialize the job, compute the last run and the next run.
-func (job *Job) init(env *Environment) (err error) {
+func (job *Job) init(env *Environment, name string) (err error) {
+	job.Name = name
+
 	if len(job.ID) == 0 {
 		job.ID = libhtml.NormalizeForID(job.Name)
+	} else {
+		job.ID = libhtml.NormalizeForID(job.ID)
 	}
 
 	job.pathLog = filepath.Join(env.dirLogJob, job.ID)

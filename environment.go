@@ -23,8 +23,9 @@ const (
 type Environment struct {
 	Hooks map[string]*Hook `ini:"hook"`
 
-	// List of Job indexed by ID.
-	jobs map[string]*Job
+	// List of Job by name.
+	Jobs map[string]*Job `ini:"job"`
+	jobs map[string]*Job // List of Job indexed by ID.
 
 	// Name of the service.
 	// The Name will be used for title on the web user interface, as log
@@ -84,9 +85,6 @@ type Environment struct {
 	// before server started and printed to stdout.
 	Secret  string `ini:"karajo::secret" json:"-"`
 	secretb []byte
-
-	// List of registered Job.
-	Jobs []*Job `ini:"karajo:job"`
 
 	// HttpTimeout define the default HTTP client timeout when executing
 	// each jobs.
@@ -161,12 +159,11 @@ func (env *Environment) init() (err error) {
 	}
 
 	env.jobs = make(map[string]*Job, len(env.Jobs))
-	for _, job = range env.Jobs {
-		err = job.init(env)
+	for name, job = range env.Jobs {
+		err = job.init(env, name)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
-
 		env.jobs[job.ID] = job
 	}
 

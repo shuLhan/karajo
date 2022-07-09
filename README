@@ -46,6 +46,10 @@ There are three configuration sections: one to configure the server, one to
 configure the logs, and another one to configure one or more jobs to be
 executed.
 
+Default values,
+
+* `DefaultMaxRequests`: 1
+
 [#config_server]
 === Server
 
@@ -184,16 +188,17 @@ The following environment variables are available inside the command:
 This section has the following format,
 
 ----
-[karajo "job"]
-name = <string>
+[job "name"]
 description = <string>
 secret = <string>
 interval = <duration>
+max_requests = <number>
 
 http_method = [GET|POST|PUT|DELETE]
 http_url = <URL>
 http_request_type = [query|form|json]
 http_header = <string ":" string>
+http_timeout = <duration>
 http_insecure = <bool>
 ----
 
@@ -215,6 +220,9 @@ This field is required, if not set or invalid it will set to 30 seconds.
 If one have job that need to run less than 30 seconds, it should be run on
 single program.
 --
+
+`max_requests`:: maximum number of requests executed by karajo.
+This field is optional default to DefaultMaxRequests.
 
 `http_method`:: Define the HTTP method used to request job execution.
 Its accept only GET, POST, PUT, or DELETE.
@@ -247,6 +255,15 @@ object, for example `{"_karajo_epoch":1656750073}`.
 `http_header`:: Define optional HTTP headers that will send when executing the
 "http_url".
 This option can be declared more than one.
+
+`http_timeout`:: Define the HTTP timeout when executing the job.
++
+--
+If its zero, it will set from the Environment.HttpTimeout.
+To make job run without timeout, set the value to negative.
+The value of this option is using the Go time.Duration format, for example,
+30s for 30 seconds, 1m for 1 minute, 1h for 1 hour.
+--
 
 `http_insecure`:: Can be set to true if the "http_url" is HTTPS with unknown
 certificate authority.
