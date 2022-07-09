@@ -16,3 +16,13 @@
 --
 [ ] Hook: add options to pass value using environment variables to the
 command.
++
+--
+	[hook]
+	command_env = key:value
+--
+[ ] Change the job configuration format,
++
+--
+	[job "<name>"]
+--

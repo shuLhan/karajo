@@ -19,6 +19,7 @@ Features,
 * Running job on specific interval
 * Preserve the job states on restart
 * Able to pause and resume specific job
+* Receiving hook and running commands
 * HTTP APIs to programmatically interact with karajo
 
 Work flow on karajo,
@@ -60,20 +61,25 @@ dir_public = <path>
 secret = <string>
 ----
 
-The "name" option define the name of the service.
+`name`:: Define the name of the service.
++
+--
 It will be used for title on the web user interface, as log prefix, for file
 prefix on the jobs state, and as file prefix on log files.
 If this value is empty, it will be set to "karajo".
+--
 
-The "listen_address" define the address for WUI, default to ":31937".
+`listen_address`:: Define the address for WUI, default to ":31937".
 
-The "http_timeout" define the HTTP timeout when executing the job, default to
-5 minutes.
+`http_timeout`:: Define the HTTP timeout when executing the job, default to 5
+minutes.
 The value of this option is using the Go time.Duration format, for example,
 30s for 30 seconds, 1m for 1 minute.
 
-The "dir_base" option define the base directory where configuration, job
-state, and log stored.
+`dir_base`:: Define the base directory where configuration, job state, and log
+stored.
++
+--
 This field is optional, default to current directory.
 The structure of directory follow the UNIX system,
 
@@ -93,18 +99,26 @@ $DirBase
 
 Each job log stored under directory /var/log/karajo/job and the job state
 under directory /var/run/karajo/job.
+--
 
-The "dir_public" option define a path to serve to the public.
+`dir_public`:: Define a path to serve to the public.
++
+--
 While the WUI is served under "/karajo", a directory dir_public will be served
 under "/".
 A dir_public can contains sub directory as long as its name is not
 "karajo".
+--
 
-The "secret" field define a string to check signature of request.
+`secret`:: Define the secret to authorize the incoming request through
+signature.
++
+--
 Each request sign the payload (query string or body) with HMAC + SHA-256 using
 this secret.
 The signature then sent in HTTP header "x-karajo-sign" as hex.
 This field is required.
+--
 
 
 [#config_hook]
@@ -116,7 +130,7 @@ receiving request.
 The hook configuration have the following format,
 
 ----
-[hook "<name>"]
+[hook "name"]
 description = <string>
 path = <string>
 secret = <string>
@@ -126,35 +140,42 @@ command = <string>
 command = <string>
 ----
 
-The name subsection define the hook name.
+`name`:: Define the hook name.
 The hook name is used for logging, normalized to ID.
 This field is required and should unique between Hook.
 
-The "description" field define the hook description.
+`description`:: Define the hook description.
 It could be plain text or simple HTML.
 
-The "path" field set HTTP path where Karajo will listen for request.
+`path`:: Set HTTP path where Karajo will listen for request.
++
+--
 The `path` is automatically prefixed with "/karajo/hook", it is not
 static.
 For example, if it set to "/my", then the actual path would be
 "/karajo/hook/my".
 This field is required and unique between Hook.
+--
 
-The "secret" field define a string to check signature of request.
+`secret`:: Define a string to check signature of request.
++
+--
 Each request sign the body with HMAC + SHA-256 using this secret.
 The signature then sent in HTTP header "x-karajo-sign" as hex.
 This field is required.
+--
 
-The "log_retention" option define the maximum number of logs to keep in
-storage.
+`log_retention`:: Define the maximum number of logs to keep in storage.
 This field is optional, default to 5.
 
-The "command" field contains list of command to be executed, in order from top
-to bottom.
-
+`command`:: This option can be defined multiple times.
+It contains command to be executed, in order from top to bottom.
++
+--
 The following environment variables are available inside the command:
 
 * KARAJO_HOOK_COUNTER: contains the current hook counter.
+--
 
 
 [#config_job]
@@ -176,31 +197,36 @@ http_header = <string ":" string>
 http_insecure = <bool>
 ----
 
-The "name" option define the job name.
+`name`:: Define the job name.
 Each job must have unique name or only the first one will be processed.
 
-The "description" field define the job description.
+`description`:: Define the job description.
 It could be plain text or simple HTML.
 
-The "secret" option define a string to sign the request query or body with
+`secret`:: Define a string to sign the request query or body with
 HMAC+SHA-256.
 The signature is sent on HTTP header "x-karajo-sign" as hex string.
 This field is optional.
 
-The "interval" option define the duration when job will be repeatedly
-executed.
+`interval`:: Define the duration when job will be repeatedly executed.
++
+--
 This field is required, if not set or invalid it will set to 30 seconds.
 If one have job that need to run less than 30 seconds, it should be run on
 single program.
+--
 
-The "http_method" define the HTTP method used to request job execution.
+`http_method`:: Define the HTTP method used to request job execution.
 Its accept only GET, POST, PUT, or DELETE.
 This field is optional, default to GET.
 
-The "http_url" define the HTTP URL where the job will be executed.
+`http_url`:: Define the HTTP URL where the job will be executed.
 This field is required.
 
-The "http_request_type" define the header Content-Type to be set on request.
+`http_request_type`:: Define the header Content-Type to be set on
+request.
++
+--
 Its accept,
 
 * query: no header Content-Type to be set, reserved for future use;
@@ -210,19 +236,20 @@ Its accept,
 The type "form" and "json" only applicable if the method is POST or PUT.
 This field is optional, default to query.
 
-The "http_header" option define optional HTTP headers that will send when
-executing the "http_url".
-This option can be declared more than one.
-
-The "http_insecure" option can be set to true if the "http_url" is HTTPS with
-unknown certificate authority.
-
 Each Job execution send the parameter named `_karajo_epoch` with value is
 current server Unix time.
 If the request type is `query` then the parameter is inside the query URL.
 If the request type is `form` then the parameter is inside the body.
 If the request type is `json` then the parameter is inside the body as JSON
 object, for example `{"_karajo_epoch":1656750073}`.
+--
+
+`http_header`:: Define optional HTTP headers that will send when executing the
+"http_url".
+This option can be declared more than one.
+
+`http_insecure`:: Can be set to true if the "http_url" is HTTPS with unknown
+certificate authority.
 
 
 [#http_api]
