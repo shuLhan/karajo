@@ -152,6 +152,10 @@ This field is optional, default to 5.
 The "command" field contains list of command to be executed, in order from top
 to bottom.
 
+The following environment variables are available inside the command:
+
+* KARAJO_HOOK_COUNTER: contains the current hook counter.
+
 
 [#config_job]
 === Job

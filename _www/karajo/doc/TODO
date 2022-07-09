@@ -14,3 +14,5 @@
 	kind = telegram | slack
 	api_key = <string>
 --
+[ ] Hook: add options to pass value using environment variables to the
+command.

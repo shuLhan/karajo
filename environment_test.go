@@ -25,6 +25,7 @@ func TestLoadEnvironment(t *testing.T) {
 					Path:   "/test-fail",
 					Secret: "s3cret",
 					Commands: []string{
+						`echo Counter is $KARAJO_HOOK_COUNTER`,
 						`echo Test hook fail`,
 						`command-not-found`,
 					},
@@ -34,6 +35,7 @@ func TestLoadEnvironment(t *testing.T) {
 					Path:        "/test-random",
 					Secret:      "s3cret",
 					Commands: []string{
+						`echo Counter is $KARAJO_HOOK_COUNTER`,
 						`rand=$(($RANDOM%2)) && echo $rand && exit $rand`,
 					},
 				},
@@ -41,6 +43,7 @@ func TestLoadEnvironment(t *testing.T) {
 					Path:   "/test-success",
 					Secret: "s3cret",
 					Commands: []string{
+						`echo Counter is $KARAJO_HOOK_COUNTER`,
 						`echo Test hook success`,
 					},
 				},

@@ -47,6 +47,8 @@ var (
 
 const (
 	defHookLogRetention = 5
+
+	hookEnvCounter = "KARAJO_HOOK_COUNTER"
 )
 
 // HookHandler define a function signature for handling Hook using code.
@@ -108,6 +110,11 @@ type Hook struct {
 	lastCounter  int64
 
 	sync.Mutex
+}
+
+func (hook *Hook) generateCmdEnvs() (env []string) {
+	env = append(env, fmt.Sprintf("%s=%d", hookEnvCounter, hook.lastCounter))
+	return env
 }
 
 func (hook *Hook) init(env *Environment, name string) (err error) {
@@ -275,6 +282,7 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 				"-c",
 				cmd,
 			},
+			Env:    hook.generateCmdEnvs(),
 			Stdout: hlog,
 			Stderr: hlog,
 		}
