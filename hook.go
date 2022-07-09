@@ -5,6 +5,7 @@ package karajo
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -228,6 +229,7 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 		cmd     string
 		expSign string
 		gotSign string
+		x       int
 	)
 
 	// Authenticated request by checking the request body.
@@ -262,7 +264,9 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	}
 
 	// Run commands.
-	for _, cmd = range hook.Commands {
+	for x, cmd = range hook.Commands {
+		fmt.Fprintf(hlog, "\n=== Execute %2d: %s\n", x, cmd)
+
 		execCmd = exec.Cmd{
 			Path: "/bin/sh",
 			Dir:  hook.dirWork,

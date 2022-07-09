@@ -511,6 +511,10 @@ func (job *Job) execute() {
 		return
 	}
 
+	log = "=== Starting job " + job.ID
+	job.mlog.Outf(log)
+	job.Log.Push(fmt.Sprintf("%s: %s", logTime, log))
+
 	httpRes, payload, err = job.httpc.Do(httpReq)
 	if err != nil {
 		log = fmt.Sprintf("!!! %s", err)
