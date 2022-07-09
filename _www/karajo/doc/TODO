@@ -1,0 +1,16 @@
+= TODO
+
+[x] Authorize HTTP APIs using secret
+[x] Hook: load log numbers
+[x] Hook: log retentions
+[ ] Return JSON Job Log as string instead base64.
+[ ] Hook named log is not allowed
+[x] Unified refresh using single API /api/environment
+[x] Add dir_public to serve the content to public as HTTP
+[ ] Add report
++
+--
+	[report "<name>"]
+	kind = telegram | slack
+	api_key = <string>
+--

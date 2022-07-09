@@ -68,6 +68,13 @@ type Environment struct {
 
 	file string
 
+	// DirPublic define a path to serve to public.
+	// While the WUI is served under "/karajo", a directory dir_public
+	// will be served under "/".
+	// A dir_public can contains sub directory as long as its name is not
+	// "karajo".
+	DirPublic string `ini:"karajo::dir_public"`
+
 	// Secret contains string to authorize HTTP API using signature.
 	// The signature is generated from HTTP payload (query or body) with
 	// HMAC+SHA-256.

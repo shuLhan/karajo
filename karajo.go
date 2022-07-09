@@ -100,7 +100,27 @@ func New(env *Environment) (k *Karajo, err error) {
 
 	serverOpts.Address = k.env.ListenAddress
 
-	memfsWww.Opts.Development = env.IsDevelopment
+	memfsWww.Opts.TryDirect = env.IsDevelopment
+
+	if len(env.DirPublic) != 0 {
+		var (
+			opts = memfs.Options{
+				Root:      env.DirPublic,
+				TryDirect: true,
+			}
+			mfs *memfs.MemFS
+		)
+
+		mfs, err = memfs.New(&opts)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", logp, err)
+		}
+
+		mfs = memfs.Merge(mfs, memfsWww)
+		mfs.Root.SysPath = env.DirPublic
+		mfs.Opts.TryDirect = true
+		serverOpts.Memfs = mfs
+	}
 
 	k.Server, err = libhttp.NewServer(&serverOpts)
 	if err != nil {

@@ -56,6 +56,7 @@ name = <string>
 listen_address = [<ip>:<port>]
 http_timeout = [<duration>]
 dir_base = <path>
+dir_public = <path>
 secret = <string>
 ----
 
@@ -92,6 +93,12 @@ $DirBase
 
 Each job log stored under directory /var/log/karajo/job and the job state
 under directory /var/run/karajo/job.
+
+The "dir_public" option define a path to serve to the public.
+While the WUI is served under "/karajo", a directory dir_public will be served
+under "/".
+A dir_public can contains sub directory as long as its name is not
+"karajo".
 
 The "secret" field define a string to check signature of request.
 Each request sign the payload (query string or body) with HMAC + SHA-256 using

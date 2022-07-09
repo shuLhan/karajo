@@ -18,6 +18,7 @@ func TestLoadEnvironment(t *testing.T) {
 			HttpTimeout:   time.Duration(5 * time.Minute),
 			Secret:        "s3cret",
 			DirBase:       "testdata",
+			DirPublic:     "testdata",
 			file:          "testdata/karajo.conf",
 			Hooks: map[string]*Hook{
 				"test fail": &Hook{

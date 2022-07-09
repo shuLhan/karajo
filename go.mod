@@ -3,8 +3,8 @@ module git.sr.ht/~shulhan/karajo
 go 1.17
 
 require (
-	git.sr.ht/~shulhan/ciigo v0.8.1
-	github.com/shuLhan/share v0.38.1-0.20220702080257-3a61112d7a4d
+	git.sr.ht/~shulhan/ciigo v0.8.2-0.20220709072950-837b649ab028
+	github.com/shuLhan/share v0.39.1-0.20220709072157-a39d5d2246f8
 )
 
 require (
@@ -14,3 +14,4 @@ require (
 )
 
 //replace github.com/shuLhan/share => ../share
+//replace git.sr.ht/~shulhan/ciigo => ../ciigo
