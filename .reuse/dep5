@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: ciigo
+Upstream-Name: karajo
 Upstream-Contact: Shulhan <ms@kilabit.info>
-Source: https://git.sr.ht/~shulhan/ciigo
+Source: https://git.sr.ht/~shulhan/karajo
 
 Files: CHANGELOG.adoc
 Copyright: 2021 Shulhan <ms@kilabit.info>
