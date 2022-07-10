@@ -221,7 +221,7 @@ If one have job that need to run less than 30 seconds, it should be run on
 single program.
 --
 
-`max_requests`:: maximum number of requests executed by karajo.
+`max_requests`:: Define the Maximum number of requests executed by karajo.
 This field is optional default to DefaultMaxRequests.
 
 `http_method`:: Define the HTTP method used to request job execution.
@@ -293,15 +293,68 @@ All HTTP response is encoded in the JSON format, with the following wrapper,
 [#http_api_schemas]
 === Schemas
 
-[#schema_hook]
-==== HookLog
+[#schema_environment]
+==== Environment
+
+JSON format,
 
 ----
 {
-	"HookID": <string>
-	"Name": <string>
-	"Status": <string>
-	"Content": <base64>
+	"Hooks": {<Hook.Name>: <Hook>, ...},
+	"Jobs": {<Job.Name>: <Job>, ...},
+
+	"Name": <string>,
+	"ListenAddress": <string>,
+	"DirBase": <string>,
+	"DirPublic": <string>,
+
+	"HttpTimeout": <number>,
+	"IsDevelopment": <boolean>
+}
+----
+
+* `Hooks`: list of Hook.
+* `Jobs`: list of Job.
+
+* `Name`: the karajo server name.
+* `ListenAddress`: the address where karajo HTTP server listening for request.
+* `DirBase`: The path to directory used as working directory.
+* `DirPublic`: The path to directory served to public.
+
+* `HttpTimeout`: default HTTP timeout for job in nano-second.
+* `IsDevelopment`: true if current karajo server run for testing.
+
+
+[#schema_hook]
+==== Hook
+
+JSON format,
+
+----
+{
+	"ID": <string>,
+	"Name": <string>,
+	"Description": <string>,
+	"Path": <string>,
+	"LogRetention": <number>,
+	"LastStatus": <"success"|"fail">,
+	"Commands": [<string>, ...],
+	"Logs": [<HookLog>, ...]
+}
+----
+
+
+[#schema_hooklog]
+==== HookLog
+
+JSON format,
+
+----
+{
+	"HookID": <string>,
+	"Name": <string>,
+	"Status": <string>,
+	"Content": <base64>,
 	"Counter": <number>
 }
 ----
@@ -316,42 +369,56 @@ All HTTP response is encoded in the JSON format, with the following wrapper,
 [#http_api_schema_job]
 ====  Job
 
-Job schema,
+JSON format,
 
 ----
 {
-        "ID": <string>,
-        "Name": <string>,
-        "Description": <string>,
-        "HttpUrl": <string>,
-        "HttpHeaders": [<string>],
-        "HttpInsecure": <boolean>,
-        "HttpTimeout": <number>,
-        "Interval": <number>,
-        "MaxRequest": <number>,
-        "NumRequests": <number>,
-        "LastRun": <string>,
-        "NextRun": <string>,
-        "Status": <string>,
+	"LastRun": <string>,
+	"Status": <string>,
+	"NextRun": <string>,
+	"Log": [<string>, ...],
+
+	"ID": <string>,
+	"Name": <string>,
+	"Description": <string>,
+
+	"HttpMethod": <string>,
+	"HttpUrl": <string>,
+	"HttpRequestType": <string>,
+	"HttpHeaders": [<string>],
+	"HttpTimeout": <number>,
+
+	"Interval": <number>,
+	"MaxRequests": <number>,
+	"NumRequests": <number>,
+	"HttpInsecure": <boolean>
 }
 ----
+
+* `LastRun`: date and time when the job last run, in the format RFC3339,
+* `Status`: status of the last job running, its either "started, "success",
+  "failed", or "paused".
+* `NextRun`: date and time when the next job will be executed, in the format
+  RFC3339.
+* `Log`: job logs as array.
 
 * `ID`: unique job ID
 * `Name`: human representation of job name.
 * `Description`: job description, can be HTML.
+
+* `HttpMethod`: the HTTP method used to invoke.
 * `HttpUrl`: the URL where job will be executed.
+* `HttpRequestType`: the request type for HTTP.
 * `HttpHeaders`: list of string, in the format of HTTP header "Key: Value",
   which will be send when invoking the job at `HttpUrl`.
 * `HttpTimeout`: number of nano-seconds when the job will be considered to be
   timeout.
+
 * `Interval`: a period of nano-seconds when the job will be executed.
-* `MaxRequest`: maximum number of job can be requested at a time.
+* `MaxRequests`: maximum number of job can be requested at a time.
 * `NumRequests`: current number of job running.
-* `LastRun`: date and time when the job last run, in the format RFC3339,
-* `NextRun`: date and time when the next job will be executed, in the format
-  RFC3339.
-* `Status`: status of the last job running, its either "started, "success",
-  "failed", or "paused".
+* `HttpInsecure`: true if the HttpUrl use HTTPS schema with self-signed
+  certificate.
 
 
 [#http_api_environment]
@@ -371,20 +438,10 @@ On success, it will return the Environment object,
 
 ----
 {
-        "Name": <string>,
-        "ListenAddress": <string>,
-        "HttpTimeout": <number>
-        "DirLogs": <string>,
-        "Jobs": [<Job>]
+	"code": 200,
+	"data": <Environment>
 }
 ----
-
-* `Name`: the karajo server name.
-* `ListenAddress`: the address where karajo HTTP server listening for request.
-* `HttpTimeout`: default HTTP timeout for job in nano-second.
-* `DirLogs`: the path to directory where the each job logs will be stored.
-* `Jobs`: list of Job.
-
 
 [#http_api_hook_log]
 === Get hook log
