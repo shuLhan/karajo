@@ -4,6 +4,219 @@ Shulhan <ms@kilabit.info>
 :sectanchors:
 :sectlinks:
 
+[#v0_4_0]
+== karajo v0.4.0 (2022-07-10)
+
+Highlights on this release,
+
+* Set minimum Go version to 1.17.
+* Introduce Hook, a HTTP endpoint that execute commands; reverse of Job.
+* Refactoring Environment.  Karajo now run under DirBase where all Hook and
+  Job logs, state stored.
+* Refactoring Job configuration.
+* Improve web user interface (WUI) refresh mechanism.
+* Add authorization to Job APIs using secret and signature mechanism.
+
+
+[#v0_4_0_breaking_changes]
+===  Breaking changes
+
+all: changes the Job configuration format to match with Hook::
++
+--
+Previously, the job section is defined using `[karajo "job"]`, while
+hook section is defined as `[hook "<name>"]`.
+
+The format on hook section is more friendly and short.
+So, to make it consistent we changes the job format to match with hook.
+The job section now become `[job "<name>"]`.
+--
+
+_www: refactoring the job interface::
++
+--
+Changes,
+
+*  replace button Attributes and Logs with single click on Job
+   name.
+*  we also minimize job refresh request from two (job and log)
+   into one: job only.
+*  move the Documentation link to the bottom
+*  simplify rendering job info and log into separate function
+*  update the Job status on refresh
+
+This changes affect the HTTP API for pausing and resuming
+the job to pass the job ID as query instead on path.
+--
+
+all: refactoring the Job::
++
+--
+The Job log now stored under Environment.dirLogJob + job.ID.
+
+The Job state is now split into separate struct jobState that contains
+last run time and status.
+
+The Job state now saved under Environment.dirRunJob + job.ID instead
+of saving all jobs using gob in one file.
+The Job state is stored as text that can read and edited by human.
+
+The Job IsPausing field is removed because its duplicate with Job Status.
+--
+
+all: refactoring the environment::
++
+--
+This changes remove DirLogs and add DirBase or ini file set under karajo
+section with option dir_base.
+
+The DirBase option define the base directory where configuration, job
+state, and log stored.
+This field is optional, default to current directory.
+The structure of directory follow the UNIX system,
+
+	$DirBase
+	|
+	|-- /etc/karajo/karajo.conf
+	|
+	+-- /var/log/karajo/job/$Job.ID
+	|
+	+-- /var/run/karajo/job/$Job.ID
+
+Each job log stored under directory /var/log/karajo/job and the job state
+under directory /var/run/karajo/job.
+--
+
+
+[#v0_4_0_new_features]
+===  New features
+
+all: add option to serve directory to public::
++
+--
+In the Environment we add field DirPublic that define a path to serve
+to public.
+
+While the WUI is served under "/karajo", a directory dir_public
+will be served under "/".
+A dir_public can contains sub directory as long as its name is not
+"karajo".
+
+In the configuration file, the DirPublic is set under
+"karajo::dir_public" option.
+--
+
+all: authorize HTTP API for pausing and resuming Job::
++
+--
+The Environment now have field Secret that contains secret to check
+the signature from HTTP API for pausing and resuming Job.
+
+This require adding input field on the WUI to input the secret, generate
+signature, and pass it on each request for Job pause and resume.
+--
+
+all: implement Hook::
++
+--
+Hook is the HTTP endpoint that run a function or list of commands upon
+receiving request, a reverse of what a Job.
+
+Each Hook contains Secret for authenticating request, a working directory,
+and a callback or list of commands to be executed when the request
+received.
+
+The circle is now complete!
+--
+
+all: add option to sign the Job payload using Secret::
++
+--
+The Secret field (or "secret" option) define a string to sign the request
+query or body with HMAC+SHA-256.
+The signature is sent on HTTP header "x-karajo-sign" as hex string.
+This field is optional.
+--
+
+all: add option to set HTTP method and request type on Job::
++
+--
+The HttpMethod field (or http_method in configuration) set the HTTP
+method in request.
+Its accept only GET, POST, PUT, or DELETE.
+This field is optional, default to GET if its empty.
+
+The HttpRequestType field (or http_request_type in configuration) define
+the HTTP request type.
+Its accept only,
+
+  - query: no header Content-Type to be set, reserved for future use;
+  - form: header Content-Type set to "application/x-www-form-urlencoded";
+  - json: header Content-Type set to "application/json".
+
+The type "form" and "json" only applicable if the method is POST or PUT.
+This field is optional, default to query.
+--
+
+[#v0_4_0_enhancements]
+===  Enhancements
+
+_www/karajo: refresh whole hooks and jobs through environment::
++
+--
+Instead of refreshing only Jobs and its log when its opened, re-fetch
+the environment (that include Hooks and Jobs) and render them every 10
+seconds.
+--
+
+all: send the current epoch on each Job execution::
++
+--
+Each Job execution send the parameter named `_karajo_epoch` with value is
+current server Unix time.
+
+If the request type is `query` then the parameter is inside the query URL.
+If the request type is `form` then the parameter is inside the body.
+If the request type is `json` then the parameter is inside the body as
+JSON object, for example `{"_karajo_epoch":1656750073}`.
+--
+
+all: load previous job log on start up::
++
+--
+Upon started the Job log will be filled with the last logs.
+Currently, its read 2048 bytes from the end of log file.
+--
+
+
+[#v0_4_0_chores]
+===  Chores
+
+all: add test for random hook and job result::
++
+--
+The test-random hook will execute command:
+
+	rand=$(($RANDOM%2)) && echo $rand && exit $rand
+
+Sometimes it will fail and sometimes it will success.
+This will allow us to check the user interface for multiple status on
+one hook or log.
+--
+
+all: generate ID using lib/net/html.NormalizeForID::
++
+--
+The NormalizeForID replace white spaces non ASCII letters, digits, '-',
+'_' with '_'.
+--
+
+all: add documentation inside the website under /karajo/doc::
++
+--
+The documentation is the same with README but formatted using asciidoc.
+--
+
 
 [#v0_3_0]
 == karajo v0.3.0 (2022-03-12)
