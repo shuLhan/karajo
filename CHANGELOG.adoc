@@ -1,5 +1,11 @@
 = karajo changelog
+Shulhan <ms@kilabit.info>
+:toc:
+:sectanchors:
+:sectlinks:
 
+
+[#v0_3_0]
 == karajo v0.3.0 (2022-03-12)
 
 This release change the license of karajo software to GPL 3.0 or later.
@@ -7,13 +13,16 @@ This release change the license of karajo software to GPL 3.0 or later.
 See https://kilabit.info/journal/2022/gpl/ for more information.
 
 
+[#v0_2_1]
 == karajo v0.2.1 (2022-01-10)
 
 This release update all dependencies and codes related to affected changes.
 
 
+[#v0_2_0]
 == karajo v0.2.0 (2021-12-07)
 
+[#v0_2_0_breaking_changes]
 ===  Breaking changes
 
 *  all: move the karajo web user interface to sub-directory karajo
@@ -22,6 +31,7 @@ In case the user of karajo module also have embedded memfs, merging
 the Karajo memfs with their memfs may cause conflict (especially if
 the user have /index.html and /favicon.png).
 
+[#v0_2_0_enhancements]
 ===  Enhancements
 
 *  www: make the showAttrs and showLogs to pool per 10 seconds
@@ -33,11 +43,13 @@ attributes and/or logs will be refreshed every 5 minutes.
 In order to make user can view the latest attributes and/logs
 immediately, we changes the interval to 10 seconds.
 
+[v0_2_0_chores]
 ===  Chores
 
 *  all: add prefix "http://" to address when logging at Start
 
 
+[#v0_1_0]
 == karajo v0.1.0 (2021-06-05)
 
 The first release of karajo, programmable HTTP workers with web interface.
