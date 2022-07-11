@@ -232,6 +232,7 @@ function renderHooks(hooks) {
 function renderJob(job) {
   renderJobAttrs(job);
   renderJobLog(job);
+  renderJobNextRun(job);
   renderJobStatus(job);
 }
 
@@ -276,6 +277,17 @@ function renderJobLog(job) {
   el.scrollTop = el.scrollHeight;
 }
 
+function renderJobNextRun(job) {
+  let now = new Date();
+  let nextRun = new Date(job.NextRun);
+  let seconds = Math.floor((nextRun - now) / 1000);
+  let hours = Math.floor(seconds / 3600);
+  let minutes = Math.floor((seconds % 3600) / 60);
+  let remSeconds = Math.floor(seconds % 60);
+  let elNextRun = document.getElementById(job._idNextRun);
+  elNextRun.innerText = `Next run in ${hours}h ${minutes}m ${remSeconds}s`;
+}
+
 function renderJobStatus(job) {
   let el = document.getElementById(job._idStatus);
   el.className = `name ${job.Status}`;
@@ -289,10 +301,11 @@ function renderJobs(jobs) {
     let job = jobs[name];
 
     job._id = `job_${job.ID}`;
-    job._idAttrs = job.ID + "_attrs";
-    job._idInfo = job.ID + "_info";
-    job._idLog = job.ID + "_log";
-    job._idStatus = job.ID + "_status";
+    job._idAttrs = `job_${job.ID}_attrs`;
+    job._idInfo = `job_${job.ID}_info`;
+    job._idLog = `job_${job.ID}_log`;
+    job._idStatus = `job_${job.ID}_status`;
+    job._idNextRun = `job_${job.ID}_next_run`;
     job._display = "none";
 
     if (_jobs != null) {
@@ -316,6 +329,7 @@ function renderJobs(jobs) {
           <a href="#${job._id}" onclick='jobInfo("${job.ID}")'>
             ${job.Name}
           </a>
+          <span id="${job._idNextRun}" class="next_run"></span>
         </div>
 
         <div id="${job._idInfo}" style="display: ${job._display};">
