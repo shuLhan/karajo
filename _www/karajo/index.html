@@ -10,9 +10,13 @@
     <script type="text/javascript" src="/karajo/crypto-js.min.js"></script>
     <script type="text/javascript" src="/karajo/index.js"></script>
     <style>
+      body {
+        margin: 0;
+        padding: 20px 0 0 0;
+      }
+
       #timer {
         font-size: 12px;
-        float: right;
       }
 
       .auth {
@@ -28,6 +32,20 @@
         background-color: antiquewhite;
         padding: 4px;
         margin: 4px 0;
+      }
+
+      .header-fixed {
+        background-color: whitesmoke;
+        border-bottom: 1px solid silver;
+        padding: 4px;
+        position: fixed;
+        text-align: center;
+        top: 0;
+        width: 100%;
+      }
+
+      .content {
+        padding: 8px;
       }
 
       .name {
@@ -72,6 +90,7 @@
         background-color: lightgray;
         padding: 1em;
         white-space: pre-wrap;
+        word-break: break-word;
       }
 
       .footer {
@@ -90,25 +109,30 @@
   </head>
 
   <body onload="main()">
-    <h2>
-      <span id="title">Karajo</span>
+    <div class="header-fixed">
       <span id="timer"> </span>
-    </h2>
-
-    <div class="auth">
-      <label for="_secret">Secret: </label>
-      <input id="_secret" />
-      <div class="hint">Secret is required to pause or resume job.</div>
     </div>
 
-    <h3>Hooks</h3>
-    <div id="hooks"></div>
+    <div class="content">
+      <h2>
+        <span id="title">Karajo</span>
+      </h2>
 
-    <h3>Jobs</h3>
-    <div id="jobs"></div>
+      <div class="auth">
+        <label for="_secret">Secret: </label>
+        <input id="_secret" />
+        <div class="hint">Secret is required to pause or resume job.</div>
+      </div>
 
-    <div id="out"></div>
-    <div id="err"></div>
+      <h3>Hooks</h3>
+      <div id="hooks"></div>
+
+      <h3>Jobs</h3>
+      <div id="jobs"></div>
+
+      <div id="out"></div>
+      <div id="err"></div>
+    </div>
 
     <div class="footer">
       <div>
