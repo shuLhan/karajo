@@ -131,6 +131,7 @@ async function jobResume(id) {
 // renderHook render single hook.
 function renderHook(hook) {
   renderHookAttributes(hook);
+  renderHookStatus(hook);
 }
 
 function renderHookAttributes(hook) {
@@ -173,18 +174,22 @@ function renderHookAttributes(hook) {
   el.innerHTML = out;
 }
 
+function renderHookStatus(hook) {
+  let el = document.getElementById(hook._idStatus);
+  el.className = `name ${hook.LastStatus}`;
+}
+
 // renderHooks render list of hooks.
 function renderHooks(hooks) {
   let elHooks = document.getElementById("hooks");
-  let out = "";
 
   for (let name in hooks) {
     let hook = hooks[name];
 
     hook._id = `hook_${hook.ID}`;
-    hook._idInfo = `hook_${hook.ID}_info`;
     hook._idAttrs = `hook_${hook.ID}_attrs`;
-    hook._idLog = `hook_${hook.ID}_log`;
+    hook._idInfo = `hook_${hook.ID}_info`;
+    hook._idStatus = `hook_${hook.ID}_status`;
     hook._display = "none";
 
     if (_hooks != null) {
@@ -196,15 +201,15 @@ function renderHooks(hooks) {
 
     _hooks[hook.ID] = hook;
 
-    let elHook = document.getElementById(hook._id);
-    if (elHook != null) {
+    let elHookInfo = document.getElementById(hook._idInfo);
+    if (elHookInfo != null) {
       renderHook(hook);
       continue;
     }
 
-    out = `
+    let out = `
       <div id="${hook._id}" class="hook">
-        <div id="${hook.ID}" class="name ${hook.LastStatus}">
+        <div id="${hook._idStatus}" class="name ${hook.LastStatus}">
           <a href="#${hook._id}" onclick='hookInfo("${hook.ID}")'>
             ${hook.Name}
           </a>
@@ -216,7 +221,9 @@ function renderHooks(hooks) {
       </div>
     `;
 
-    elHooks.innerHTML += out;
+    let elHook = document.createElement("div");
+    elHook.innerHTML = out;
+    elHooks.appendChild(elHook);
 
     renderHook(hook);
   }
