@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	liberrors "github.com/shuLhan/share/lib/errors"
 	libhttp "github.com/shuLhan/share/lib/http"
@@ -73,6 +74,9 @@ type Hook struct {
 	// This field is optional, it is only used if Hook created through
 	// code.
 	Call HookHandler `json:"-" ini:"-"`
+
+	// The last time the Hook is finished running, in UTC.
+	LastRun time.Time `ini:"-"`
 
 	// The id of the hook.
 	// It is normalized from the Name.
@@ -175,10 +179,11 @@ func (hook *Hook) initDirsState(env *Environment) (err error) {
 // initLogs load the hook logs state, counter and status.
 func (hook *Hook) initLogs() (err error) {
 	var (
-		dir  *os.File
-		hlog *HookLog
-		fi   os.FileInfo
-		fis  []os.FileInfo
+		dir       *os.File
+		hlog      *HookLog
+		fi        os.FileInfo
+		fiModTime time.Time
+		fis       []os.FileInfo
 	)
 
 	dir, err = os.Open(hook.dirLog)
@@ -203,7 +208,16 @@ func (hook *Hook) initLogs() (err error) {
 			hook.lastCounter = hlog.Counter
 			hook.LastStatus = hlog.Status
 		}
+
+		fiModTime = fi.ModTime()
+		if hook.LastRun.IsZero() {
+			hook.LastRun = fiModTime
+		} else if fiModTime.After(hook.LastRun) {
+			hook.LastRun = fiModTime
+		}
 	}
+
+	hook.LastRun = hook.LastRun.UTC().Round(time.Second)
 
 	sort.Slice(hook.Logs, func(x, y int) bool {
 		return hook.Logs[x].Counter < hook.Logs[y].Counter
@@ -328,6 +342,7 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err
 
 	hook.Logs = append(hook.Logs, hlog)
 	hook.logsPrune()
+	hook.LastRun = time.Now().UTC().Round(time.Second)
 
 	err = hlog.flush()
 	if err != nil {

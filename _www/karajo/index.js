@@ -131,6 +131,7 @@ async function jobResume(id) {
 // renderHook render single hook.
 function renderHook(hook) {
   renderHookAttributes(hook);
+  renderHookLastRun(hook);
   renderHookStatus(hook);
 }
 
@@ -141,6 +142,7 @@ function renderHookAttributes(hook) {
     <br/>
     <div>ID: ${hook.ID}</div>
     <div>Path: ${hook.Path}</div>
+    <div>Last run: ${hook.LastRun}</div>
     <div class="hook_commands">
       Commands:
   `;
@@ -174,6 +176,17 @@ function renderHookAttributes(hook) {
   el.innerHTML = out;
 }
 
+function renderHookLastRun(hook) {
+  let now = new Date();
+  let lastRun = new Date(hook.LastRun);
+  let seconds = Math.floor((now - lastRun) / 1000);
+  let hours = Math.floor(seconds / 3600);
+  let minutes = Math.floor((seconds % 3600) / 60);
+  let remSeconds = Math.floor(seconds % 60);
+  let elLastRun = document.getElementById(hook._idLastRun);
+  elLastRun.innerText = `Last run ${hours}h  ${minutes}m ${remSeconds}s ago`;
+}
+
 function renderHookStatus(hook) {
   let el = document.getElementById(hook._idStatus);
   el.className = `name ${hook.LastStatus}`;
@@ -189,6 +202,7 @@ function renderHooks(hooks) {
     hook._id = `hook_${hook.ID}`;
     hook._idAttrs = `hook_${hook.ID}_attrs`;
     hook._idInfo = `hook_${hook.ID}_info`;
+    hook._idLastRun = `hook_${hook.ID}_last_run`;
     hook._idStatus = `hook_${hook.ID}_status`;
     hook._display = "none";
 
@@ -213,6 +227,7 @@ function renderHooks(hooks) {
           <a href="#${hook._id}" onclick='hookInfo("${hook.ID}")'>
             ${hook.Name}
           </a>
+          <span id="${hook._idLastRun}" class="last_run"></span>
         </div>
 
         <div id="${hook._idInfo}" style="display: ${hook._display};">
