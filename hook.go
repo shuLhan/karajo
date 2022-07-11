@@ -48,7 +48,9 @@ var (
 const (
 	defHookLogRetention = 5
 
-	hookEnvCounter = "KARAJO_HOOK_COUNTER"
+	hookEnvCounter   = "KARAJO_HOOK_COUNTER"
+	hookEnvPath      = "PATH"
+	hookEnvPathValue = "/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl"
 )
 
 // HookHandler define a function signature for handling Hook using code.
@@ -114,6 +116,7 @@ type Hook struct {
 
 func (hook *Hook) generateCmdEnvs() (env []string) {
 	env = append(env, fmt.Sprintf("%s=%d", hookEnvCounter, hook.lastCounter))
+	env = append(env, fmt.Sprintf("%s=%s", hookEnvPath, hookEnvPathValue))
 	return env
 }
 
