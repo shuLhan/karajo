@@ -248,13 +248,17 @@ func (hook *Hook) logsPrune() {
 
 func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
-		execCmd exec.Cmd
-		hlog    *HookLog
-		cmd     string
-		expSign string
-		gotSign string
-		x       int
+		zeroTime time.Time
+		execCmd  exec.Cmd
+		hlog     *HookLog
+		cmd      string
+		expSign  string
+		gotSign  string
+		x        int
 	)
+
+	hook.LastStatus = JobStatusStarted
+	hook.LastRun = zeroTime
 
 	// Authenticated request by checking the request body.
 	gotSign = epr.HttpRequest.Header.Get(HeaderNameXKarajoSign)
@@ -276,14 +280,9 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	hook.lastCounter++
 	hlog = newHookLog(hook.ID, hook.dirLog, hook.lastCounter)
 
-	hook.LastStatus = JobStatusSuccess
-
 	// Call the hook.
 	if hook.Call != nil {
 		err = hook.Call(hlog, epr)
-		if err != nil {
-			hook.LastStatus = JobStatusFailed
-		}
 		return hook.writeResponse(epr, hlog, err)
 	}
 
@@ -306,7 +305,6 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 
 		err = execCmd.Run()
 		if err != nil {
-			hook.LastStatus = JobStatusFailed
 			return hook.writeResponse(epr, hlog, err)
 		}
 	}
@@ -343,6 +341,7 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err
 	hook.Logs = append(hook.Logs, hlog)
 	hook.logsPrune()
 	hook.LastRun = time.Now().UTC().Round(time.Second)
+	hook.LastStatus = hlog.Status
 
 	err = hlog.flush()
 	if err != nil {

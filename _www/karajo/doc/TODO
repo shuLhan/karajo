@@ -21,8 +21,13 @@ command.
 	[hook]
 	command_env = key:value
 --
-[ ] Change the job configuration format,
+[x] Change the job configuration format,
 +
 --
 	[job "<name>"]
 --
+
+[ ] Add HTTP API to force build a job
+[ ] Add HTTP API to rename a hook
+[ ] Add HTTP API to rename a job
+[ ] Add HookMaxRunning

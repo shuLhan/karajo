@@ -177,13 +177,20 @@ function renderHookAttributes(hook) {
 }
 
 function renderHookLastRun(hook) {
+  let elLastRun = document.getElementById(hook._idLastRun);
+
   let now = new Date();
   let lastRun = new Date(hook.LastRun);
+
+  if (lastRun <= 0) {
+    elLastRun.innerText = `Running ...`;
+    return;
+  }
+
   let seconds = Math.floor((now - lastRun) / 1000);
   let hours = Math.floor(seconds / 3600);
   let minutes = Math.floor((seconds % 3600) / 60);
   let remSeconds = Math.floor(seconds % 60);
-  let elLastRun = document.getElementById(hook._idLastRun);
   elLastRun.innerText = `Last run ${hours}h  ${minutes}m ${remSeconds}s ago`;
 }
 
@@ -293,13 +300,20 @@ function renderJobLog(job) {
 }
 
 function renderJobNextRun(job) {
+  let elNextRun = document.getElementById(job._idNextRun);
+
   let now = new Date();
   let nextRun = new Date(job.NextRun);
+
   let seconds = Math.floor((nextRun - now) / 1000);
+  if (seconds <= 0) {
+    elNextRun.innerText = `Running ...`;
+    return;
+  }
+
   let hours = Math.floor(seconds / 3600);
   let minutes = Math.floor((seconds % 3600) / 60);
   let remSeconds = Math.floor(seconds % 60);
-  let elNextRun = document.getElementById(job._idNextRun);
   elNextRun.innerText = `Next run in ${hours}h ${minutes}m ${remSeconds}s`;
 }
 

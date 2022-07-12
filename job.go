@@ -487,6 +487,8 @@ func (job *Job) execute() {
 	}
 	defer job.decrement()
 
+	job.setStatus(JobStatusStarted)
+
 	job.params[defJosParamEpoch] = now.Unix()
 
 	switch job.requestType {
@@ -525,8 +527,10 @@ func (job *Job) execute() {
 		log = fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
 		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+		job.Lock()
 		job.Status = JobStatusFailed
 		job.LastRun = now
+		job.Unlock()
 		return
 	}
 
@@ -534,16 +538,20 @@ func (job *Job) execute() {
 		log = fmt.Sprintf("!!! %s: %s", httpRes.Status, payload)
 		job.mlog.Errf(log)
 		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+		job.Lock()
 		job.Status = JobStatusFailed
 		job.LastRun = now
+		job.Unlock()
 		return
 	}
 
 	log = fmt.Sprintf(">>> %s\n", payload)
 	job.mlog.Outf(log)
 	job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
+	job.Lock()
 	job.Status = JobStatusSuccess
 	job.LastRun = now
+	job.Unlock()
 }
 
 // computeFirstTimer compute the duration when the job will be running based
@@ -592,6 +600,12 @@ func (job *Job) resume() {
 	job.mlog.Outf("resuming...\n")
 	job.Lock()
 	job.Status = JobStatusStarted
+	job.Unlock()
+}
+
+func (job *Job) setStatus(status string) {
+	job.Lock()
+	job.Status = status
 	job.Unlock()
 }
 
