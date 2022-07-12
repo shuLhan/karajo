@@ -266,13 +266,17 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 		return nil, &ErrHookForbidden
 	}
 
-	mlog.Outf("%s: request body: %s", epr.HttpRequest.URL, epr.RequestBody)
-
 	expSign = Sign(epr.RequestBody, []byte(hook.Secret))
 	if expSign != gotSign {
-		mlog.Outf("Sign: exp %s got %s", expSign, gotSign)
+		mlog.Outf("hook: %s: expecting signature %s got %s", hook.ID, expSign, gotSign)
 		return nil, &ErrHookForbidden
 	}
+
+	hookq <- struct{}{}
+	mlog.Outf("hook: %s: started ...", hook.ID)
+	defer func() {
+		<-hookq
+	}()
 
 	hook.Lock()
 	defer hook.Unlock()
@@ -324,7 +328,6 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err
 
 	if err != nil {
 		hlog.Status = JobStatusFailed
-		mlog.Errf("hook: %s: %s", hook.Path, err)
 
 		e, ok = err.(*liberrors.E)
 		if !ok {
@@ -336,6 +339,7 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err
 	} else {
 		hlog.Status = JobStatusSuccess
 		res.Code = http.StatusOK
+		res.Message = "OK"
 	}
 
 	hook.Logs = append(hook.Logs, hlog)
@@ -345,9 +349,10 @@ func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err
 
 	err = hlog.flush()
 	if err != nil {
-		mlog.Errf("hook: %s: %s", hook.Path, err)
+		mlog.Errf("hook: %s: %s", hook.ID, err)
 	}
 
+	mlog.Outf("hook: %s: %s: %s", hook.ID, hlog.Status, res.Message)
 	epr.HttpWriter.WriteHeader(res.Code)
 
 	return json.Marshal(&res)

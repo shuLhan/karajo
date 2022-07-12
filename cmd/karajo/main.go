@@ -92,7 +92,7 @@ func main() {
 	defer func() {
 		var panicMsg = recover()
 		if panicMsg != nil {
-			mlog.Errf("recover: %s\n", panicMsg)
+			mlog.Errf("recover: %s", panicMsg)
 			mlog.Flush()
 			debug.PrintStack()
 			os.Exit(1)
@@ -176,7 +176,7 @@ func watchWww(running chan bool) {
 				continue
 			}
 
-			mlog.Outf("--- %d changes\n", nChanges)
+			mlog.Outf("--- %d changes", nChanges)
 			err = mfsWww.GoEmbed()
 			if err != nil {
 				mlog.Errf(err.Error())
@@ -190,7 +190,7 @@ func watchWww(running chan bool) {
 
 	// Run GoEmbed for the last time.
 	if nChanges > 0 {
-		mlog.Outf("--- %d changes\n", nChanges)
+		mlog.Outf("--- %d changes", nChanges)
 		err = mfsWww.GoEmbed()
 		if err != nil {
 			mlog.Errf(err.Error())

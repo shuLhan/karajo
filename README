@@ -63,6 +63,7 @@ http_timeout = [<duration>]
 dir_base = <path>
 dir_public = <path>
 secret = <string>
+max_hook_running = <number>
 ----
 
 `name`:: Define the name of the service.
@@ -123,6 +124,9 @@ this secret.
 The signature then sent in HTTP header "x-karajo-sign" as hex.
 This field is required.
 --
+
+`max_hook_running`:: Define the maximum hook running at the same time.
+This field is optional default to 1.
 
 
 [#config_hook]

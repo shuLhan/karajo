@@ -30,4 +30,4 @@ command.
 [ ] Add HTTP API to force build a job
 [ ] Add HTTP API to rename a hook
 [ ] Add HTTP API to rename a job
-[ ] Add HookMaxRunning
+[x] Add HookMaxRunning

@@ -166,10 +166,8 @@ func (job *Job) Start() {
 
 	job.NumRequests = 0
 
-	job.mlog.Outf("starting job: %+v\n", job)
-
 	job.NextRun = now.Add(firstTimer)
-	job.mlog.Outf("running the first job in %s ...\n", firstTimer)
+	job.mlog.Outf("running the first job in %s ...", firstTimer)
 
 	t = time.NewTimer(firstTimer)
 	for ever {
@@ -183,16 +181,18 @@ func (job *Job) Start() {
 		}
 	}
 
+	job.Lock()
 	job.NextRun = job.LastRun.Add(job.Interval)
-	job.mlog.Outf("running the next job at %s ...\n", job.NextRun.Format(defTimeLayout))
+	job.Unlock()
 
 	tick = time.NewTicker(job.Interval)
 	for {
 		select {
 		case <-tick.C:
 			job.execute()
+			job.Lock()
 			job.NextRun = job.LastRun.Add(job.Interval)
-			job.mlog.Outf("running the next job at %s\n", job.NextRun.Format(defTimeLayout))
+			job.Unlock()
 
 		case <-job.done:
 			return
@@ -202,7 +202,7 @@ func (job *Job) Start() {
 
 // Stop the job.
 func (job *Job) Stop() {
-	job.mlog.Outf("stopping job ...\n")
+	job.mlog.Outf("stopping job ...")
 	job.done <- true
 
 	job.mlog.Flush()
@@ -288,8 +288,9 @@ func (job *Job) init(env *Environment, name string) (err error) {
 // and then to file named job.ID in Environment.dirLogJob.
 func (job *Job) initLogger(env *Environment) (err error) {
 	var (
-		logp    = "initLogger"
-		lastLog = make([]byte, defJobLogSizeLoad)
+		logp       = "initLogger"
+		lastLog    = make([]byte, defJobLogSizeLoad)
+		mlogPrefix = fmt.Sprintf("%s:  job: %s:", env.Name, job.ID)
 
 		fi      os.FileInfo
 		nw      mlog.NamedWriter
@@ -300,7 +301,7 @@ func (job *Job) initLogger(env *Environment) (err error) {
 
 	job.Log = clise.New(defJobLogSize)
 
-	job.mlog = mlog.NewMultiLogger(defTimeLayout, job.ID+":", nil, nil)
+	job.mlog = mlog.NewMultiLogger(defTimeLayout, mlogPrefix, nil, nil)
 	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter("stderr", os.Stderr))
 	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter("stdout", os.Stdout))
 
@@ -518,11 +519,11 @@ func (job *Job) execute() {
 		return
 	}
 
-	log = "=== Starting job " + job.ID
+	log = "started ..."
 	job.mlog.Outf(log)
 	job.Log.Push(fmt.Sprintf("%s: %s", logTime, log))
 
-	httpRes, payload, err = job.httpc.Do(httpReq)
+	httpRes, _, err = job.httpc.Do(httpReq)
 	if err != nil {
 		log = fmt.Sprintf("!!! %s", err)
 		job.mlog.Errf(log)
@@ -535,7 +536,7 @@ func (job *Job) execute() {
 	}
 
 	if httpRes.StatusCode != http.StatusOK {
-		log = fmt.Sprintf("!!! %s: %s", httpRes.Status, payload)
+		log = fmt.Sprintf("!!! %s", httpRes.Status)
 		job.mlog.Errf(log)
 		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		job.Lock()
@@ -545,7 +546,7 @@ func (job *Job) execute() {
 		return
 	}
 
-	log = fmt.Sprintf(">>> %s\n", payload)
+	log = "finished"
 	job.mlog.Outf(log)
 	job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 	job.Lock()
@@ -590,14 +591,14 @@ func (job *Job) paramsToUrlValues() (url.Values, []byte) {
 }
 
 func (job *Job) pause() {
-	job.mlog.Outf("pausing...\n")
+	job.mlog.Outf("pausing...")
 	job.Lock()
 	job.Status = JobStatusPaused
 	job.Unlock()
 }
 
 func (job *Job) resume() {
-	job.mlog.Outf("resuming...\n")
+	job.mlog.Outf("resuming...")
 	job.Lock()
 	job.Status = JobStatusStarted
 	job.Unlock()

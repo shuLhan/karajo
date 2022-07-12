@@ -59,10 +59,15 @@ var (
 		Code:    http.StatusUnauthorized,
 		Message: "empty or invalid signature",
 	}
+
+	// hookq is the channel that limit the number of hook running at the
+	// same time.
+	hookq chan struct{}
 )
 
 type Karajo struct {
 	*libhttp.Server
+
 	env *Environment
 }
 
@@ -100,6 +105,8 @@ func New(env *Environment) (k *Karajo, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
+
+	hookq = make(chan struct{}, env.MaxHookRunning)
 
 	mlog.SetPrefix(env.Name + ":")
 
@@ -227,14 +234,16 @@ func (k *Karajo) registerHooks() (err error) {
 			return err
 		}
 	}
+
 	return nil
 }
 
 // Start all the jobs and the HTTP server.
 func (k *Karajo) Start() (err error) {
-	mlog.Outf("started the karajo server at http://%s/karajo\n", k.Server.Addr)
-
 	var job *Job
+
+	mlog.Outf("started the karajo server at http://%s/karajo", k.Server.Addr)
+
 	for _, job = range k.env.Jobs {
 		go job.Start()
 	}

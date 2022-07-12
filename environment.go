@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	defEnvName       = "karajo"
-	defListenAddress = ":31937"
-	defHttpTimeout   = 5 * time.Minute
+	defEnvName        = "karajo"
+	defHttpTimeout    = 5 * time.Minute
+	defListenAddress  = ":31937"
+	defMaxHookRunning = 1
 )
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
@@ -91,6 +92,10 @@ type Environment struct {
 	// This field is optional, default to 5 minutes.
 	HttpTimeout time.Duration `ini:"karajo::http_timeout"`
 
+	// MaxHookRunning define the maximum hook running at the same time.
+	// This field is optional default to 1.
+	MaxHookRunning int `ini:"karajo::max_hook_running"`
+
 	// IsDevelopment if its true, the assets will be loaded directly from
 	// disk instead from memory (memfs).
 	IsDevelopment bool
@@ -139,6 +144,9 @@ func (env *Environment) init() (err error) {
 	}
 	if env.HttpTimeout == 0 {
 		env.HttpTimeout = defHttpTimeout
+	}
+	if env.MaxHookRunning <= 0 {
+		env.MaxHookRunning = defMaxHookRunning
 	}
 
 	if len(env.Secret) == 0 {
