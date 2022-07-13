@@ -249,6 +249,7 @@ func (hook *Hook) logsPrune() {
 func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
 		zeroTime time.Time
+		now      time.Time
 		execCmd  exec.Cmd
 		hlog     *HookLog
 		cmd      string
@@ -292,7 +293,9 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 
 	// Run commands.
 	for x, cmd = range hook.Commands {
-		fmt.Fprintf(hlog, "\n=== Execute %2d: %s\n", x, cmd)
+		now = time.Now().UTC()
+		fmt.Fprintf(hlog, "\n%s === Execute %2d: %s\n",
+			now.Format(defTimeLayout), x, cmd)
 
 		execCmd = exec.Cmd{
 			Path: "/bin/sh",
