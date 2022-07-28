@@ -1,0 +1,40 @@
+= TODO
+
+List of works to do,
+
+*  Return JSON Job Log as string instead base64.
+
+*  Hook named `log` should not allowed.
+
+*  Add Report.
++
+--
+A Report is the one that registered by Job or Hook.
+Once is registered, the Job or Hook will send their log to Report object.
+
+Report configuration format,
+
+----
+[report "<name>"]
+kind = telegram | slack | email
+api_key = # For telegram and slack.
+from = # For email.
+to = # For email.
+----
+--
+
+*  Hook: add options to pass value using environment variables to the
+   command.
++
+--
+	[hook]
+	command_env = key:value
+--
+
+*  Add HTTP API to force build a job
+
+*  Add HTTP API to rename a hook
+
+*  Add HTTP API to rename a job
+
+*  Auto refresh hook log until its status is failed or success.
