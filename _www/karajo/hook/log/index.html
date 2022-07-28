@@ -38,29 +38,52 @@
       async function main() {
         let elContent = document.getElementById("content");
 
-        let httpRes = await fetch(
-          "/karajo/api/hook/log" + window.location.search
-        );
-
-        let res = await httpRes.json();
+        let res = await getHookLog();
         if (res.code != 200) {
           elContent.innerHTML = res.message;
           return;
         }
 
         let log = res.data;
-        let out = "";
 
         document.title = `${log.HookID} #${log.Counter}`;
 
-        out += `
-            <h2>${document.title}</h2>
-            <div class="log">
-${atob(log.Content)}
-            </div>
-        `;
+        let elTitle = document.createElement("h2");
+        elTitle.innerText = document.title;
 
-        elContent.innerHTML = out;
+        elContent.appendChild(elTitle);
+
+        let elLog = document.createElement("div");
+        elLog.className = "log";
+        elLog.innerText = atob(log.Content);
+
+        elContent.appendChild(elLog);
+
+        if (log.Status != "started") {
+          return;
+        }
+
+        let refreshInterval = setInterval(async () => {
+          res = await getHookLog();
+          if (res.code != 200) {
+            return;
+          }
+
+          log = res.data;
+          elLog.innerText = atob(log.Content);
+
+          if (log.Status == "success" || log.Status == "failed") {
+            clearInterval(refreshInterval);
+          }
+        }, 5000);
+      }
+
+      async function getHookLog() {
+        let httpRes = await fetch(
+          "/karajo/api/hook/log" + window.location.search
+        );
+
+        return await httpRes.json();
       }
     </script>
   </body>

@@ -36,5 +36,3 @@ to = # For email.
 *  Add HTTP API to rename a hook
 
 *  Add HTTP API to rename a job
-
-*  Auto refresh hook log until its status is failed or success.

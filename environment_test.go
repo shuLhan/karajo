@@ -52,6 +52,14 @@ func TestLoadEnvironment(t *testing.T) {
 						`x=$(($RANDOM%10)) && echo sleep in ${x}s && sleep $x`,
 					},
 				},
+				`Test long running`: &Hook{
+					Description: `The hook to test log refresh.`,
+					Path:        `/test-long-running`,
+					Secret:      `s3cret`,
+					Commands: []string{
+						`for ((x=0; x<90; x++)); do echo "$x"; sleep 1; done`,
+					},
+				},
 			},
 			Jobs: map[string]*Job{
 				"Test fail": &Job{
@@ -86,6 +94,15 @@ func TestLoadEnvironment(t *testing.T) {
 					HttpHeaders: []string{
 						"X: Y",
 					},
+				},
+				`Test long running`: &Job{
+					Description:     `The job to test hook log refresh.`,
+					Secret:          `s3cret`,
+					Interval:        time.Duration(2 * time.Minute),
+					MaxRequests:     1,
+					HttpMethod:      `POST`,
+					HttpUrl:         `/karajo/hook/test-long-running`,
+					HttpRequestType: `json`,
 				},
 			},
 		}
