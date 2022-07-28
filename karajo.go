@@ -273,7 +273,9 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 	res.Data = k.env
 
 	k.env.jobsLock()
+	k.env.hooksLock()
 	resbody, err = json.Marshal(res)
+	k.env.hooksUnlock()
 	k.env.jobsUnlock()
 
 	return resbody, err

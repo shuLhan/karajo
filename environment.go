@@ -125,6 +125,20 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 	return env, nil
 }
 
+func (env *Environment) hooksLock() {
+	var hook *Hook
+	for _, hook = range env.Hooks {
+		hook.Lock()
+	}
+}
+
+func (env *Environment) hooksUnlock() {
+	var hook *Hook
+	for _, hook = range env.Hooks {
+		hook.Unlock()
+	}
+}
+
 func (env *Environment) init() (err error) {
 	var (
 		logp = "init"

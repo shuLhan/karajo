@@ -134,8 +134,10 @@ func (hook *Hook) finish(hlog *HookLog, status string) {
 		mlog.Errf("hook: %s: %s", hook.ID, err)
 	}
 
+	hook.Lock()
 	hook.LastRun = time.Now().UTC().Round(time.Second)
 	hook.LastStatus = status
+	hook.Unlock()
 
 	mlog.Outf("hook: %s: %s", hook.ID, status)
 }
@@ -283,8 +285,10 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 		gotSign  string
 	)
 
+	hook.Lock()
 	hook.LastStatus = JobStatusStarted
 	hook.LastRun = zeroTime
+	hook.Unlock()
 
 	// Authenticated request by checking the request body.
 	gotSign = epr.HttpRequest.Header.Get(hook.HeaderSign)
@@ -328,13 +332,12 @@ func (hook *Hook) start(epr *libhttp.EndpointRequest) {
 	}()
 
 	hook.Lock()
-	defer hook.Unlock()
-
 	hook.lastCounter++
 	hlog = newHookLog(hook.ID, hook.dirLog, hook.lastCounter)
 
 	hook.Logs = append(hook.Logs, hlog)
 	hook.logsPrune()
+	hook.Unlock()
 
 	// Call the hook.
 	if hook.Call != nil {
