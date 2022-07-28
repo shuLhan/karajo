@@ -45,22 +45,7 @@ func main() {
 
 	switch cmd {
 	case cmdEmbed:
-		var opts = memfs.Options{
-			Root: "_www",
-			Excludes: []string{
-				`.*\.adoc$`,
-			},
-			Embed: memfs.EmbedOptions{
-				CommentHeader: `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
-// SPDX-License-Identifier: GPL-3.0-or-later
-`,
-				PackageName: "karajo",
-				VarName:     "memfsWww",
-				GoFileName:  "memfs_www.go",
-			},
-		}
-
-		mfs, err = memfs.New(&opts)
+		mfs, err = karajo.GenerateMemfs()
 		if err != nil {
 			mlog.Fatalf(err.Error())
 		}
@@ -133,30 +118,16 @@ func main() {
 // _www/karajo/doc, convert, and embed them.
 func watchWww(running chan bool) {
 	var (
-		tick    = time.NewTicker(3 * time.Second)
-		mfsOpts = memfs.Options{
-			Root: "_www",
-			Excludes: []string{
-				`.*\.adoc$`,
-			},
-			Embed: memfs.EmbedOptions{
-				CommentHeader: `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
-// SPDX-License-Identifier: GPL-3.0-or-later
-`,
-				PackageName: "karajo",
-				VarName:     "memfsWww",
-				GoFileName:  "memfs_www.go",
-			},
-		}
+		tick      = time.NewTicker(3 * time.Second)
+		mfsWww    *memfs.MemFS
 		isRunning = true
 
-		mfsWww   *memfs.MemFS
 		dw       *memfs.DirWatcher
 		nChanges int
 		err      error
 	)
 
-	mfsWww, err = memfs.New(&mfsOpts)
+	mfsWww, err = karajo.GenerateMemfs()
 	if err != nil {
 		mlog.Fatalf(err.Error())
 	}
