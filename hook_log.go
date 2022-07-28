@@ -38,6 +38,7 @@ func newHookLog(hookID, dirLog string, logCounter int64) (hlog *HookLog) {
 	hlog = &HookLog{
 		HookID:  hookID,
 		Name:    fmt.Sprintf("%s.%d", hookID, logCounter),
+		Status:  JobStatusStarted,
 		Counter: logCounter,
 	}
 
