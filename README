@@ -165,6 +165,15 @@ For example, if it set to "/my", then the actual path would be
 This field is required and unique between Hook.
 --
 
+`header_sign`:: Define custom HTTP header where the signature is read.
+Default to "x-karajo-sign" if its empty.
++
+--
+For example, to receive WebHook from GitHub, one can set this value to
+"X-Hub-Signature-256".
+--
+
+
 `secret`:: Define a string to check signature of request.
 +
 --

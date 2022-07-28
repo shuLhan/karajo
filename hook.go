@@ -96,6 +96,10 @@ type Hook struct {
 	// This field is required and unique between Hook.
 	Path string `ini:"::path"`
 
+	// HeaderSign define the HTTP header where the signature is read.
+	// Default to "x-karajo-sign" if its empty.
+	HeaderSign string `ini:"::header_sign"`
+
 	// Secret define a string to check signature of request.
 	// Each request sign the body with HMAC + SHA-256 using this secret.
 	// The signature then sent in HTTP header "X-Karajo-Sign" as hex.
@@ -173,6 +177,10 @@ func (hook *Hook) init(env *Environment, name string) (err error) {
 	err = hook.initLogs()
 	if err != nil {
 		return err
+	}
+
+	if len(hook.HeaderSign) == 0 {
+		hook.HeaderSign = HeaderNameXKarajoSign
 	}
 
 	return nil
@@ -279,10 +287,12 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	hook.LastRun = zeroTime
 
 	// Authenticated request by checking the request body.
-	gotSign = epr.HttpRequest.Header.Get(HeaderNameXKarajoSign)
+	gotSign = epr.HttpRequest.Header.Get(hook.HeaderSign)
 	if len(gotSign) == 0 {
 		return nil, &ErrHookForbidden
 	}
+
+	gotSign = strings.TrimPrefix(gotSign, "sha256=")
 
 	expSign = Sign(epr.RequestBody, []byte(hook.Secret))
 	if expSign != gotSign {
