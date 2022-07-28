@@ -361,22 +361,22 @@ func (k *Karajo) apiHookLog(epr *libhttp.EndpointRequest) (resbody []byte, err e
 		if hlog.Counter != counter {
 			continue
 		}
-		if len(hlog.Content) == 0 {
-			err = hlog.load()
-			if err != nil {
-				res.Code = http.StatusInternalServerError
-				res.Message = err.Error()
-				return nil, res
-			}
-		}
-
-		res.Code = http.StatusOK
-		res.Data = hlog
-		return json.Marshal(res)
+		break
 	}
 
-	res.Code = http.StatusNotFound
-	res.Message = fmt.Sprintf("log #%s not found", counterStr)
+	if hlog == nil {
+		res.Code = http.StatusNotFound
+		res.Message = fmt.Sprintf("log #%s not found", counterStr)
+	} else {
+		err = hlog.load()
+		if err != nil {
+			res.Code = http.StatusInternalServerError
+			res.Message = err.Error()
+		} else {
+			res.Code = http.StatusOK
+			res.Data = hlog
+		}
+	}
 
 	return json.Marshal(res)
 }

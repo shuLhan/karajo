@@ -103,6 +103,10 @@ func (hlog *HookLog) load() (err error) {
 	hlog.Lock()
 	defer hlog.Unlock()
 
+	if len(hlog.Content) != 0 {
+		return nil
+	}
+
 	hlog.Content, err = os.ReadFile(hlog.path)
 	if err != nil {
 		return err
