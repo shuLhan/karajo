@@ -4,11 +4,14 @@
 package karajo
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // HookLog contains the content, status, and counter for log.
@@ -27,6 +30,8 @@ type HookLog struct {
 	Status  string
 	Content []byte
 	Counter int64
+
+	sync.Mutex
 }
 
 func newHookLog(hookID, dirLog string, logCounter int64) (hlog *HookLog) {
@@ -81,6 +86,9 @@ func parseHookLogName(dir, name string) (hlog *HookLog) {
 }
 
 func (hlog *HookLog) flush() (err error) {
+	hlog.Lock()
+	defer hlog.Unlock()
+
 	hlog.Name = hlog.Name + "." + hlog.Status
 	hlog.path = hlog.path + "." + hlog.Status
 	err = os.WriteFile(hlog.path, hlog.Content, 0600)
@@ -92,6 +100,9 @@ func (hlog *HookLog) flush() (err error) {
 
 // load the content of log from storage.
 func (hlog *HookLog) load() (err error) {
+	hlog.Lock()
+	defer hlog.Unlock()
+
 	hlog.Content, err = os.ReadFile(hlog.path)
 	if err != nil {
 		return err
@@ -99,7 +110,30 @@ func (hlog *HookLog) load() (err error) {
 	return nil
 }
 
+func (hlog *HookLog) MarshalJSON() ([]byte, error) {
+	hlog.Lock()
+	defer hlog.Unlock()
+
+	var (
+		buf     bytes.Buffer
+		content = base64.StdEncoding.EncodeToString(hlog.Content)
+	)
+
+	fmt.Fprintf(&buf, `{"HookID":%q,"Name":%q,"Status":%q,"Counter":%d,"Content":%q}`,
+		hlog.HookID, hlog.Name, hlog.Status, hlog.Counter, content)
+
+	return buf.Bytes(), nil
+}
+
+func (hlog *HookLog) setStatus(status string) {
+	hlog.Lock()
+	hlog.Status = status
+	hlog.Unlock()
+}
+
 func (hlog *HookLog) Write(b []byte) (n int, err error) {
+	hlog.Lock()
 	hlog.Content = append(hlog.Content, b...)
+	hlog.Unlock()
 	return len(b), nil
 }
