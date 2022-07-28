@@ -118,6 +118,24 @@ type Hook struct {
 	sync.Mutex
 }
 
+// finish mark the hook as finished with status.
+func (hook *Hook) finish(hlog *HookLog, status string) {
+	var (
+		err error
+	)
+
+	hlog.setStatus(status)
+	err = hlog.flush()
+	if err != nil {
+		mlog.Errf("hook: %s: %s", hook.ID, err)
+	}
+
+	hook.LastRun = time.Now().UTC().Round(time.Second)
+	hook.LastStatus = status
+
+	mlog.Outf("hook: %s: %s", hook.ID, status)
+}
+
 func (hook *Hook) generateCmdEnvs() (env []string) {
 	env = append(env, fmt.Sprintf("%s=%d", hookEnvCounter, hook.lastCounter))
 	env = append(env, fmt.Sprintf("%s=%s", hookEnvPath, hookEnvPathValue))
@@ -246,16 +264,15 @@ func (hook *Hook) logsPrune() {
 	}
 }
 
+// run is the HTTP handler for Hook.
+// Once the signature is verified it will response immediately and run the
+// actual process in the new goroutine.
 func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
+		res      libhttp.EndpointResponse
 		zeroTime time.Time
-		now      time.Time
-		execCmd  exec.Cmd
-		hlog     *HookLog
-		cmd      string
 		expSign  string
 		gotSign  string
-		x        int
 	)
 
 	hook.LastStatus = JobStatusStarted
@@ -273,6 +290,27 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 		return nil, &ErrHookForbidden
 	}
 
+	go hook.start(epr)
+
+	res.Code = http.StatusOK
+	res.Message = "OK"
+
+	epr.HttpWriter.WriteHeader(res.Code)
+
+	return json.Marshal(&res)
+}
+
+// start run the hook Call or commands.
+func (hook *Hook) start(epr *libhttp.EndpointRequest) {
+	var (
+		hlog    *HookLog
+		execCmd exec.Cmd
+		now     time.Time
+		cmd     string
+		err     error
+		x       int
+	)
+
 	hookq <- struct{}{}
 	mlog.Outf("hook: %s: started ...", hook.ID)
 	defer func() {
@@ -285,26 +323,30 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	hook.lastCounter++
 	hlog = newHookLog(hook.ID, hook.dirLog, hook.lastCounter)
 
+	hook.Logs = append(hook.Logs, hlog)
+	hook.logsPrune()
+
 	// Call the hook.
 	if hook.Call != nil {
 		err = hook.Call(hlog, epr)
-		return hook.writeResponse(epr, hlog, err)
+		if err != nil {
+			_, _ = hlog.Write([]byte(err.Error()))
+			hook.finish(hlog, JobStatusFailed)
+		} else {
+			hook.finish(hlog, JobStatusSuccess)
+		}
+		return
 	}
 
 	// Run commands.
 	for x, cmd = range hook.Commands {
 		now = time.Now().UTC()
-		fmt.Fprintf(hlog, "\n%s === Execute %2d: %s\n",
-			now.Format(defTimeLayout), x, cmd)
+		fmt.Fprintf(hlog, "\n%s === Execute %2d: %s\n", now.Format(defTimeLayout), x, cmd)
 
 		execCmd = exec.Cmd{
-			Path: "/bin/sh",
-			Dir:  hook.dirWork,
-			Args: []string{
-				"/bin/sh",
-				"-c",
-				cmd,
-			},
+			Path:   "/bin/sh",
+			Dir:    hook.dirWork,
+			Args:   []string{"/bin/sh", "-c", cmd},
 			Env:    hook.generateCmdEnvs(),
 			Stdout: hlog,
 			Stderr: hlog,
@@ -312,51 +354,11 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 
 		err = execCmd.Run()
 		if err != nil {
-			return hook.writeResponse(epr, hlog, err)
+			_, _ = hlog.Write([]byte(err.Error()))
+			hook.finish(hlog, JobStatusFailed)
+			return
 		}
 	}
 
-	return hook.writeResponse(epr, hlog, nil)
-}
-
-func (hook *Hook) writeResponse(epr *libhttp.EndpointRequest, hlog *HookLog, err error) ([]byte, error) {
-	var (
-		res = libhttp.EndpointResponse{
-			Data: hlog,
-		}
-
-		e  *liberrors.E
-		ok bool
-	)
-
-	if err != nil {
-		hlog.Status = JobStatusFailed
-
-		e, ok = err.(*liberrors.E)
-		if !ok {
-			res.Code = http.StatusInternalServerError
-			res.Message = err.Error()
-		} else {
-			res.E = *e
-		}
-	} else {
-		hlog.Status = JobStatusSuccess
-		res.Code = http.StatusOK
-		res.Message = "OK"
-	}
-
-	hook.Logs = append(hook.Logs, hlog)
-	hook.logsPrune()
-	hook.LastRun = time.Now().UTC().Round(time.Second)
-	hook.LastStatus = hlog.Status
-
-	err = hlog.flush()
-	if err != nil {
-		mlog.Errf("hook: %s: %s", hook.ID, err)
-	}
-
-	mlog.Outf("hook: %s: %s: %s", hook.ID, hlog.Status, res.Message)
-	epr.HttpWriter.WriteHeader(res.Code)
-
-	return json.Marshal(&res)
+	hook.finish(hlog, JobStatusSuccess)
 }
