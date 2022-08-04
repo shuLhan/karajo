@@ -128,10 +128,12 @@ func (hook *Hook) finish(hlog *HookLog, status string) {
 		err error
 	)
 
-	hlog.setStatus(status)
-	err = hlog.flush()
-	if err != nil {
-		mlog.Errf("hook: %s: %s", hook.ID, err)
+	if hlog != nil {
+		hlog.setStatus(status)
+		err = hlog.flush()
+		if err != nil {
+			mlog.Errf("hook: %s: %s", hook.ID, err)
+		}
 	}
 
 	hook.Lock()
@@ -293,7 +295,11 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	// Authenticated request by checking the request body.
 	gotSign = epr.HttpRequest.Header.Get(hook.HeaderSign)
 	if len(gotSign) == 0 {
-		return nil, &ErrHookForbidden
+		gotSign = epr.HttpRequest.Header.Get(HeaderNameXKarajoSign)
+		if len(gotSign) == 0 {
+			hook.finish(nil, JobStatusFailed)
+			return nil, &ErrHookForbidden
+		}
 	}
 
 	gotSign = strings.TrimPrefix(gotSign, "sha256=")
@@ -301,6 +307,7 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	expSign = Sign(epr.RequestBody, []byte(hook.Secret))
 	if expSign != gotSign {
 		mlog.Outf("hook: %s: expecting signature %s got %s", hook.ID, expSign, gotSign)
+		hook.finish(nil, JobStatusFailed)
 		return nil, &ErrHookForbidden
 	}
 
