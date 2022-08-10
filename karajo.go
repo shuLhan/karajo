@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	Version = "0.1.0"
+	Version = "0.5.0"
 
 	// HeaderNameXKarajoSign define the header key for the signature of
 	// body.

@@ -4,6 +4,124 @@ Shulhan <ms@kilabit.info>
 :sectanchors:
 :sectlinks:
 
+[#v0_5_0]
+== karajo v0.5.0 (2022-08-10)
+
+This release add auto-refresh when viewing hook's log, add options to
+customized hook header signature, and option to set maximum hook running at
+the same time.
+
+[#v0_5_0_new_features]
+===  New features
+
+all: enable auto generated index.html on public directory::
+
+hook/log: auto refresh hook log until its failed or success::
+When opening log for Hook in the browser, if its Status is still started
+keep re-fetching it every 5 seconds until its Status changes to failed
+or success.
+
+all: add options to set custom header signature in Hook::
+The HeaderSign or header_sign in the hook configuration allow user to
+define the HTTP header where the signature is read.
+Default to "x-karajo-sign" if its empty.
+
+all: limit hook running at the same time::
++
+--
+In the Environment, we add field MaxHookRunning that defined maximum
+hook running at the same time.
+
+This field is optional, default to 1.
+
+While at it, clean up the logs format to make the console output
+more readable.
+--
+
+[#v0_5_0_bug_fixes]
+===  Bug fixes
+
+all: fix possible data race on HTTP API for fetching hook log::
+Since the HookLog may still writing when requested, accesing it
+periodically may cause a data race.
+
+all: set environment PATH when running Hook command::
++
+--
+Without setting the PATH, any command that use sudo will return an error
+"command not found".
+
+The current PATH values is derived from default PATH after bootstraping
+with base-devel.
+--
+
+all: fix the reuse Upstream-Name and Source::
+Due to copy-paste, we use the ciigo as the Upstream-Name and Source.
+
+[#v0_5_0_enhancements]
+===  Enhancements
+
+all: split running the hook into separate goroutine::
++
+--
+Previously, hook write the HTTP response after the Call or all of the
+Commands are finish.
+If the Hook run longer than, say 5 seconds, this may cause the request
+that trigger the hook return with timeout.
+
+In this changes, once we receive the request to trigger the Hook and
+when the signature is valid, we return with HTTP status 200 immediately
+and run the Hook job in the other goroutine.
+--
+
+all: add timestamp to each Hook log command when executed::
+The goal is to know when the command is executed on the log.
+
+all: set the Job and Hook Status before running::
++
+--
+The Status is set to "started" so the interface can display different
+color.
+
+On Job user interface, if the NextRun is less than now, it will show text
+"Running...".
+
+On Hook, set the LastRun to zero time before running, so the WUI can
+show status as "Running...".
+
+To test it, we add random sleep on Hooks in testdata.
+--
+
+all: store and display when the last Hook run::
++
+--
+The Hook last running time is derived from the last log and after the
+Hook is finished running, either sucess or fail.
+
+On the WUI, the last run is displayed next to the Hook name.
+--
+
+_www/karajo: display when the next Job will run in hours, minutes, seconds::
++
+--
+To minimize expanding the Job, display the next Job running time
+right after the Job name in the following format
+
+"Next run in ${hours}h ${minutes}m ${seconds}s"
+--
+
+_www/karajo: set the timer position fixed at the top::
+If user scroll to the bottom and open one or more Job, they can inspect
+the Next run with the current timer without scrolling again to the top.
+
+_www/karajo: add function to render Hook status on refresh::
+
+_www/karajo: set the log style to pre-wrap instead of wrap::
+Using CSS style "white-space: wrap" with "overflow: auto" cause adding
+horizontal scroll bar which is not good user experience, where user
+need to scroll right and bottom if log is width and taller
+
+
 [#v0_4_0]
 == karajo v0.4.0 (2022-07-10)
 
