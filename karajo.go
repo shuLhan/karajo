@@ -121,7 +121,8 @@ func New(env *Environment) (k *Karajo, err error) {
 				WriteTimeout:   10 * time.Minute,
 				MaxHeaderBytes: 1 << 20,
 			},
-			Memfs: memfsWww,
+			Memfs:           memfsWww,
+			EnableIndexHtml: true,
 		}
 	)
 
