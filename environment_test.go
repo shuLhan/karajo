@@ -63,7 +63,7 @@ func TestLoadEnvironment(t *testing.T) {
 			},
 			Jobs: map[string]*Job{
 				"Test fail": &Job{
-					Description:     "The job to test what the user interface and logs look likes  if its <b>fail</b>.",
+					Description:     "The job to test what the user interface and logs look likes if its <b>fail</b>.",
 					Secret:          "s3cret",
 					Interval:        time.Duration(20 * time.Second),
 					MaxRequests:     2,
@@ -84,7 +84,7 @@ func TestLoadEnvironment(t *testing.T) {
 					HttpRequestType: "json",
 				},
 				"Test success": &Job{
-					Description:     "The job to test what the user interface and logs look likes  if its <i>success</i>.",
+					Description:     "The job to test what the user interface and logs look likes if its <i>success</i>.",
 					Secret:          "s3cret",
 					Interval:        time.Duration(20 * time.Second),
 					MaxRequests:     1,
