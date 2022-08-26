@@ -60,6 +60,15 @@ func TestLoadEnvironment(t *testing.T) {
 						`for ((x=0; x<90; x++)); do echo "$x"; sleep 1; done`,
 					},
 				},
+				`Test manual run`: &Hook{
+					Description: `The hook to test manual run.`,
+					Path:        `/test-manual-run`,
+					Secret:      `s3cret`,
+					Commands: []string{
+						`echo Test hook manual run`,
+						`echo Counter is $KARAJO_HOOK_COUNTER`,
+					},
+				},
 			},
 			Jobs: map[string]*Job{
 				"Test fail": &Job{

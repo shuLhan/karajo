@@ -315,10 +315,13 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 
 	res.Code = http.StatusOK
 	res.Message = "OK"
+	res.Data = hook
 
-	epr.HttpWriter.WriteHeader(res.Code)
+	hook.Lock()
+	resbody, err = json.Marshal(&res)
+	hook.Unlock()
 
-	return json.Marshal(&res)
+	return resbody, err
 }
 
 // start run the hook Call or commands.

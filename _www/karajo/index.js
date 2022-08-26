@@ -64,6 +64,34 @@ async function hookInfo(hookID) {
   }
 }
 
+async function hookRunNow(hookID, hookPath) {
+  let secret = document.getElementById("_secret").value;
+  let epoch = parseInt(new Date().valueOf() / 1000);
+  let req = {
+    _karajo_epoch: epoch,
+  };
+  let body = JSON.stringify(req);
+
+  let hash = CryptoJS.HmacSHA256(body, secret);
+  let sign = hash.toString(CryptoJS.enc.Hex);
+
+  let fres = await fetch(`/karajo/hook${hookPath}`, {
+    method: "POST",
+    headers: {
+      "x-karajo-sign": sign,
+    },
+    body: body,
+  });
+  let res = await fres.json();
+  if (res.code !== 200) {
+    console.error(res.message);
+    return;
+  }
+
+  let hook = res.data;
+  renderHooks([hook]);
+}
+
 async function jobInfo(jobID) {
   let job = _jobs[jobID];
   let el = document.getElementById(job._idInfo);
@@ -170,6 +198,8 @@ function renderHookAttributes(hook) {
         #${log.Counter}
     </a>`;
   });
+
+  out += `&nbsp;<button onclick="hookRunNow('${hook.ID}', '${hook.Path}')">Run now</button>`;
 
   out += "</div>";
 
