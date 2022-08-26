@@ -158,7 +158,7 @@ function renderHookAttributes(hook) {
   `;
 
   if (hook.Logs == null) {
-    return;
+    hook.Logs = [];
   }
 
   hook.Logs.forEach(function (log, idx, list) {
@@ -183,7 +183,9 @@ function renderHookLastRun(hook) {
   let lastRun = new Date(hook.LastRun);
 
   if (lastRun <= 0) {
-    elLastRun.innerText = `Running ...`;
+    if (hook.LastStatus != "") {
+      elLastRun.innerText = "Running ...";
+    }
     return;
   }
 
