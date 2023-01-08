@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 let _env = {};
-let _jobs = {};
+let _httpJobs = {};
 let _hooks = {};
 
 async function main() {
@@ -34,7 +34,7 @@ async function doRefresh() {
   setTitle();
 
   renderHooks(_env.Hooks);
-  renderJobs(_env.Jobs);
+  renderHttpJobs(_env.HttpJobs);
 }
 
 function setTitle() {
@@ -93,7 +93,7 @@ async function hookRunNow(hookID, hookPath) {
 }
 
 async function jobInfo(jobID) {
-  let job = _jobs[jobID];
+  let job = _httpJobs[jobID];
   let el = document.getElementById(job._idInfo);
   let delay = 10000;
 
@@ -126,7 +126,7 @@ async function jobPause(id) {
     return;
   }
 
-  let job = _jobs[id];
+  let job = _httpJobs[id];
   job = Object.assign(job, res.data);
   renderJob(job);
 }
@@ -151,7 +151,7 @@ async function jobResume(id) {
     return;
   }
 
-  let job = _jobs[id];
+  let job = _httpJobs[id];
   job = Object.assign(job, res.data);
   renderJob(job);
 }
@@ -354,9 +354,9 @@ function renderJobStatus(job) {
   el.className = `name ${job.Status}`;
 }
 
-function renderJobs(jobs) {
+function renderHttpJobs(jobs) {
   let out = "";
-  let elJobs = document.getElementById("jobs");
+  let elJobs = document.getElementById("http_jobs");
 
   for (let name in jobs) {
     let job = jobs[name];
@@ -369,14 +369,14 @@ function renderJobs(jobs) {
     job._idNextRun = `job_${job.ID}_next_run`;
     job._display = "none";
 
-    if (_jobs != null) {
-      let prevJob = _jobs[job.ID];
+    if (_httpJobs != null) {
+      let prevJob = _httpJobs[job.ID];
       if (prevJob != null) {
         job._display = prevJob._display;
       }
     }
 
-    _jobs[job.ID] = job;
+    _httpJobs[job.ID] = job;
 
     let elJob = document.getElementById(job._id);
     if (elJob != null) {

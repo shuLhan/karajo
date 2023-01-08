@@ -25,8 +25,8 @@ type Environment struct {
 	Hooks map[string]*Hook `ini:"hook"`
 
 	// List of Job by name.
-	Jobs map[string]*Job `ini:"job"`
-	jobs map[string]*Job // List of Job indexed by ID.
+	HttpJobs map[string]*JobHttp `ini:"job.http"`
+	httpJobs map[string]*JobHttp // List of Job indexed by ID.
 
 	// Name of the service.
 	// The Name will be used for title on the web user interface, as log
@@ -143,9 +143,9 @@ func (env *Environment) init() (err error) {
 	var (
 		logp = "init"
 
-		hook *Hook
-		job  *Job
-		name string
+		hook    *Hook
+		jobHttp *JobHttp
+		name    string
 	)
 
 	if len(env.Name) == 0 {
@@ -180,13 +180,13 @@ func (env *Environment) init() (err error) {
 		}
 	}
 
-	env.jobs = make(map[string]*Job, len(env.Jobs))
-	for name, job = range env.Jobs {
-		err = job.init(env, name)
+	env.httpJobs = make(map[string]*JobHttp, len(env.HttpJobs))
+	for name, jobHttp = range env.HttpJobs {
+		err = jobHttp.init(env, name)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
-		env.jobs[job.ID] = job
+		env.httpJobs[jobHttp.ID] = jobHttp
 	}
 
 	return nil
@@ -234,16 +234,16 @@ func (env *Environment) initDirs() (err error) {
 
 // jobsLock lock all the jobs.
 func (env *Environment) jobsLock() {
-	var job *Job
-	for _, job = range env.jobs {
-		job.Lock()
+	var jobHttp *JobHttp
+	for _, jobHttp = range env.httpJobs {
+		jobHttp.Lock()
 	}
 }
 
 func (env *Environment) jobsSave() (err error) {
-	var job *Job
-	for _, job = range env.jobs {
-		err = job.stateSave()
+	var jobHttp *JobHttp
+	for _, jobHttp = range env.httpJobs {
+		err = jobHttp.stateSave()
 		if err != nil {
 			return err
 		}
@@ -253,8 +253,8 @@ func (env *Environment) jobsSave() (err error) {
 
 // jobsUnlock unlock all the jobs.
 func (env *Environment) jobsUnlock() {
-	var job *Job
-	for _, job = range env.jobs {
-		job.Unlock()
+	var jobHttp *JobHttp
+	for _, jobHttp = range env.httpJobs {
+		jobHttp.Unlock()
 	}
 }

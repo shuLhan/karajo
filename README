@@ -25,12 +25,14 @@ Features,
 Work flow on karajo,
 
 ----
-                +-----+      +-------+
-  INTERNET <--- | Job | ---> | Hook  | <--- INTERNET
-                +-----+      +-------+
-                                 |
-                                 |
-                                 v
+                +-------------------------+
+                | Karajo                  |
+                | +---------+  +-------+  |
+  INTERNET <----- | JobHttp |  | Hook  | <--- INTERNET
+                | +---------+  +-------+  |
+                +------------------|------+
+                                   |
+                                   v
                         +-----------------+
                         | Commands / Call |
                         +-----------------+
@@ -43,8 +45,7 @@ This section describe the file format when loading karajo environment from
 file.
 
 There are three configuration sections: one to configure the server, one to
-configure the logs, and another one to configure one or more jobs to be
-executed.
+configure the hooks, and another one to configure the jobs to be executed.
 
 Default values,
 
@@ -195,13 +196,16 @@ The following environment variables are available inside the command:
 --
 
 
-[#config_job]
-=== Job
+[#config_job_http]
+=== HTTP Job
 
-This section has the following format,
+An HTTP job is a periodic job that send HTTP request to external HTTP server
+(or to karajo Hook itself).
+
+Each HTTP job has the following configuration,
 
 ----
-[job "name"]
+[job.http "name"]
 description = <string>
 secret = <string>
 interval = <duration>
@@ -216,7 +220,8 @@ http_insecure = <bool>
 ----
 
 `name`:: Define the job name.
-Each job must have unique name or only the first one will be processed.
+Each job must have unique name.
+If two or more jobs have the same name only the first one will be processed.
 
 `description`:: Define the job description.
 It could be plain text or simple HTML.

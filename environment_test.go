@@ -70,8 +70,8 @@ func TestLoadEnvironment(t *testing.T) {
 					},
 				},
 			},
-			Jobs: map[string]*Job{
-				"Test fail": &Job{
+			HttpJobs: map[string]*JobHttp{
+				"Test fail": &JobHttp{
 					Description:     "The job to test what the user interface and logs look likes if its <b>fail</b>.",
 					Secret:          "s3cret",
 					Interval:        time.Duration(20 * time.Second),
@@ -84,7 +84,7 @@ func TestLoadEnvironment(t *testing.T) {
 						"C: D",
 					},
 				},
-				"Test random": &Job{
+				"Test random": &JobHttp{
 					Description:     `Test triggering hook /test-random`,
 					Secret:          "s3cret",
 					MaxRequests:     1,
@@ -92,7 +92,7 @@ func TestLoadEnvironment(t *testing.T) {
 					HttpUrl:         "/karajo/hook/test-random",
 					HttpRequestType: "json",
 				},
-				"Test success": &Job{
+				"Test success": &JobHttp{
 					Description:     "The job to test what the user interface and logs look likes if its <i>success</i>.",
 					Secret:          "s3cret",
 					Interval:        time.Duration(20 * time.Second),
@@ -104,7 +104,7 @@ func TestLoadEnvironment(t *testing.T) {
 						"X: Y",
 					},
 				},
-				`Test long running`: &Job{
+				`Test long running`: &JobHttp{
 					Description:     `The job to test hook log refresh.`,
 					Secret:          `s3cret`,
 					Interval:        time.Duration(2 * time.Minute),

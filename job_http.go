@@ -39,17 +39,16 @@ const (
 	defTimeLayout = "2006-01-02 15:04:05 MST"
 )
 
-// Job is the worker that trigger HTTP $method request to the remote job
-// periodically and save the response status to log and the last execution
-// time for future run.
+// JobHttp is a job that trigger HTTP $method request to the remote server
+// periodically.
 //
-// Each Job execution send the parameter named `_karajo_epoch` with value is
-// current server Unix time.
+// Each JobHttp execution send the parameter named `_karajo_epoch` with value
+// is current server Unix time.
 // If the request type is `query` then the parameter is inside the query URL.
 // If the request type is `form` then the parameter is inside the body.
 // If the request type is `json` then the parameter is inside the body as JSON
 // object, for example `{"_karajo_epoch":1656750073}`.
-type Job struct {
+type JobHttp struct {
 	jobState
 
 	// The next time the job will running, in UTC.
@@ -128,14 +127,9 @@ type Job struct {
 	requestMethod libhttp.RequestMethod
 	requestType   libhttp.RequestType
 
-	//
 	// Interval duration when job will be repeatedly executed.
-	// This field is required, if not set or invalid it will set to 10
-	// minutes.
-	//
-	// If one have job that need to run every less than 10 minutes, it
-	// should be run on single program.
-	//
+	// This field is required, if not set or invalid it will default to 30
+	// seconds.
 	Interval time.Duration `ini:"::interval"`
 
 	// MaxRequests maximum number of requests executed by karajo.
@@ -147,14 +141,12 @@ type Job struct {
 
 	sync.Mutex
 
-	//
 	// HttpInsecure can be set to true if the http_url is HTTPS with
 	// unknown certificate authority.
-	//
 	HttpInsecure bool `ini:"::http_insecure"`
 }
 
-func (job *Job) Start() {
+func (job *JobHttp) Start() {
 	var (
 		now        = time.Now().UTC().Round(time.Second)
 		firstTimer = job.computeFirstTimer(now)
@@ -167,7 +159,7 @@ func (job *Job) Start() {
 	job.NumRequests = 0
 
 	job.NextRun = now.Add(firstTimer)
-	job.mlog.Outf("running the first job in %s ...", firstTimer)
+	job.mlog.Outf("running the first HTTP job in %s ...", firstTimer)
 
 	t = time.NewTimer(firstTimer)
 	for ever {
@@ -201,19 +193,19 @@ func (job *Job) Start() {
 }
 
 // Stop the job.
-func (job *Job) Stop() {
-	job.mlog.Outf("stopping job ...")
+func (job *JobHttp) Stop() {
+	job.mlog.Outf("stopping HTTP job ...")
 	job.done <- true
 
 	job.mlog.Flush()
 	var err error = job.flog.Close()
 	if err != nil {
-		mlog.Errf("Stop %s: %s", job.ID, err)
+		mlog.Errf("Stop JobHttp %s: %s", job.ID, err)
 	}
 }
 
 // init initialize the job, compute the last run and the next run.
-func (job *Job) init(env *Environment, name string) (err error) {
+func (job *JobHttp) init(env *Environment, name string) (err error) {
 	job.Name = name
 
 	if len(job.ID) == 0 {
@@ -286,7 +278,7 @@ func (job *Job) init(env *Environment, name string) (err error) {
 // initLogger initialize the job log and its location.
 // By default log are written to os.Stdout and os.Stderr;
 // and then to file named job.ID in Environment.dirLogJob.
-func (job *Job) initLogger(env *Environment) (err error) {
+func (job *JobHttp) initLogger(env *Environment) (err error) {
 	var (
 		logp       = "initLogger"
 		lastLog    = make([]byte, defJobLogSizeLoad)
@@ -349,7 +341,7 @@ func (job *Job) initLogger(env *Environment) (err error) {
 
 // initHttpMethod check if defined HTTP method is valid.
 // If its empty, set default to GET, otherwise return an error.
-func (job *Job) initHttpMethod() (err error) {
+func (job *JobHttp) initHttpMethod() (err error) {
 	job.HttpMethod = strings.TrimSpace(job.HttpMethod)
 	if len(job.HttpMethod) == 0 {
 		job.HttpMethod = defJobHttpMethod
@@ -374,7 +366,7 @@ func (job *Job) initHttpMethod() (err error) {
 	return nil
 }
 
-func (job *Job) initHttpRequestType() (err error) {
+func (job *JobHttp) initHttpRequestType() (err error) {
 	var vstr = strings.ToLower(job.HttpRequestType)
 	switch vstr {
 	case "", "query":
@@ -389,7 +381,7 @@ func (job *Job) initHttpRequestType() (err error) {
 	return nil
 }
 
-func (job *Job) initHttpUrl(serverAddress string) (err error) {
+func (job *JobHttp) initHttpUrl(serverAddress string) (err error) {
 	if job.HttpUrl[0] == '/' {
 		job.baseUri = fmt.Sprintf("http://%s", serverAddress)
 		job.requestUri = job.HttpUrl
@@ -421,7 +413,7 @@ func (job *Job) initHttpUrl(serverAddress string) (err error) {
 	return nil
 }
 
-func (job *Job) initHttpHeaders() (err error) {
+func (job *JobHttp) initHttpHeaders() (err error) {
 	if len(job.HttpHeaders) > 0 {
 		job.headers = make(http.Header, len(job.HttpHeaders))
 	}
@@ -442,7 +434,7 @@ func (job *Job) initHttpHeaders() (err error) {
 	return nil
 }
 
-func (job *Job) increment() (ok bool) {
+func (job *JobHttp) increment() (ok bool) {
 	job.Lock()
 	if job.NumRequests+1 <= job.MaxRequests {
 		job.NumRequests++
@@ -452,13 +444,13 @@ func (job *Job) increment() (ok bool) {
 	return ok
 }
 
-func (job *Job) decrement() {
+func (job *JobHttp) decrement() {
 	job.Lock()
 	job.NumRequests--
 	job.Unlock()
 }
 
-func (job *Job) execute() {
+func (job *JobHttp) execute() {
 	var (
 		now     = time.Now().UTC().Round(time.Second)
 		logTime = now.Format(defTimeLayout)
@@ -560,7 +552,7 @@ func (job *Job) execute() {
 //
 // If the `(last_run + interval) < now` then it will return 0; otherwise it will
 // return `(last_run + interval) - now`
-func (job *Job) computeFirstTimer(now time.Time) time.Duration {
+func (job *JobHttp) computeFirstTimer(now time.Time) time.Duration {
 	var lastInterval time.Time = job.LastRun.Add(job.Interval)
 	if lastInterval.Before(now) {
 		return 0
@@ -568,7 +560,7 @@ func (job *Job) computeFirstTimer(now time.Time) time.Duration {
 	return lastInterval.Sub(now)
 }
 
-func (job *Job) paramsToJson() (obj map[string]interface{}, raw []byte, err error) {
+func (job *JobHttp) paramsToJson() (obj map[string]interface{}, raw []byte, err error) {
 	raw, err = json.Marshal(job.params)
 	if err != nil {
 		return nil, nil, err
@@ -577,7 +569,7 @@ func (job *Job) paramsToJson() (obj map[string]interface{}, raw []byte, err erro
 }
 
 // paramsToUrlValues convert the job parameters to url.Values.
-func (job *Job) paramsToUrlValues() (url.Values, []byte) {
+func (job *JobHttp) paramsToUrlValues() (url.Values, []byte) {
 	var (
 		urlValues = url.Values{}
 
@@ -590,28 +582,28 @@ func (job *Job) paramsToUrlValues() (url.Values, []byte) {
 	return urlValues, []byte(urlValues.Encode())
 }
 
-func (job *Job) pause() {
+func (job *JobHttp) pause() {
 	job.mlog.Outf("pausing...")
 	job.Lock()
 	job.Status = JobStatusPaused
 	job.Unlock()
 }
 
-func (job *Job) resume() {
+func (job *JobHttp) resume() {
 	job.mlog.Outf("resuming...")
 	job.Lock()
 	job.Status = JobStatusStarted
 	job.Unlock()
 }
 
-func (job *Job) setStatus(status string) {
+func (job *JobHttp) setStatus(status string) {
 	job.Lock()
 	job.Status = status
 	job.Unlock()
 }
 
 // stateLoad load the job state from file Job.pathState.
-func (job *Job) stateLoad() (err error) {
+func (job *JobHttp) stateLoad() (err error) {
 	var rawState []byte
 
 	rawState, err = os.ReadFile(job.pathState)
@@ -629,7 +621,7 @@ func (job *Job) stateLoad() (err error) {
 }
 
 // stateSave save the job state into file job.pathState.
-func (job *Job) stateSave() (err error) {
+func (job *JobHttp) stateSave() (err error) {
 	var rawState []byte
 
 	rawState, err = job.jobState.pack()
@@ -644,7 +636,7 @@ func (job *Job) stateSave() (err error) {
 	return nil
 }
 
-func (job *Job) isPaused() (b bool) {
+func (job *JobHttp) isPaused() (b bool) {
 	job.Lock()
 	b = job.Status == JobStatusPaused
 	job.Unlock()
