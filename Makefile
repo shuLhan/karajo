@@ -4,14 +4,14 @@
 .PHONY: all lint build test dev
 .FORCE:
 
-all: lint test build
+all: test build lint
 
 memfs_www.go: .FORCE
 	go run ./cmd/karajo embed
 
 lint:
-	-fieldalignment ./...
 	-golangci-lint run ./...
+	-fieldalignment ./...
 	-reuse lint
 
 build: memfs_www.go
@@ -19,7 +19,6 @@ build: memfs_www.go
 
 test:
 	CGO_ENABLED=1 go test -race ./...
-	fieldalignment ./...
 
 dev:
 	CGO_ENABLED=1 go run -race ./cmd/karajo -dev -config testdata/karajo.conf
