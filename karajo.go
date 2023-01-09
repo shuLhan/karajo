@@ -52,6 +52,12 @@ const (
 	paramNameCounter = "counter"
 )
 
+// TimeNow return the current time.
+// It can be used in testing to provide static, predictable time.
+var TimeNow = func() time.Time {
+	return time.Now()
+}
+
 var (
 	memfsWww *memfs.MemFS
 

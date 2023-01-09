@@ -1,0 +1,108 @@
+// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+Test HTTP APIs response.
+
+>>> test.conf
+[karajo]
+name = My karajo
+listen_address = 127.0.0.1:32000
+http_timeout = 5m0s
+secret = s3cret
+max_hook_running = 1
+
+[job.http "Test success"]
+description = HTTP job to for a <i>success</i> call.
+secret = s3cret
+interval = 1m
+max_requests = 1
+http_method = POST
+http_url = /karajo/hook/test-hook-success
+http_request_type = json
+http_header = X: Y
+
+[hook "Test hook success"]
+path = /test-hook-success
+secret = s3cret
+command = echo "Test hook success"
+command = echo "Counter is $KARAJO_HOOK_COUNTER"
+command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
+
+<<< apiEnvironment.json
+{
+  "Hooks": {
+    "Test hook success": {
+      "Logs": null,
+      "LastRun": "0001-01-01T00:00:00Z",
+      "ID": "test_hook_success",
+      "Name": "Test hook success",
+      "Description": "",
+      "Path": "/test-hook-success",
+      "HeaderSign": "x-karajo-sign",
+      "LastStatus": "",
+      "Commands": [
+        "echo Test hook success",
+        "echo Counter is $KARAJO_HOOK_COUNTER",
+        "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
+      ],
+      "LogRetention": 5
+    }
+  },
+  "HttpJobs": {
+    "Test success": {
+      "LastRun": "2023-01-09T00:00:00Z",
+      "Status": "",
+      "NextRun": "2023-01-09T00:01:00Z",
+      "Log": [],
+      "ID": "test_success",
+      "Name": "Test success",
+      "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+      "HttpMethod": "POST",
+      "HttpUrl": "/karajo/hook/test-hook-success",
+      "HttpRequestType": "json",
+      "HttpHeaders": [
+        "X: Y"
+      ],
+      "HttpTimeout": 300000000000,
+      "Interval": 60000000000,
+      "MaxRequests": 1,
+      "NumRequests": 0,
+      "HttpInsecure": false
+    }
+  },
+  "Name": "My karajo",
+  "ListenAddress": "127.0.0.1:32000",
+  "DirBase": "\u003cREDACTED\u003e",
+  "DirPublic": "",
+  "HttpTimeout": 300000000000,
+  "MaxHookRunning": 1,
+  "IsDevelopment": false
+}
+
+<<< apiJob_success.json
+{
+  "LastRun": "2023-01-09T00:00:00Z",
+  "Status": "",
+  "NextRun": "2023-01-09T00:01:00Z",
+  "Log": [],
+  "ID": "test_success",
+  "Name": "Test success",
+  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+  "HttpMethod": "POST",
+  "HttpUrl": "/karajo/hook/test-hook-success",
+  "HttpRequestType": "json",
+  "HttpHeaders": [
+    "X: Y"
+  ],
+  "HttpTimeout": 300000000000,
+  "Interval": 60000000000,
+  "MaxRequests": 1,
+  "NumRequests": 0,
+  "HttpInsecure": false
+}
+
+<<< apiJob_notfound.json
+{
+  "code": 400,
+  "message": "invalid or empty job id: test_notfound"
+}

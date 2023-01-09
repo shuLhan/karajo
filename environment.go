@@ -125,6 +125,22 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 	return env, nil
 }
 
+// ParseEnvironment parse the environment from raw bytes.
+func ParseEnvironment(content []byte) (env *Environment, err error) {
+	var (
+		logp = `ParseEnvironment`
+	)
+
+	env = &Environment{}
+
+	err = ini.Unmarshal(content, env)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	return env, nil
+}
+
 func (env *Environment) hooksLock() {
 	var hook *Hook
 	for _, hook = range env.Hooks {

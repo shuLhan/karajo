@@ -148,7 +148,7 @@ type JobHttp struct {
 
 func (job *JobHttp) Start() {
 	var (
-		now        = time.Now().UTC().Round(time.Second)
+		now        = TimeNow().UTC().Round(time.Second)
 		firstTimer = job.computeFirstTimer(now)
 		ever       = true
 
@@ -452,7 +452,7 @@ func (job *JobHttp) decrement() {
 
 func (job *JobHttp) execute() {
 	var (
-		now     = time.Now().UTC().Round(time.Second)
+		now     = TimeNow().UTC().Round(time.Second)
 		logTime = now.Format(defTimeLayout)
 		headers = http.Header{}
 

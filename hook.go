@@ -137,7 +137,7 @@ func (hook *Hook) finish(hlog *HookLog, status string) {
 	}
 
 	hook.Lock()
-	hook.LastRun = time.Now().UTC().Round(time.Second)
+	hook.LastRun = TimeNow().UTC().Round(time.Second)
 	hook.LastStatus = status
 	hook.Unlock()
 
@@ -363,7 +363,7 @@ func (hook *Hook) start(epr *libhttp.EndpointRequest) {
 
 	// Run commands.
 	for x, cmd = range hook.Commands {
-		now = time.Now().UTC()
+		now = TimeNow().UTC()
 		fmt.Fprintf(hlog, "\n%s === Execute %2d: %s\n", now.Format(defTimeLayout), x, cmd)
 
 		execCmd = exec.Cmd{

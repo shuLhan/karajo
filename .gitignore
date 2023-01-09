@@ -2,6 +2,8 @@
 ## SPDX-License-Identifier: GPL-3.0-or-later
 /README.html
 /_www/karajo/doc/*.html
+/cover.html
+/cover.out
 /karajo
 /testdata/karajo.conf.lastrun
 /testdata/var
