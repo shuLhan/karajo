@@ -106,3 +106,56 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "code": 400,
   "message": "invalid or empty job id: test_notfound"
 }
+
+<<< apiJobLogs.json
+[
+  "The first log"
+]
+
+<<< apiJobPause.json
+{
+  "LastRun": "2023-01-09T00:00:00Z",
+  "Status": "paused",
+  "NextRun": "2023-01-09T00:01:00Z",
+  "Log": [
+    "The first log"
+  ],
+  "ID": "test_success",
+  "Name": "Test success",
+  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+  "HttpMethod": "POST",
+  "HttpUrl": "/karajo/hook/test-hook-success",
+  "HttpRequestType": "json",
+  "HttpHeaders": [
+    "X: Y"
+  ],
+  "HttpTimeout": 300000000000,
+  "Interval": 60000000000,
+  "MaxRequests": 1,
+  "NumRequests": 0,
+  "HttpInsecure": false
+}
+
+<<< apiJobResume.json
+{
+  "LastRun": "2023-01-09T00:00:00Z",
+  "Status": "started",
+  "NextRun": "2023-01-09T00:01:00Z",
+  "Log": [
+    "The first log"
+  ],
+  "ID": "test_success",
+  "Name": "Test success",
+  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+  "HttpMethod": "POST",
+  "HttpUrl": "/karajo/hook/test-hook-success",
+  "HttpRequestType": "json",
+  "HttpHeaders": [
+    "X: Y"
+  ],
+  "HttpTimeout": 300000000000,
+  "Interval": 60000000000,
+  "MaxRequests": 1,
+  "NumRequests": 0,
+  "HttpInsecure": false
+}

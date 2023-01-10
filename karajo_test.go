@@ -18,6 +18,7 @@ import (
 var (
 	testTimeNow = time.Date(2023, time.January, 9, 0, 0, 0, 0, time.UTC)
 
+	testEnv    *Environment
 	testClient *Client
 )
 
@@ -32,7 +33,6 @@ func TestMain(m *testing.M) {
 func TestKarajo_apis(t *testing.T) {
 	var (
 		tdata   *test.Data
-		env     *Environment
 		httpJob *JobHttp
 		karajo  *Karajo
 		err     error
@@ -43,22 +43,22 @@ func TestKarajo_apis(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	env, err = ParseEnvironment(tdata.Input[`test.conf`])
+	testEnv, err = ParseEnvironment(tdata.Input[`test.conf`])
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Overwrite the base directory to make the output predictable.
-	env.DirBase = t.TempDir()
+	testEnv.DirBase = t.TempDir()
 
-	karajo, err = New(env)
+	karajo, err = New(testEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Set the job LastRun to the current time so it will not run when
 	// server started.
-	for _, httpJob = range env.HttpJobs {
+	for _, httpJob = range testEnv.HttpJobs {
 		httpJob.LastRun = testTimeNow
 	}
 
@@ -76,10 +76,13 @@ func TestKarajo_apis(t *testing.T) {
 		}
 	}()
 
-	var clientOpts = libhttp.ClientOptions{
-		ServerUrl: fmt.Sprintf(`http://%s`, env.ListenAddress),
+	var clientOpts = ClientOptions{
+		ClientOptions: libhttp.ClientOptions{
+			ServerUrl: fmt.Sprintf(`http://%s`, testEnv.ListenAddress),
+		},
+		Secret: `s3cret`,
 	}
-	testClient = NewClient(&clientOpts)
+	testClient = NewClient(clientOpts)
 	waitServerAlive(t, testClient)
 
 	t.Run(`apiEnvironment`, func(tt *testing.T) {
@@ -92,7 +95,15 @@ func TestKarajo_apis(t *testing.T) {
 	t.Run(`apiJob_notfound`, func(tt *testing.T) {
 		testKarajo_apiJob_notfound(tt, tdata, testClient)
 	})
-
+	t.Run(`apiJobLogs`, func(tt *testing.T) {
+		testKarajo_apiJobLogs(tt, tdata, testClient)
+	})
+	t.Run(`apiJobPause`, func(tt *testing.T) {
+		testKarajo_apiJobPause(tt, tdata, testClient)
+	})
+	t.Run(`apiJobResume`, func(tt *testing.T) {
+		testKarajo_apiJobResume(tt, tdata, testClient)
+	})
 }
 
 func waitServerAlive(t *testing.T, cl *Client) {
@@ -190,4 +201,79 @@ func testKarajo_apiJob_notfound(t *testing.T, tdata *test.Data, cl *Client) {
 		t.Fatal(err)
 	}
 	test.Assert(t, `apiJob_notfound`, string(exp), string(got))
+}
+
+func testKarajo_apiJobLogs(t *testing.T, tdata *test.Data, cl *Client) {
+	var (
+		exp []byte = tdata.Output[`apiJobLogs.json`]
+
+		data interface{}
+		logs []string
+		got  []byte
+		err  error
+	)
+
+	// Add dummy logs.
+	testEnv.httpJobs[`test_success`].Log.Push(`The first log`)
+
+	logs, err = testClient.JobHttpLogs(`test_success`)
+	if err != nil {
+		data = err
+	} else {
+		data = logs
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+	test.Assert(t, `apiJobLogs`, string(exp), string(got))
+}
+
+func testKarajo_apiJobPause(t *testing.T, tdata *test.Data, cl *Client) {
+	var (
+		exp []byte = tdata.Output[`apiJobPause.json`]
+
+		data interface{}
+		job  *JobHttp
+		got  []byte
+		err  error
+	)
+
+	job, err = testClient.JobHttpPause(`test_success`)
+	if err != nil {
+		data = err
+	} else {
+		data = job
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+	test.Assert(t, `apiJobPause`, string(exp), string(got))
+}
+
+func testKarajo_apiJobResume(t *testing.T, tdata *test.Data, cl *Client) {
+	var (
+		exp []byte = tdata.Output[`apiJobResume.json`]
+
+		data interface{}
+		job  *JobHttp
+		got  []byte
+		err  error
+	)
+
+	job, err = testClient.JobHttpResume(`test_success`)
+	if err != nil {
+		data = err
+	} else {
+		data = job
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+	test.Assert(t, `apiJobResume`, string(exp), string(got))
 }
