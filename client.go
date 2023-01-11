@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
+	"strconv"
 
 	libhttp "github.com/shuLhan/share/lib/http"
 )
@@ -54,6 +56,87 @@ func (cl *Client) Environment() (env *Environment, err error) {
 		return nil, res
 	}
 	return env, nil
+}
+
+// Hook trigger the Hook by its path.
+func (cl *Client) Hook(hookPath string) (hook *Hook, err error) {
+	var (
+		logp        = `Hook`
+		timeNow     = TimeNow()
+		apiHookPath = path.Join(apiHook, hookPath)
+		header      = http.Header{}
+
+		req = HookRequest{
+			Epoch: timeNow.Unix(),
+		}
+
+		httpRes *http.Response
+		res     *libhttp.EndpointResponse
+		sign    string
+		reqBody []byte
+		resBody []byte
+	)
+
+	reqBody, err = json.Marshal(&req)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	sign = Sign(reqBody, []byte(cl.opts.Secret))
+	header.Set(HeaderNameXKarajoSign, sign)
+
+	httpRes, resBody, err = cl.PostJSON(apiHookPath, header, &req)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+	if httpRes.StatusCode == http.StatusNotFound {
+		return nil, errHookNotFound(hookPath)
+	}
+
+	res = &libhttp.EndpointResponse{
+		Data: &hook,
+	}
+	err = json.Unmarshal(resBody, res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+	if res.Code == 200 {
+		return hook, nil
+	}
+	res.Data = nil
+	return nil, res
+}
+
+// HookLog get the Hook log by its ID and counter.
+func (cl *Client) HookLog(hookID string, counter int) (hooklog *HookLog, err error) {
+	var (
+		logp   = `HookLog`
+		params = url.Values{}
+
+		res     *libhttp.EndpointResponse
+		resBody []byte
+	)
+
+	params.Set(paramNameID, hookID)
+	params.Set(paramNameCounter, strconv.Itoa(counter))
+
+	_, resBody, err = cl.Get(apiHookLog, nil, params)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	res = &libhttp.EndpointResponse{
+		Data: &hooklog,
+	}
+	err = json.Unmarshal(resBody, res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+	if res.Code == 200 {
+		return hooklog, nil
+	}
+	res.Data = nil
+	return nil, res
 }
 
 // JobHttp get JobHttp detail by its ID.

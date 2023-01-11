@@ -79,6 +79,40 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "IsDevelopment": false
 }
 
+<<< apiHook_success.json
+{
+  "Logs": null,
+  "LastRun": "0001-01-01T00:00:00Z",
+  "ID": "test_hook_success",
+  "Name": "Test hook success",
+  "Description": "",
+  "Path": "/test-hook-success",
+  "HeaderSign": "x-karajo-sign",
+  "LastStatus": "started",
+  "Commands": [
+    "echo Test hook success",
+    "echo Counter is $KARAJO_HOOK_COUNTER",
+    "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
+  ],
+  "LogRetention": 5
+}
+
+<<< apiHook_notfound.json
+{
+  "code": 404,
+  "message": "hook not found: /test-hook-notfound",
+  "name": "ERR_HOOK_NOT_FOUND"
+}
+
+<<< apiHookLog.json
+{
+  "HookID": "test_hook_success",
+  "Name": "test_hook_success.1",
+  "Status": "started",
+  "Counter": 1,
+  "Content": "PFJFREFDVEVEPg=="
+}
+
 <<< apiJob_success.json
 {
   "LastRun": "2023-01-09T00:00:00Z",

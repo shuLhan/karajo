@@ -364,12 +364,16 @@ func (k *Karajo) apiHookLog(epr *libhttp.EndpointRequest) (resbody []byte, err e
 		return nil, res
 	}
 
-	for _, hlog = range hook.Logs {
-		if hlog.Counter != counter {
+	hook.Lock()
+	var v *HookLog
+	for _, v = range hook.Logs {
+		if v.Counter != counter {
 			continue
 		}
+		hlog = v
 		break
 	}
+	hook.Unlock()
 
 	if hlog == nil {
 		res.Code = http.StatusNotFound

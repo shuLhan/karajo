@@ -72,7 +72,7 @@ func TestKarajo_apis(t *testing.T) {
 	defer func() {
 		var err = karajo.Stop()
 		if err != nil {
-			t.Fatal(err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -87,6 +87,16 @@ func TestKarajo_apis(t *testing.T) {
 
 	t.Run(`apiEnvironment`, func(tt *testing.T) {
 		testKarajo_apiEnvironment(tt, tdata, testClient)
+	})
+
+	t.Run(`apiHook_success`, func(tt *testing.T) {
+		testKarajo_apiHook_success(tt, tdata, testClient)
+	})
+	t.Run(`apiHook_notfound`, func(tt *testing.T) {
+		testKarajo_apiHook_notfound(tt, tdata, testClient)
+	})
+	t.Run(`apiHookLog`, func(tt *testing.T) {
+		testKarajo_apiHookLog(tt, tdata, testClient)
 	})
 
 	t.Run(`apiJob_success`, func(tt *testing.T) {
@@ -151,6 +161,80 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data, cl *Client) {
 		t.Fatal(err)
 	}
 	test.Assert(t, `apiEnvironment`, string(exp), string(got))
+}
+
+func testKarajo_apiHook_success(t *testing.T, tdata *test.Data, cl *Client) {
+	var (
+		exp []byte = tdata.Output[`apiHook_success.json`]
+
+		hook *Hook
+		data interface{}
+		got  []byte
+		err  error
+	)
+
+	hook, err = testClient.Hook(`/test-hook-success`)
+	if err != nil {
+		data = err
+	} else {
+		data = hook
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+	test.Assert(t, `apiHook_success`, string(exp), string(got))
+}
+
+func testKarajo_apiHook_notfound(t *testing.T, tdata *test.Data, cl *Client) {
+	var (
+		exp []byte = tdata.Output[`apiHook_notfound.json`]
+
+		hook *Hook
+		data interface{}
+		got  []byte
+		err  error
+	)
+
+	hook, err = testClient.Hook(`/test-hook-notfound`)
+	if err != nil {
+		data = err
+	} else {
+		data = hook
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+	test.Assert(t, `apiHook_notfound`, string(exp), string(got))
+}
+
+func testKarajo_apiHookLog(t *testing.T, tdata *test.Data, cl *Client) {
+	var (
+		exp []byte = tdata.Output[`apiHookLog.json`]
+
+		hooklog *HookLog
+		data    interface{}
+		got     []byte
+		err     error
+	)
+
+	hooklog, err = testClient.HookLog(`test-hook-success`, 1)
+	if err != nil {
+		data = err
+	} else {
+		hooklog.Content = []byte(`<REDACTED>`)
+		data = hooklog
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	test.Assert(t, `apiHookLog`, string(exp), string(got))
 }
 
 func testKarajo_apiJob_success(t *testing.T, tdata *test.Data, cl *Client) {
