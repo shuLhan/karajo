@@ -104,7 +104,8 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 <<< apiJob_notfound.json
 {
   "code": 400,
-  "message": "invalid or empty job id: test_notfound"
+  "message": "invalid or empty job id: test_notfound",
+  "name": "ERR_INVALID_JOB_ID"
 }
 
 <<< apiJobLogs.json

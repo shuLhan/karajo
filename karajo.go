@@ -398,9 +398,7 @@ func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error
 	)
 
 	if jobHttp == nil {
-		res.Code = http.StatusBadRequest
-		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
-		return nil, res
+		return nil, errInvalidJobID(id)
 	}
 
 	res.Code = http.StatusOK
@@ -421,9 +419,7 @@ func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	)
 
 	if jobHttp == nil {
-		res.Code = http.StatusBadRequest
-		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
-		return nil, res
+		return nil, errInvalidJobID(id)
 	}
 
 	res.Code = http.StatusOK
@@ -449,9 +445,7 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err err
 	id = epr.HttpRequest.Form.Get(paramNameID)
 	jobHttp = k.env.httpJobs[id]
 	if jobHttp == nil {
-		res.Code = http.StatusBadRequest
-		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
-		return nil, res
+		return nil, errInvalidJobID(id)
 	}
 
 	jobHttp.pause()
@@ -479,9 +473,7 @@ func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) (resb []byte, err er
 	id = epr.HttpRequest.Form.Get(paramNameID)
 	jobHttp = k.env.httpJobs[id]
 	if jobHttp == nil {
-		res.Code = http.StatusBadRequest
-		res.Message = fmt.Sprintf("invalid or empty job id: %s", id)
-		return nil, res
+		return nil, errInvalidJobID(id)
 	}
 
 	jobHttp.resume()
