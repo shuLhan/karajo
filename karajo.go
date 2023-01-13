@@ -40,10 +40,11 @@ const (
 	HeaderNameXKarajoSign = "x-karajo-sign"
 
 	apiEnvironment = "/karajo/api/environment"
-	apiJob         = "/karajo/api/job"
-	apiJobLogs     = "/karajo/api/job/logs"
-	apiJobPause    = "/karajo/api/job/pause"
-	apiJobResume   = "/karajo/api/job/resume"
+
+	apiJobHttp       = `/karajo/api/job_http`
+	apiJobHttpLogs   = `/karajo/api/job_http/logs`
+	apiJobHttpPause  = `/karajo/api/job_http/pause`
+	apiJobHttpResume = `/karajo/api/job_http/resume`
 
 	apiHook    = "/karajo/hook"
 	apiHookLog = "/karajo/api/hook/log"
@@ -219,40 +220,40 @@ func (k *Karajo) registerApis() (err error) {
 
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         apiJob,
+		Path:         apiJobHttp,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJob,
+		Call:         k.apiJobHttp,
 	})
 	if err != nil {
 		return err
 	}
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         apiJobLogs,
+		Path:         apiJobHttpLogs,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobLogs,
+		Call:         k.apiJobHttpLogs,
 	})
 	if err != nil {
 		return err
 	}
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         apiJobPause,
+		Path:         apiJobHttpPause,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobPause,
+		Call:         k.apiJobHttpPause,
 	})
 	if err != nil {
 		return err
 	}
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         apiJobResume,
+		Path:         apiJobHttpResume,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobResume,
+		Call:         k.apiJobHttpResume,
 	})
 	if err != nil {
 		return err
@@ -329,7 +330,7 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 //
 // Format,
 //
-//	GET /karajo/hook/log?id=<hookID>&counter=<counter>
+//	GET /karajo/api/hook/log?id=<hookID>&counter=<counter>
 //
 // # Response
 //
@@ -392,9 +393,8 @@ func (k *Karajo) apiHookLog(epr *libhttp.EndpointRequest) (resbody []byte, err e
 	return json.Marshal(res)
 }
 
-// apiJob API to get job detail and its status.
-// The api accept query parameter job "id".
-func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+// apiJobHttp HTTP API to get the JobHttp information by its ID.
+func (k *Karajo) apiJobHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
 		res              = &libhttp.EndpointResponse{}
 		id      string   = epr.HttpRequest.Form.Get(paramNameID)
@@ -415,7 +415,8 @@ func (k *Karajo) apiJob(epr *libhttp.EndpointRequest) (resbody []byte, err error
 	return resbody, err
 }
 
-func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
+// apiJobHttpLogs HTTP API to get the logs for JobHttp by its ID.
+func (k *Karajo) apiJobHttpLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	var (
 		res              = &libhttp.EndpointResponse{}
 		id      string   = epr.HttpRequest.Form.Get(paramNameID)
@@ -432,8 +433,8 @@ func (k *Karajo) apiJobLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	return json.Marshal(res)
 }
 
-// apiJobPause HTTP API to pause executing the job.
-func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+// apiJobHttpPause HTTP API to pause running the JobHttp.
+func (k *Karajo) apiJobHttpPause(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		res = &libhttp.EndpointResponse{}
 
@@ -460,8 +461,8 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err err
 	return json.Marshal(res)
 }
 
-// apiJobResume HTTP API to resume executing the job.
-func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+// apiJobHttpResume HTTP API to resume running JobHttp.
+func (k *Karajo) apiJobHttpResume(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		res = &libhttp.EndpointResponse{}
 

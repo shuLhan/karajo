@@ -92,7 +92,7 @@ async function hookRunNow(hookID, hookPath) {
   renderHooks([hook]);
 }
 
-async function jobInfo(jobID) {
+async function jobHttpInfo(jobID) {
   let job = _httpJobs[jobID];
   let el = document.getElementById(job._idInfo);
   let delay = 10000;
@@ -106,7 +106,7 @@ async function jobInfo(jobID) {
   }
 }
 
-async function jobPause(id) {
+async function jobHttpPause(id) {
   let secret = document.getElementById("_secret").value;
   let epoch = parseInt(new Date().valueOf() / 1000);
   let q = `_karajo_epoch=${epoch}&id=${id}`;
@@ -114,7 +114,7 @@ async function jobPause(id) {
   let hash = CryptoJS.HmacSHA256(q, secret);
   let sign = hash.toString(CryptoJS.enc.Hex);
 
-  let fres = await fetch("/karajo/api/job/pause?" + q, {
+  let fres = await fetch("/karajo/api/job_http/pause?" + q, {
     method: "POST",
     headers: {
       "x-karajo-sign": sign,
@@ -128,10 +128,10 @@ async function jobPause(id) {
 
   let job = _httpJobs[id];
   job = Object.assign(job, res.data);
-  renderJob(job);
+  renderJobHttp(job);
 }
 
-async function jobResume(id) {
+async function jobHttpResume(id) {
   let secret = document.getElementById("_secret").value;
   let epoch = parseInt(new Date().valueOf() / 1000);
   let q = `_karajo_epoch=${epoch}&id=${id}`;
@@ -139,7 +139,7 @@ async function jobResume(id) {
   let hash = CryptoJS.HmacSHA256(q, secret);
   let sign = hash.toString(CryptoJS.enc.Hex);
 
-  let fres = await fetch("/karajo/api/job/resume?" + q, {
+  let fres = await fetch("/karajo/api/job_http/resume?" + q, {
     method: "POST",
     headers: {
       "x-karajo-sign": sign,
@@ -153,7 +153,7 @@ async function jobResume(id) {
 
   let job = _httpJobs[id];
   job = Object.assign(job, res.data);
-  renderJob(job);
+  renderJobHttp(job);
 }
 
 // renderHook render single hook.
@@ -283,14 +283,14 @@ function renderHooks(hooks) {
   }
 }
 
-function renderJob(job) {
-  renderJobAttrs(job);
-  renderJobLog(job);
-  renderJobNextRun(job);
-  renderJobStatus(job);
+function renderJobHttp(job) {
+  renderJobHttpAttrs(job);
+  renderJobHttpLog(job);
+  renderJobHttpNextRun(job);
+  renderJobHttpStatus(job);
 }
 
-function renderJobAttrs(job) {
+function renderJobHttpAttrs(job) {
   let el = document.getElementById(job._idAttrs);
   let out = `
     <div>${job.Description}</div>
@@ -310,16 +310,16 @@ function renderJobAttrs(job) {
   `;
 
   if (job.Status == "paused") {
-    out += `<button onclick="jobResume('${job.ID}')">Resume</button>`;
+    out += `<button onclick="jobHttpResume('${job.ID}')">Resume</button>`;
   } else {
-    out += `<button onclick="jobPause('${job.ID}')">Pause</button>`;
+    out += `<button onclick="jobHttpPause('${job.ID}')">Pause</button>`;
   }
 
   out += `</div>`;
   el.innerHTML = out;
 }
 
-function renderJobLog(job) {
+function renderJobHttpLog(job) {
   let el = document.getElementById(job._idLog);
   let out = "";
 
@@ -331,7 +331,7 @@ function renderJobLog(job) {
   el.scrollTop = el.scrollHeight;
 }
 
-function renderJobNextRun(job) {
+function renderJobHttpNextRun(job) {
   let elNextRun = document.getElementById(job._idNextRun);
 
   let now = new Date();
@@ -349,7 +349,7 @@ function renderJobNextRun(job) {
   elNextRun.innerText = `Next run in ${hours}h ${minutes}m ${remSeconds}s`;
 }
 
-function renderJobStatus(job) {
+function renderJobHttpStatus(job) {
   let el = document.getElementById(job._idStatus);
   el.className = `name ${job.Status}`;
 }
@@ -380,14 +380,14 @@ function renderHttpJobs(jobs) {
 
     let elJob = document.getElementById(job._id);
     if (elJob != null) {
-      renderJob(job);
+      renderJobHttp(job);
       continue;
     }
 
     out = `
       <div id="${job._id}" class="job">
         <div id="${job._idStatus}" class="name ${job.Status}">
-          <a href="#${job._id}" onclick='jobInfo("${job.ID}")'>
+          <a href="#${job._id}" onclick='jobHttpInfo("${job.ID}")'>
             ${job.Name}
           </a>
           <span id="${job._idNextRun}" class="next_run"></span>
@@ -401,6 +401,6 @@ function renderHttpJobs(jobs) {
     `;
 
     elJobs.innerHTML += out;
-    renderJob(job);
+    renderJobHttp(job);
   }
 }
