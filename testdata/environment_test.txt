@@ -1,0 +1,205 @@
+Test LoadEnvironment.
+
+<<< environment.json
+{
+  "Hooks": {
+    "Test interval 1m": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Interval": 60000000000,
+      "NumRunning": 0,
+      "Logs": null,
+      "ID": "",
+      "Name": "",
+      "Description": "",
+      "Path": "",
+      "HeaderSign": "",
+      "LastStatus": "",
+      "Commands": [
+        "echo Test hook interval 1m",
+        "echo Counter is $KARAJO_HOOK_COUNTER"
+      ],
+      "LogRetention": 0
+    },
+    "Test long running": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Interval": 0,
+      "NumRunning": 0,
+      "Logs": null,
+      "ID": "",
+      "Name": "",
+      "Description": "The hook to test log refresh.",
+      "Path": "/test-long-running",
+      "HeaderSign": "",
+      "LastStatus": "",
+      "Commands": [
+        "for ((x=0; x\u003c90; x++)); do echo \"$x\"; sleep 1; done"
+      ],
+      "LogRetention": 0
+    },
+    "Test manual run": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Interval": 0,
+      "NumRunning": 0,
+      "Logs": null,
+      "ID": "",
+      "Name": "",
+      "Description": "The hook to test manual run.",
+      "Path": "/test-manual-run",
+      "HeaderSign": "",
+      "LastStatus": "",
+      "Commands": [
+        "echo Test hook manual run",
+        "echo Counter is $KARAJO_HOOK_COUNTER"
+      ],
+      "LogRetention": 0
+    },
+    "test fail": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Interval": 0,
+      "NumRunning": 0,
+      "Logs": null,
+      "ID": "",
+      "Name": "",
+      "Description": "",
+      "Path": "/test-fail",
+      "HeaderSign": "",
+      "LastStatus": "",
+      "Commands": [
+        "echo Test hook fail",
+        "echo Counter is $KARAJO_HOOK_COUNTER",
+        "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x",
+        "command-not-found"
+      ],
+      "LogRetention": 0
+    },
+    "test random": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Interval": 0,
+      "NumRunning": 0,
+      "Logs": null,
+      "ID": "",
+      "Name": "",
+      "Description": "Test running command with random exit status",
+      "Path": "/test-random",
+      "HeaderSign": "",
+      "LastStatus": "",
+      "Commands": [
+        "echo Test hook random",
+        "echo Counter is $KARAJO_HOOK_COUNTER",
+        "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x",
+        "rand=$(($RANDOM%2)) \u0026\u0026 echo $rand \u0026\u0026 exit $rand"
+      ],
+      "LogRetention": 0
+    },
+    "test success": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Interval": 0,
+      "NumRunning": 0,
+      "Logs": null,
+      "ID": "",
+      "Name": "",
+      "Description": "",
+      "Path": "/test-success",
+      "HeaderSign": "",
+      "LastStatus": "",
+      "Commands": [
+        "echo Test hook success",
+        "echo Counter is $KARAJO_HOOK_COUNTER",
+        "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
+      ],
+      "LogRetention": 0
+    }
+  },
+  "HttpJobs": {
+    "Test fail": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "Status": "",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Log": null,
+      "ID": "",
+      "Name": "",
+      "Description": "The job to test what the user interface and logs look likes if its \u003cb\u003efail\u003c/b\u003e.",
+      "HttpMethod": "POST",
+      "HttpUrl": "http://127.0.0.1:31937/karajo/hook/test-fail",
+      "HttpRequestType": "json",
+      "HttpHeaders": [
+        "A: B",
+        "C: D"
+      ],
+      "HttpTimeout": 0,
+      "Interval": 20000000000,
+      "MaxRequests": 2,
+      "NumRequests": 0,
+      "HttpInsecure": false
+    },
+    "Test long running": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "Status": "",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Log": null,
+      "ID": "",
+      "Name": "",
+      "Description": "The job to test hook log refresh.",
+      "HttpMethod": "POST",
+      "HttpUrl": "/karajo/hook/test-long-running",
+      "HttpRequestType": "json",
+      "HttpHeaders": null,
+      "HttpTimeout": 0,
+      "Interval": 120000000000,
+      "MaxRequests": 1,
+      "NumRequests": 0,
+      "HttpInsecure": false
+    },
+    "Test random": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "Status": "",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Log": null,
+      "ID": "",
+      "Name": "",
+      "Description": "Test triggering hook /test-random",
+      "HttpMethod": "POST",
+      "HttpUrl": "/karajo/hook/test-random",
+      "HttpRequestType": "json",
+      "HttpHeaders": null,
+      "HttpTimeout": 0,
+      "Interval": 0,
+      "MaxRequests": 1,
+      "NumRequests": 0,
+      "HttpInsecure": false
+    },
+    "Test success": {
+      "LastRun": "0001-01-01T00:00:00Z",
+      "Status": "",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Log": null,
+      "ID": "",
+      "Name": "",
+      "Description": "The job to test what the user interface and logs look likes if its \u003ci\u003esuccess\u003c/i\u003e.",
+      "HttpMethod": "POST",
+      "HttpUrl": "/karajo/hook/test-success",
+      "HttpRequestType": "json",
+      "HttpHeaders": [
+        "X: Y"
+      ],
+      "HttpTimeout": 0,
+      "Interval": 20000000000,
+      "MaxRequests": 1,
+      "NumRequests": 0,
+      "HttpInsecure": false
+    }
+  },
+  "Name": "My karajo",
+  "ListenAddress": "127.0.0.1:31937",
+  "DirBase": "testdata",
+  "DirPublic": "testdata",
+  "HttpTimeout": 300000000000,
+  "MaxHookRunning": 2,
+  "IsDevelopment": false
+}
