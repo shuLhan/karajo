@@ -171,6 +171,17 @@ function renderHookAttributes(hook) {
     <div>ID: ${hook.ID}</div>
     <div>Path: ${hook.Path}</div>
     <div>Last run: ${hook.LastRun}</div>
+  `;
+
+  if (hook.Interval > 0) {
+    out += `
+      <div>Interval: ${hook.Interval / 1e9} seconds</div>
+      <div>Next run: ${hook.NextRun}</div>
+    `;
+  }
+
+  out += `
+    <br/>
     <div class="hook_commands">
       Commands:
   `;
@@ -181,6 +192,7 @@ function renderHookAttributes(hook) {
 
   out += `
     </div>
+    <br/>
     <div>Log:</div>
     <div>
   `;

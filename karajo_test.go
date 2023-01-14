@@ -12,6 +12,7 @@ import (
 	"time"
 
 	libhttp "github.com/shuLhan/share/lib/http"
+	"github.com/shuLhan/share/lib/mlog"
 	"github.com/shuLhan/share/lib/test"
 )
 
@@ -23,6 +24,10 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	mlog.SetPrefix(``)
+	mlog.SetTimeFormat(``)
+	defer mlog.Flush()
+
 	TimeNow = func() time.Time {
 		return testTimeNow
 	}

@@ -34,11 +34,6 @@ var (
 		Name:    "ERR_HOOK_FORBIDDEN",
 		Message: "forbidden",
 	}
-	ErrHookInvalidPath = liberrors.E{
-		Code:    http.StatusBadRequest,
-		Name:    "ERR_HOOK_INVALID_PATH",
-		Message: "invalid or empty Hook Path",
-	}
 	ErrHookInvalidSecret = liberrors.E{
 		Code:    http.StatusBadRequest,
 		Name:    "ERR_HOOK_INVALID_SECRET",
@@ -59,13 +54,21 @@ const (
 // The epr parameter contains HTTP request, body, and response writer.
 type HookHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 
-// Hook is HTTP endpoint inside the Karajo that can be triggered from
-// external using POST method.
+// Hook is a job that can be triggered manually by sending HTTP POST request
+// or automatically by timer (per interval).
 //
-// Each Hook contains Secret for authenticating request, a working directory,
-// and a callback or list of commands to be executed when the request
-// received.
+// For hook triggered by HTTP request, the Path and Secret must be set.
+// For hook triggered by timer, the Interval must be positive duration, equal
+// or greater than 1 minute.
+//
+// Each Hook contains a working directory, and a callback or list of commands
+// to be executed.
 type Hook struct {
+	JobBase
+
+	// Shared Environment.
+	env *Environment `json:"-"`
+
 	// Cache of log sorted by its counter.
 	Logs []*HookLog
 
@@ -74,9 +77,6 @@ type Hook struct {
 	// This field is optional, it is only used if Hook created through
 	// code.
 	Call HookHandler `json:"-" ini:"-"`
-
-	// The last time the Hook is finished running, in UTC.
-	LastRun time.Time `ini:"-"`
 
 	// The id of the hook.
 	// It is normalized from the Name.
@@ -103,7 +103,7 @@ type Hook struct {
 	// Secret define a string to check signature of request.
 	// Each request sign the body with HMAC + SHA-256 using this secret.
 	// The signature then sent in HTTP header "X-Karajo-Sign" as hex.
-	// This field is required.
+	// This field is required if Path is not empty.
 	Secret string `ini:"::secret" json:"-"`
 
 	// dirWork define the directory on the system where all commands
@@ -137,8 +137,17 @@ func (hook *Hook) finish(hlog *HookLog, status string) {
 	}
 
 	hook.Lock()
+	hook.NumRunning--
 	hook.LastRun = TimeNow().UTC().Round(time.Second)
 	hook.LastStatus = status
+	if hook.Interval > 0 {
+		hook.NextRun = hook.LastRun.Add(hook.Interval)
+	}
+
+	select {
+	case hook.finished <- true:
+	default:
+	}
 	hook.Unlock()
 
 	mlog.Outf("hook: %s: %s", hook.ID, status)
@@ -150,23 +159,28 @@ func (hook *Hook) generateCmdEnvs() (env []string) {
 	return env
 }
 
+// init initialize the Hook.
+//
+// For Hook that need to be triggered by HTTP request the Path and Secret
+// _must_ not be empty, otherwise it will return an error
+// ErrHookInvalidSecret.
+//
+// It will return an error ErrHookEmptyCommandsOrCall if one of the Call or
+// Commands is not set.
 func (hook *Hook) init(env *Environment, name string) (err error) {
-	hook.Path = strings.TrimSpace(hook.Path)
-	if hook.Path == "" {
-		return &ErrHookInvalidPath
-	}
+	hook.JobBase.init()
 
+	hook.Path = strings.TrimSpace(hook.Path)
 	hook.Secret = strings.TrimSpace(hook.Secret)
-	if hook.Secret == "" {
+	if len(hook.Path) != 0 && len(hook.Secret) == 0 {
 		return &ErrHookInvalidSecret
 	}
 
-	if len(hook.Commands) == 0 {
-		if hook.Call == nil {
-			return &ErrHookEmptyCommandsOrCall
-		}
+	if len(hook.Commands) == 0 && hook.Call == nil {
+		return &ErrHookEmptyCommandsOrCall
 	}
 
+	hook.env = env
 	hook.Name = name
 	hook.ID = libhtml.NormalizeForID(name)
 	if hook.LogRetention <= 0 {
@@ -182,6 +196,8 @@ func (hook *Hook) init(env *Environment, name string) (err error) {
 	if err != nil {
 		return err
 	}
+
+	hook.initTimer()
 
 	if len(hook.HeaderSign) == 0 {
 		hook.HeaderSign = HeaderNameXKarajoSign
@@ -258,6 +274,16 @@ func (hook *Hook) initLogs() (err error) {
 	return nil
 }
 
+// initTimer init fields that required to run Hook with interval.
+func (hook *Hook) initTimer() {
+	if hook.Interval <= 0 {
+		return
+	}
+	if hook.Interval < time.Minute {
+		hook.Interval = time.Minute
+	}
+}
+
 func (hook *Hook) logsPrune() {
 	var (
 		hlog     *HookLog
@@ -276,10 +302,11 @@ func (hook *Hook) logsPrune() {
 	}
 }
 
-// run is the HTTP handler for Hook.
+// handleHttp handle trigger to run the Hook from HTTP request.
+//
 // Once the signature is verified it will response immediately and run the
 // actual process in the new goroutine.
-func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+func (hook *Hook) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
 		res      libhttp.EndpointResponse
 		zeroTime time.Time
@@ -311,7 +338,7 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 		return nil, &ErrHookForbidden
 	}
 
-	go hook.start(epr)
+	go hook.execute(epr)
 
 	res.Code = http.StatusOK
 	res.Message = "OK"
@@ -324,8 +351,51 @@ func (hook *Hook) run(epr *libhttp.EndpointRequest) (resbody []byte, err error) 
 	return resbody, err
 }
 
-// start run the hook Call or commands.
-func (hook *Hook) start(epr *libhttp.EndpointRequest) {
+// Start the Hook timer only if its Interval is non-zero.
+func (hook *Hook) Start() {
+	if hook.Interval <= 0 {
+		return
+	}
+
+	var (
+		now          time.Time
+		nextInterval time.Duration
+		timer        *time.Timer
+		ever         bool
+	)
+
+	for {
+		hook.Lock()
+		now = TimeNow().UTC().Round(time.Second)
+		nextInterval = hook.computeNextInterval(now)
+		hook.NextRun = now.Add(nextInterval)
+		hook.Unlock()
+
+		mlog.Outf("hook: %s: next running in %s ...", hook.ID, nextInterval)
+
+		timer = time.NewTimer(nextInterval)
+		ever = true
+		for ever {
+			select {
+			case <-timer.C:
+				hook.execute(nil)
+				// The execute will trigger the finished
+				// channel.
+
+			case <-hook.finished:
+				timer.Stop()
+				ever = false
+
+			case <-hook.stopped:
+				timer.Stop()
+				return
+			}
+		}
+	}
+}
+
+// execute the hook Call or commands.
+func (hook *Hook) execute(epr *libhttp.EndpointRequest) {
 	var (
 		hlog    *HookLog
 		execCmd exec.Cmd
@@ -335,13 +405,14 @@ func (hook *Hook) start(epr *libhttp.EndpointRequest) {
 		x       int
 	)
 
-	hookq <- struct{}{}
+	hook.env.hookq <- struct{}{}
 	mlog.Outf("hook: %s: started ...", hook.ID)
 	defer func() {
-		<-hookq
+		<-hook.env.hookq
 	}()
 
 	hook.Lock()
+	hook.NumRunning++
 	hook.lastCounter++
 	hlog = newHookLog(hook.ID, hook.dirLog, hook.lastCounter)
 
@@ -384,4 +455,14 @@ func (hook *Hook) start(epr *libhttp.EndpointRequest) {
 	}
 
 	hook.finish(hlog, JobStatusSuccess)
+}
+
+// Stop the Hook timer execution.
+func (hook *Hook) Stop() {
+	mlog.Outf("hook %s: stopping ...", hook.ID)
+
+	select {
+	case hook.stopped <- true:
+	default:
+	}
 }

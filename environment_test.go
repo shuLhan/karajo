@@ -69,6 +69,15 @@ func TestLoadEnvironment(t *testing.T) {
 						`echo Counter is $KARAJO_HOOK_COUNTER`,
 					},
 				},
+				`Test interval 1m`: &Hook{
+					JobBase: JobBase{
+						Interval: time.Minute,
+					},
+					Commands: []string{
+						`echo Test hook interval 1m`,
+						`echo Counter is $KARAJO_HOOK_COUNTER`,
+					},
+				},
 			},
 			HttpJobs: map[string]*JobHttp{
 				"Test fail": &JobHttp{

@@ -1,0 +1,26 @@
+Test running Hook with Call using timer.
+
+<<< hook_after.json
+{
+  "LastRun": "2023-01-09T00:00:00Z",
+  "NextRun": "2023-01-09T00:01:00Z",
+  "Interval": 60000000000,
+  "NumRunning": 0,
+  "Logs": [
+    {
+      "HookID": "test_hook_timer",
+      "Name": "test_hook_timer.1.success",
+      "Status": "success",
+      "Counter": 1,
+      "Content": "T3V0cHV0IGZyb20gQ2FsbA=="
+    }
+  ],
+  "ID": "test_hook_timer",
+  "Name": "Test hook timer",
+  "Description": "",
+  "Path": "/test-hook-timer",
+  "HeaderSign": "x-karajo-sign",
+  "LastStatus": "success",
+  "Commands": null,
+  "LogRetention": 5
+}

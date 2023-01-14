@@ -24,6 +24,11 @@ const (
 type Environment struct {
 	Hooks map[string]*Hook `ini:"hook"`
 
+	// hookq is the channel that limit the number of hook running at the
+	// same time.
+	// This limit can be overwritten by MaxHookRunning.
+	hookq chan struct{}
+
 	// List of Job by name.
 	HttpJobs map[string]*JobHttp `ini:"job.http"`
 	httpJobs map[string]*JobHttp // List of Job indexed by ID.
@@ -178,6 +183,7 @@ func (env *Environment) init() (err error) {
 	if env.MaxHookRunning <= 0 {
 		env.MaxHookRunning = defMaxHookRunning
 	}
+	env.hookq = make(chan struct{}, env.MaxHookRunning)
 
 	if len(env.Secret) == 0 {
 		return fmt.Errorf("%s: empty secret", logp)

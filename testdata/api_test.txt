@@ -32,8 +32,11 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "Hooks": {
     "Test hook success": {
-      "Logs": null,
       "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "Interval": 0,
+      "NumRunning": 0,
+      "Logs": null,
       "ID": "test_hook_success",
       "Name": "Test hook success",
       "Description": "",
@@ -81,8 +84,11 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiHook_success.json
 {
-  "Logs": null,
   "LastRun": "0001-01-01T00:00:00Z",
+  "NextRun": "0001-01-01T00:00:00Z",
+  "Interval": 0,
+  "NumRunning": 0,
+  "Logs": null,
   "ID": "test_hook_success",
   "Name": "Test hook success",
   "Description": "",
