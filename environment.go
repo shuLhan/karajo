@@ -69,7 +69,9 @@ type Environment struct {
 	dirLibJob     string
 	dirLogJob     string
 	dirLogJobHttp string
-	dirRunJob     string
+
+	// dirRunJobHttp define the directory where JobHttp state is stored.
+	dirRunJobHttp string
 
 	file string
 
@@ -256,10 +258,10 @@ func (env *Environment) initDirs() (err error) {
 		return fmt.Errorf(`%s: %w`, env.dirLogJobHttp, err)
 	}
 
-	env.dirRunJob = filepath.Join(env.DirBase, "var", "run", defEnvName, "job")
-	err = os.MkdirAll(env.dirRunJob, 0700)
+	env.dirRunJobHttp = filepath.Join(env.DirBase, `var`, `run`, defEnvName, `job_http`)
+	err = os.MkdirAll(env.dirRunJobHttp, 0700)
 	if err != nil {
-		return fmt.Errorf("%s: %w", env.dirRunJob, err)
+		return fmt.Errorf(`%s: %w`, env.dirRunJobHttp, err)
 	}
 
 	return nil

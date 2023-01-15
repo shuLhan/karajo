@@ -184,7 +184,7 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 		return err
 	}
 
-	job.pathState = filepath.Join(env.dirRunJob, job.ID)
+	job.pathState = filepath.Join(env.dirRunJobHttp, job.ID)
 	err = job.stateLoad()
 	if err != nil {
 		return err
