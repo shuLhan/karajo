@@ -201,13 +201,13 @@ The following environment variables are available inside the command:
 --
 
 
-[#config_job_http]
-=== HTTP Job
+[#config_jobhttp]
+=== JobHttp
 
-An HTTP job is a periodic job that send HTTP request to external HTTP server
+An JobHttp is a periodic job that send HTTP request to external HTTP server
 (or to karajo Job itself).
 
-Each HTTP job has the following configuration,
+Each JobHttp has the following configuration,
 
 ----
 [job.http "name"]
@@ -470,7 +470,7 @@ On success, it will return the Environment object,
 [#http_api_job_log]
 === Get job log
 
-HTTP API to get the job log by its ID and counter.
+HTTP API to get the Job log by its ID and counter.
 
 **Request**
 
@@ -490,15 +490,15 @@ link:#JobLog[JobLog]
 object as JSON.
 
 
-[#http_api_job]
-=== Get job detail
+[#http_api_jobhttp]
+=== Get JobHttp detail
 
-HTTP API to get specific job information by its ID.
+HTTP API to get a JobHttp information by its ID.
 
 **Request**
 
 ----
-GET /karajo/api/job?id=<string>
+GET /karajo/api/job_http?id=<string>
 ----
 
 Parameters,
@@ -514,15 +514,15 @@ On fail, it will return
 * `400`: for invalid or empty job ID
 
 
-[#http_api_job_log]
-=== Get job logs
+[#http_api_jobhttp_logs]
+=== Get JobHttp logs
 
-Get the last logs from specific job by its ID.
+Get the last JobHttp logs by its ID.
 
 **Request**
 
 ----
-GET /karajo/api/job/logs?id=<string>
+GET /karajo/api/job_http/logs?id=<string>
 ----
 
 Parameters,
@@ -539,10 +539,10 @@ On fail, it will return
 * `400`: invalid or empty job ID.
 
 
-[#http_api_job_pause]
-=== Pause the job
+[#http_api_jobhttp_pause]
+=== Pause the JobHttp
 
-Pause the job execution by its ID.
+Pause the JobHttp timer by its ID.
 
 **Request**
 
@@ -551,7 +551,7 @@ The request is authorization using signature.
 Format,
 
 ----
-POST /karajo/api/job/pause?id=<id>
+POST /karajo/api/job_http/pause?id=<id>
 x-karajo-sign: <query signature>
 ----
 
@@ -568,10 +568,10 @@ On fail it will return
 * `400`: invalid or empty job ID.
 
 
-[#http_api_job_resume]
-=== Resume the job
+[#http_api_jobhttp_resume]
+=== Resume the JobHttp
 
-HTTP API to resume paused job by its ID.
+HTTP API to resume paused JobHttp by its ID.
 
 **Request**
 
@@ -580,7 +580,7 @@ The request is authorization using signature.
 Format,
 
 ----
-POST /karajo/api/job/resume?id=<id>
+POST /karajo/api/job_http/resume?id=<id>
 x-karajo-sign: <query signature>
 ----
 
