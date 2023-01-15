@@ -10,7 +10,7 @@ import (
 	"github.com/shuLhan/share/lib/test"
 )
 
-func TestHttpJob_computeFirstTimer(t *testing.T) {
+func TestJobBase_computeNextInterval(t *testing.T) {
 	type testCase struct {
 		jobHttp *JobHttp
 		desc    string
@@ -25,36 +25,36 @@ func TestHttpJob_computeFirstTimer(t *testing.T) {
 	var cases = []testCase{{
 		desc: "Last run is -2*interval ",
 		jobHttp: &JobHttp{
-			jobState: jobState{
-				LastRun: now.Add(-2 * interval),
+			JobBase: JobBase{
+				LastRun:  now.Add(-2 * interval),
+				Interval: interval,
 			},
-			Interval: interval,
 		},
 	}, {
 		desc: "Last run is now",
 		jobHttp: &JobHttp{
-			jobState: jobState{
-				LastRun: now.UTC(),
+			JobBase: JobBase{
+				LastRun:  now.UTC(),
+				Interval: interval,
 			},
-			Interval: interval,
 		},
 		exp: interval,
 	}, {
 		desc: "Last run is half-interval ago",
 		jobHttp: &JobHttp{
-			jobState: jobState{
-				LastRun: now.Add(-1 * (interval / 2)),
+			JobBase: JobBase{
+				LastRun:  now.Add(-1 * (interval / 2)),
+				Interval: interval,
 			},
-			Interval: interval,
 		},
 		exp: interval / 2,
 	}, {
 		desc: "Last run > now?",
 		jobHttp: &JobHttp{
-			jobState: jobState{
-				LastRun: now.Add(1 * interval),
+			JobBase: JobBase{
+				LastRun:  now.Add(1 * interval),
+				Interval: interval,
 			},
-			Interval: interval,
 		},
 		exp: 2 * interval,
 	}}
@@ -64,7 +64,7 @@ func TestHttpJob_computeFirstTimer(t *testing.T) {
 		got time.Duration
 	)
 	for _, c = range cases {
-		got = c.jobHttp.computeFirstTimer(now)
+		got = c.jobHttp.computeNextInterval(now)
 		test.Assert(t, c.desc, c.exp, got)
 	}
 }

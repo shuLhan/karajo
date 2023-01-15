@@ -225,7 +225,7 @@ function renderHookLastRun(hook) {
   let lastRun = new Date(hook.LastRun);
 
   if (lastRun <= 0) {
-    if (hook.LastStatus != "") {
+    if (hook.Status != "") {
       elLastRun.innerText = "Running ...";
     }
     return;
@@ -240,7 +240,7 @@ function renderHookLastRun(hook) {
 
 function renderHookStatus(hook) {
   let el = document.getElementById(hook._idStatus);
-  el.className = `name ${hook.LastStatus}`;
+  el.className = `name ${hook.Status}`;
 }
 
 // renderHooks render list of hooks.
@@ -274,7 +274,7 @@ function renderHooks(hooks) {
 
     let out = `
       <div id="${hook._id}" class="hook">
-        <div id="${hook._idStatus}" class="name ${hook.LastStatus}">
+        <div id="${hook._idStatus}" class="name ${hook.Status}">
           <a href="#${hook._id}" onclick='hookInfo("${hook.ID}")'>
             ${hook.Name}
           </a>
@@ -312,8 +312,8 @@ function renderJobHttpAttrs(job) {
     <div>HTTP headers: ${job.HttpHeaders}</div>
     <div>HTTP timeout: ${job.HttpTimeout / 1e9}</div>
     <div>Interval: ${job.Interval / 1e9}s</div>
-    <div>Number of requests: ${job.NumRequests}</div>
-    <div>Maximum requests: ${job.MaxRequests}</div>
+    <div>Maximum job running: ${job.MaxRunning}</div>
+    <div>Currently job running: ${job.NumRunning}</div>
     <div>Last run: ${job.LastRun}</div>
     <div>Next run: ${job.NextRun}</div>
     <div>Status: ${job.Status}</div>

@@ -64,8 +64,6 @@ type HookHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 // Each Hook contains a working directory, and a callback or list of commands
 // to be executed.
 type Hook struct {
-	JobBase
-
 	// Shared Environment.
 	env *Environment `json:"-"`
 
@@ -77,16 +75,6 @@ type Hook struct {
 	// This field is optional, it is only used if Hook created through
 	// code.
 	Call HookHandler `json:"-" ini:"-"`
-
-	// The id of the hook.
-	// It is normalized from the Name.
-	ID string `ini:"-"`
-
-	Name string `ini:"-"`
-
-	// The description of the hook.
-	// It could be plain text or simple HTML.
-	Description string `ini:"description"`
 
 	// HTTP path where Karajo will listen for request.
 	// The Path is automatically prefixed with "/karajo/hook", it is not
@@ -111,10 +99,10 @@ type Hook struct {
 	dirWork string
 	dirLog  string
 
-	LastStatus string // The last status of hook.
-
 	// Commands list of command to be executed.
 	Commands []string `ini:"::command"`
+
+	JobBase
 
 	LogRetention int `ini:"::log_retention"`
 	lastCounter  int64
@@ -139,7 +127,7 @@ func (hook *Hook) finish(hlog *HookLog, status string) {
 	hook.Lock()
 	hook.NumRunning--
 	hook.LastRun = TimeNow().UTC().Round(time.Second)
-	hook.LastStatus = status
+	hook.Status = status
 	if hook.Interval > 0 {
 		hook.NextRun = hook.LastRun.Add(hook.Interval)
 	}
@@ -252,7 +240,7 @@ func (hook *Hook) initLogs() (err error) {
 
 		if hlog.Counter > hook.lastCounter {
 			hook.lastCounter = hlog.Counter
-			hook.LastStatus = hlog.Status
+			hook.Status = hlog.Status
 		}
 
 		fiModTime = fi.ModTime()
@@ -315,7 +303,7 @@ func (hook *Hook) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err 
 	)
 
 	hook.Lock()
-	hook.LastStatus = JobStatusStarted
+	hook.Status = JobStatusStarted
 	hook.LastRun = zeroTime
 	hook.Unlock()
 

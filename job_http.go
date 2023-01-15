@@ -23,12 +23,6 @@ import (
 	libhtml "github.com/shuLhan/share/lib/net/html"
 )
 
-// DefaultMaxRequests define maximum number of requests that can be
-// executed simultaneously.
-// This is to prevent the karajo server consume resources on the local
-// server and on the remote server.
-const DefaultMaxRequests = 1
-
 const (
 	defJobHttpMethod  = http.MethodGet
 	defJobInterval    = 30 * time.Second
@@ -39,7 +33,7 @@ const (
 	defTimeLayout = "2006-01-02 15:04:05 MST"
 )
 
-// JobHttp is a job that trigger HTTP $method request to the remote server
+// JobHttp is a job that trigger HTTP request to the remote server
 // periodically.
 //
 // Each JobHttp execution send the parameter named `_karajo_epoch` with value
@@ -49,14 +43,7 @@ const (
 // If the request type is `json` then the parameter is inside the body as JSON
 // object, for example `{"_karajo_epoch":1656750073}`.
 type JobHttp struct {
-	jobState
-
-	// The next time the job will running, in UTC.
-	NextRun time.Time `ini:"-"`
-
 	headers http.Header
-
-	done chan bool
 
 	// Log contains the Job output.
 	// Upon started it will load several kilobytes lines from previous
@@ -70,16 +57,6 @@ type JobHttp struct {
 	httpc *libhttp.Client
 
 	params map[string]interface{}
-
-	// ID of the job. It must be unique or the last job will replace the
-	// previous job with the same ID.
-	// If ID is empty, it will generated from Name by replacing
-	// non-alphanumeric character with '-'.
-	ID string `ini:"-"`
-
-	// Name of job for readibility.
-	Name        string `ini:"-"`
-	Description string `ini:"::description"`
 
 	// Secret define a string to sign the request query or body with
 	// HMAC+SHA-256.
@@ -118,26 +95,16 @@ type JobHttp struct {
 	// Optional HTTP headers for HttpUrl, in the format of "K: V".
 	HttpHeaders []string `ini:"::http_header"`
 
+	JobBase
+
 	// HttpTimeout custom HTTP timeout for this job.
-	// This field is option, if not set default to
+	// This field is optional, if not set default to global timeout in
 	// Environment.HttpTimeout.
 	// To make job run without timeout, set the value to negative.
 	HttpTimeout time.Duration `ini:"::http_timeout"`
 
 	requestMethod libhttp.RequestMethod
 	requestType   libhttp.RequestType
-
-	// Interval duration when job will be repeatedly executed.
-	// This field is required, if not set or invalid it will default to 30
-	// seconds.
-	Interval time.Duration `ini:"::interval"`
-
-	// MaxRequests maximum number of requests executed by karajo.
-	// This field is optional default to DefaultMaxRequests.
-	MaxRequests int8 `ini:"::max_requests"`
-
-	// NumRequests record the current number of requests executed.
-	NumRequests int8 `ini:"-"`
 
 	sync.Mutex
 
@@ -149,14 +116,14 @@ type JobHttp struct {
 func (job *JobHttp) Start() {
 	var (
 		now        = TimeNow().UTC().Round(time.Second)
-		firstTimer = job.computeFirstTimer(now)
+		firstTimer = job.computeNextInterval(now)
 		ever       = true
 
 		t    *time.Timer
 		tick *time.Ticker
 	)
 
-	job.NumRequests = 0
+	job.NumRunning = 0
 
 	job.NextRun = now.Add(firstTimer)
 	job.mlog.Outf("running the first HTTP job in %s ...", firstTimer)
@@ -168,7 +135,7 @@ func (job *JobHttp) Start() {
 			job.execute()
 			t.Stop()
 			ever = false
-		case <-job.done:
+		case <-job.stopped:
 			return
 		}
 	}
@@ -186,7 +153,7 @@ func (job *JobHttp) Start() {
 			job.NextRun = job.LastRun.Add(job.Interval)
 			job.Unlock()
 
-		case <-job.done:
+		case <-job.stopped:
 			return
 		}
 	}
@@ -195,7 +162,7 @@ func (job *JobHttp) Start() {
 // Stop the job.
 func (job *JobHttp) Stop() {
 	job.mlog.Outf("stopping HTTP job ...")
-	job.done <- true
+	job.stopped <- true
 
 	job.mlog.Flush()
 	var err error = job.flog.Close()
@@ -263,14 +230,11 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 	}
 	job.httpc.Client.Timeout = job.HttpTimeout
 
+	job.JobBase.init()
+
 	if job.Interval <= defJobInterval {
 		job.Interval = defJobInterval
 	}
-	if job.MaxRequests == 0 {
-		job.MaxRequests = DefaultMaxRequests
-	}
-
-	job.done = make(chan bool)
 
 	return nil
 }
@@ -434,22 +398,6 @@ func (job *JobHttp) initHttpHeaders() (err error) {
 	return nil
 }
 
-func (job *JobHttp) increment() (ok bool) {
-	job.Lock()
-	if job.NumRequests+1 <= job.MaxRequests {
-		job.NumRequests++
-		ok = true
-	}
-	job.Unlock()
-	return ok
-}
-
-func (job *JobHttp) decrement() {
-	job.Lock()
-	job.NumRequests--
-	job.Unlock()
-}
-
 func (job *JobHttp) execute() {
 	var (
 		now     = TimeNow().UTC().Round(time.Second)
@@ -472,13 +420,13 @@ func (job *JobHttp) execute() {
 		return
 	}
 
-	if !job.increment() {
-		log = fmt.Sprintf("!!! maximum requests %d has been reached", job.MaxRequests)
+	if !job.runIncrement() {
+		log = fmt.Sprintf("!!! maximum requests %d has been reached", job.MaxRunning)
 		job.mlog.Errf(log)
 		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
 		return
 	}
-	defer job.decrement()
+	defer job.runDecrement()
 
 	job.setStatus(JobStatusStarted)
 
@@ -547,19 +495,6 @@ func (job *JobHttp) execute() {
 	job.Unlock()
 }
 
-// computeFirstTimer compute the duration when the job will be running based
-// on last time run and interval.
-//
-// If the `(last_run + interval) < now` then it will return 0; otherwise it will
-// return `(last_run + interval) - now`
-func (job *JobHttp) computeFirstTimer(now time.Time) time.Duration {
-	var lastInterval time.Time = job.LastRun.Add(job.Interval)
-	if lastInterval.Before(now) {
-		return 0
-	}
-	return lastInterval.Sub(now)
-}
-
 func (job *JobHttp) paramsToJson() (obj map[string]interface{}, raw []byte, err error) {
 	raw, err = json.Marshal(job.params)
 	if err != nil {
@@ -613,7 +548,7 @@ func (job *JobHttp) stateLoad() (err error) {
 		}
 		return err
 	}
-	err = job.jobState.unpack(rawState)
+	err = job.unpackState(rawState)
 	if err != nil {
 		return err
 	}
@@ -624,7 +559,7 @@ func (job *JobHttp) stateLoad() (err error) {
 func (job *JobHttp) stateSave() (err error) {
 	var rawState []byte
 
-	rawState, err = job.jobState.pack()
+	rawState, err = job.packState()
 	if err != nil {
 		return err
 	}

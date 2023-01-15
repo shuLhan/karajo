@@ -49,7 +49,7 @@ configure the hooks, and another one to configure the jobs to be executed.
 
 Default values,
 
-* `DefaultMaxRequests`: 1
+* `DefaultJobMaxRunning`: 1
 
 [#config_server]
 === Server
@@ -209,7 +209,7 @@ Each HTTP job has the following configuration,
 description = <string>
 secret = <string>
 interval = <duration>
-max_requests = <number>
+max_running = <number>
 
 http_method = [GET|POST|PUT|DELETE]
 http_url = <URL>
@@ -239,8 +239,8 @@ If one have job that need to run less than 30 seconds, it should be run on
 single program.
 --
 
-`max_requests`:: Define the Maximum number of requests executed by karajo.
-This field is optional default to DefaultMaxRequests.
+`max_running`:: Define the Maximum number of requests executed by karajo.
+This field is optional default to DefaultJobMaxRunning.
 
 `http_method`:: Define the HTTP method used to request job execution.
 Its accept only GET, POST, PUT, or DELETE.
@@ -355,8 +355,8 @@ JSON format,
 	"Description": <string>,
 	"Path": <string>,
 	"LogRetention": <number>,
-	"LastStatus": <"success"|"fail">,
 	"Commands": [<string>, ...],
+	"Status": <"success"|"fail">,
 	"Logs": [<HookLog>, ...]
 }
 ----
@@ -391,24 +391,25 @@ JSON format,
 
 ----
 {
-	"LastRun": <string>,
-	"Status": <string>,
-	"NextRun": <string>,
 	"Log": [<string>, ...],
-
-	"ID": <string>,
-	"Name": <string>,
-	"Description": <string>,
 
 	"HttpMethod": <string>,
 	"HttpUrl": <string>,
 	"HttpRequestType": <string>,
 	"HttpHeaders": [<string>],
+
+	"LastRun": <string>,
+	"NextRun": <string>,
+	"ID": <string>,
+	"Name": <string>,
+	"Description": <string>,
+	"Status": <string>,
+	"Interval": <number>,
+	"MaxRunning": <number>,
+	"NumRunning": <number>,
+
 	"HttpTimeout": <number>,
 
-	"Interval": <number>,
-	"MaxRequests": <number>,
-	"NumRequests": <number>,
 	"HttpInsecure": <boolean>
 }
 ----
@@ -433,8 +434,8 @@ JSON format,
   timeout.
 
 * `Interval`: a period of nano-seconds when the job will be executed.
-* `MaxRequests`: maximum number of job can be requested at a time.
-* `NumRequests`: current number of job running.
+* `MaxRunning`: maximum number of job can be requested at a time.
+* `NumRunning`: current number of job running.
 * `HttpInsecure`: true if the HttpUrl use HTTPS schema with self-signed
   certificate.
 

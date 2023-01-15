@@ -25,7 +25,9 @@ func TestHook_handleHttp(t *testing.T) {
 			Secret:  `s3cret`,
 		}
 		hook = Hook{
-			Name:   `Test hook handle HTTP`,
+			JobBase: JobBase{
+				Name: `Test hook handle HTTP`,
+			},
 			Path:   `/test-hook-handle-http`,
 			Secret: `s3cret`,
 			Call: func(hlog io.Writer, _ *libhttp.EndpointRequest) error {
@@ -117,9 +119,9 @@ func TestHook_Start(t *testing.T) {
 		}
 		hook = Hook{
 			JobBase: JobBase{
+				Name:     `Test hook timer`,
 				Interval: time.Minute,
 			},
-			Name:   `Test hook timer`,
 			Path:   `/test-hook-timer`,
 			Secret: `s3cret`,
 			Call: func(hlog io.Writer, _ *libhttp.EndpointRequest) error {

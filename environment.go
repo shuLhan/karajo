@@ -92,7 +92,7 @@ type Environment struct {
 	Secret  string `ini:"karajo::secret" json:"-"`
 	secretb []byte
 
-	// HttpTimeout define the default HTTP client timeout when executing
+	// HttpTimeout define the global HTTP client timeout when executing
 	// each jobs.
 	// This field is optional, default to 5 minutes.
 	HttpTimeout time.Duration `ini:"karajo::http_timeout"`

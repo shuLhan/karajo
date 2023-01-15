@@ -15,7 +15,7 @@ max_hook_running = 1
 description = HTTP job to for a <i>success</i> call.
 secret = s3cret
 interval = 1m
-max_requests = 1
+max_running = 1
 http_method = POST
 http_url = /karajo/hook/test-hook-success
 http_request_type = json
@@ -32,44 +32,45 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "Hooks": {
     "Test hook success": {
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "Interval": 0,
-      "NumRunning": 0,
       "Logs": null,
-      "ID": "test_hook_success",
-      "Name": "Test hook success",
-      "Description": "",
       "Path": "/test-hook-success",
       "HeaderSign": "x-karajo-sign",
-      "LastStatus": "",
       "Commands": [
         "echo Test hook success",
         "echo Counter is $KARAJO_HOOK_COUNTER",
         "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
       ],
+      "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "ID": "test_hook_success",
+      "Name": "Test hook success",
+      "Description": "",
+      "Status": "",
+      "Interval": 0,
+      "MaxRunning": 1,
+      "NumRunning": 0,
       "LogRetention": 5
     }
   },
   "HttpJobs": {
     "Test success": {
-      "LastRun": "2023-01-09T00:00:00Z",
-      "Status": "",
-      "NextRun": "2023-01-09T00:01:00Z",
       "Log": [],
-      "ID": "test_success",
-      "Name": "Test success",
-      "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
       "HttpMethod": "POST",
       "HttpUrl": "/karajo/hook/test-hook-success",
       "HttpRequestType": "json",
       "HttpHeaders": [
         "X: Y"
       ],
-      "HttpTimeout": 300000000000,
+      "LastRun": "2023-01-09T00:00:00Z",
+      "NextRun": "2023-01-09T00:01:00Z",
+      "ID": "test_success",
+      "Name": "Test success",
+      "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+      "Status": "",
       "Interval": 60000000000,
-      "MaxRequests": 1,
-      "NumRequests": 0,
+      "MaxRunning": 1,
+      "NumRunning": 0,
+      "HttpTimeout": 300000000000,
       "HttpInsecure": false
     }
   },
@@ -84,22 +85,23 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiHook_success.json
 {
-  "LastRun": "0001-01-01T00:00:00Z",
-  "NextRun": "0001-01-01T00:00:00Z",
-  "Interval": 0,
-  "NumRunning": 0,
   "Logs": null,
-  "ID": "test_hook_success",
-  "Name": "Test hook success",
-  "Description": "",
   "Path": "/test-hook-success",
   "HeaderSign": "x-karajo-sign",
-  "LastStatus": "started",
   "Commands": [
     "echo Test hook success",
     "echo Counter is $KARAJO_HOOK_COUNTER",
     "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
+  "LastRun": "0001-01-01T00:00:00Z",
+  "NextRun": "0001-01-01T00:00:00Z",
+  "ID": "test_hook_success",
+  "Name": "Test hook success",
+  "Description": "",
+  "Status": "started",
+  "Interval": 0,
+  "MaxRunning": 1,
+  "NumRunning": 0,
   "LogRetention": 5
 }
 
@@ -121,23 +123,23 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiJob_success.json
 {
-  "LastRun": "2023-01-09T00:00:00Z",
-  "Status": "",
-  "NextRun": "2023-01-09T00:01:00Z",
   "Log": [],
-  "ID": "test_success",
-  "Name": "Test success",
-  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "HttpMethod": "POST",
   "HttpUrl": "/karajo/hook/test-hook-success",
   "HttpRequestType": "json",
   "HttpHeaders": [
     "X: Y"
   ],
-  "HttpTimeout": 300000000000,
+  "LastRun": "2023-01-09T00:00:00Z",
+  "NextRun": "2023-01-09T00:01:00Z",
+  "ID": "test_success",
+  "Name": "Test success",
+  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+  "Status": "",
   "Interval": 60000000000,
-  "MaxRequests": 1,
-  "NumRequests": 0,
+  "MaxRunning": 1,
+  "NumRunning": 0,
+  "HttpTimeout": 300000000000,
   "HttpInsecure": false
 }
 
@@ -155,48 +157,48 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiJobPause.json
 {
-  "LastRun": "2023-01-09T00:00:00Z",
-  "Status": "paused",
-  "NextRun": "2023-01-09T00:01:00Z",
   "Log": [
     "The first log"
   ],
-  "ID": "test_success",
-  "Name": "Test success",
-  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "HttpMethod": "POST",
   "HttpUrl": "/karajo/hook/test-hook-success",
   "HttpRequestType": "json",
   "HttpHeaders": [
     "X: Y"
   ],
-  "HttpTimeout": 300000000000,
+  "LastRun": "2023-01-09T00:00:00Z",
+  "NextRun": "2023-01-09T00:01:00Z",
+  "ID": "test_success",
+  "Name": "Test success",
+  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+  "Status": "paused",
   "Interval": 60000000000,
-  "MaxRequests": 1,
-  "NumRequests": 0,
+  "MaxRunning": 1,
+  "NumRunning": 0,
+  "HttpTimeout": 300000000000,
   "HttpInsecure": false
 }
 
 <<< apiJobResume.json
 {
-  "LastRun": "2023-01-09T00:00:00Z",
-  "Status": "started",
-  "NextRun": "2023-01-09T00:01:00Z",
   "Log": [
     "The first log"
   ],
-  "ID": "test_success",
-  "Name": "Test success",
-  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "HttpMethod": "POST",
   "HttpUrl": "/karajo/hook/test-hook-success",
   "HttpRequestType": "json",
   "HttpHeaders": [
     "X: Y"
   ],
-  "HttpTimeout": 300000000000,
+  "LastRun": "2023-01-09T00:00:00Z",
+  "NextRun": "2023-01-09T00:01:00Z",
+  "ID": "test_success",
+  "Name": "Test success",
+  "Description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+  "Status": "started",
   "Interval": 60000000000,
-  "MaxRequests": 1,
-  "NumRequests": 0,
+  "MaxRunning": 1,
+  "NumRunning": 0,
+  "HttpTimeout": 300000000000,
   "HttpInsecure": false
 }
