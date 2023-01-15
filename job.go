@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	liberrors "github.com/shuLhan/share/lib/errors"
@@ -107,8 +106,6 @@ type Job struct {
 
 	LogRetention int `ini:"::log_retention"`
 	lastCounter  int64
-
-	sync.Mutex
 }
 
 // finish mark the job as finished with status.
@@ -297,11 +294,17 @@ func (job *Job) logsPrune() {
 // actual process in the new goroutine.
 func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
+		logp = `handleHttp`
+
 		res      libhttp.EndpointResponse
 		zeroTime time.Time
 		expSign  string
 		gotSign  string
 	)
+
+	if job.isPaused() {
+		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, ErrJobPaused)
+	}
 
 	job.Lock()
 	job.Status = JobStatusStarted
@@ -393,6 +396,11 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) {
 		err     error
 		x       int
 	)
+
+	if job.isPaused() {
+		job.finish(hlog, JobStatusPaused)
+		return
+	}
 
 	job.env.jobq <- struct{}{}
 	mlog.Outf("job: %s: started ...", job.ID)

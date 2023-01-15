@@ -9,6 +9,12 @@ import (
 	liberrors "github.com/shuLhan/share/lib/errors"
 )
 
+var ErrJobPaused error = &liberrors.E{
+	Code:    http.StatusPreconditionFailed,
+	Name:    `ERR_JOB_PAUSED`,
+	Message: `job is paused`,
+}
+
 func errInvalidJobID(id string) error {
 	return &liberrors.E{
 		Code:    http.StatusBadRequest,

@@ -93,6 +93,9 @@ func TestKarajo_apis(t *testing.T) {
 		testKarajo_apiEnvironment(tt, tdata, testClient)
 	})
 
+	t.Run(`apiJobPause`, func(tt *testing.T) {
+		testKarajo_apiJobPause(tt, tdata, testClient)
+	})
 	t.Run(`apiJobRun_success`, func(tt *testing.T) {
 		testKarajo_apiJobRun_success(tt, tdata, testClient)
 	})
@@ -165,6 +168,49 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data, cl *Client) {
 		t.Fatal(err)
 	}
 	test.Assert(t, `apiEnvironment`, string(exp), string(got))
+}
+
+func testKarajo_apiJobPause(t *testing.T, tdata *test.Data, cl *Client) {
+	var (
+		exp []byte = tdata.Output[`apiJobPause.json`]
+
+		job  *Job
+		data interface{}
+		got  []byte
+		err  error
+	)
+
+	job, err = testClient.JobPause(`test_job_success`)
+	if err != nil {
+		data = err
+	} else {
+		job.Logs = nil
+		data = job
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	test.Assert(t, `apiJobPause`, string(exp), string(got))
+
+	// Try triggering the Job to run...
+
+	job, err = testClient.JobRun(`/test-job-success`)
+	if err != nil {
+		data = err
+	} else {
+		data = job
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exp = tdata.Output[`apiJobPause_run.json`]
+	test.Assert(t, `apiJobPause_run`, string(exp), string(got))
 }
 
 func testKarajo_apiJobRun_success(t *testing.T, tdata *test.Data, cl *Client) {

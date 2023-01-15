@@ -46,11 +46,13 @@ const (
 	apiJobHttpPause  = `/karajo/api/job_http/pause`
 	apiJobHttpResume = `/karajo/api/job_http/resume`
 
-	apiJobRun = `/karajo/api/job/run`
-	apiJobLog = `/karajo/api/job/log`
+	apiJobLog   = `/karajo/api/job/log`
+	apiJobPause = `/karajo/api/job/pause`
+	apiJobRun   = `/karajo/api/job/run`
 
-	paramNameID      = "id"
-	paramNameCounter = "counter"
+	paramNameCounter     = `counter`
+	paramNameID          = `id`
+	paramNameKarajoEpoch = `_karajo_epoch`
 )
 
 // TimeNow return the current time.
@@ -190,6 +192,10 @@ func New(env *Environment) (k *Karajo, err error) {
 }
 
 func (k *Karajo) registerApis() (err error) {
+	var (
+		logp = `registerApis`
+	)
+
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiEnvironment,
@@ -210,6 +216,16 @@ func (k *Karajo) registerApis() (err error) {
 	})
 	if err != nil {
 		return err
+	}
+	err = k.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         apiJobPause,
+		RequestType:  libhttp.RequestTypeForm,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         k.apiJobPause,
+	})
+	if err != nil {
+		return fmt.Errorf(`%s: %s: %w`, logp, apiJobPause, err)
 	}
 
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
@@ -411,6 +427,52 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	return json.Marshal(res)
 }
 
+// apiJobPause pause the Job.
+//
+// # Request
+//
+//	POST /karajo/api/job/pause
+//	Content-Type: application/x-www-form-urlencoded
+//
+//	_karajo_epoch=&id=
+//
+// # Response
+//
+//   - 200: OK, if job ID is valid.
+//   - 404: If job ID not found.
+func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+	var (
+		logp = `apiJobPause`
+
+		res *libhttp.EndpointResponse
+		job *Job
+		id  string
+	)
+
+	err = k.httpAuthorize(epr, epr.RequestBody)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	id = epr.HttpRequest.Form.Get(paramNameID)
+
+	job = k.env.job(id)
+	if job == nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, errJobNotFound(id))
+	}
+
+	job.pause()
+
+	job.Lock()
+	defer job.Unlock()
+
+	res = &libhttp.EndpointResponse{}
+	res.Code = http.StatusOK
+	res.Data = job
+
+	return json.Marshal(res)
+}
+
 // apiJobHttp HTTP API to get the JobHttp information by its ID.
 func (k *Karajo) apiJobHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
@@ -471,6 +533,7 @@ func (k *Karajo) apiJobHttpPause(epr *libhttp.EndpointRequest) (resb []byte, err
 		return nil, errInvalidJobID(id)
 	}
 
+	jobHttp.mlog.Outf(`pausing...`)
 	jobHttp.pause()
 
 	res.Code = http.StatusOK

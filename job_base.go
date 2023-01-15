@@ -5,6 +5,7 @@ package karajo
 
 import (
 	"bytes"
+	"sync"
 	"time"
 )
 
@@ -59,6 +60,8 @@ type JobBase struct {
 
 	// NumRunning record the number of job currently running.
 	NumRunning int `ini:"-"`
+
+	sync.Mutex
 }
 
 func (job *JobBase) init() {
@@ -81,6 +84,21 @@ func (job *JobBase) computeNextInterval(now time.Time) time.Duration {
 		return 0
 	}
 	return lastTime.Sub(now)
+}
+
+// isPaused return true if the job status is "paused".
+func (job *JobBase) isPaused() (b bool) {
+	job.Lock()
+	b = job.Status == JobStatusPaused
+	job.Unlock()
+	return b
+}
+
+// pause the job execution.
+func (job *JobBase) pause() {
+	job.Lock()
+	job.Status = JobStatusPaused
+	job.Unlock()
 }
 
 // runIncrement increment the number of job currently running.

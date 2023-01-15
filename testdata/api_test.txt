@@ -83,6 +83,35 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "IsDevelopment": false
 }
 
+<<< apiJobPause.json
+{
+  "Logs": null,
+  "Path": "/test-job-success",
+  "HeaderSign": "x-karajo-sign",
+  "Commands": [
+    "echo Test job success",
+    "echo Counter is $KARAJO_JOB_COUNTER",
+    "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
+  ],
+  "LastRun": "0001-01-01T00:00:00Z",
+  "NextRun": "0001-01-01T00:00:00Z",
+  "ID": "test_job_success",
+  "Name": "Test job success",
+  "Description": "",
+  "Status": "paused",
+  "Interval": 0,
+  "MaxRunning": 1,
+  "NumRunning": 0,
+  "LogRetention": 5
+}
+
+<<< apiJobPause_run.json
+{
+  "code": 412,
+  "message": "job is paused",
+  "name": "ERR_JOB_PAUSED"
+}
+
 <<< apiJobRun_success.json
 {
   "Logs": null,

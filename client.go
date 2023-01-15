@@ -58,6 +58,50 @@ func (cl *Client) Environment() (env *Environment, err error) {
 	return env, nil
 }
 
+// JobPause pause the Job by its ID.
+func (cl *Client) JobPause(id string) (job *Job, err error) {
+	var (
+		logp   = `JobPause`
+		now    = TimeNow().UTC().Unix()
+		params = url.Values{}
+		header = http.Header{}
+
+		res     *libhttp.EndpointResponse
+		body    string
+		sign    string
+		resBody []byte
+	)
+
+	params.Set(paramNameKarajoEpoch, strconv.FormatInt(now, 10))
+	params.Set(paramNameID, id)
+
+	body = params.Encode()
+
+	sign = Sign([]byte(body), []byte(cl.opts.Secret))
+	header.Set(HeaderNameXKarajoSign, sign)
+
+	_, resBody, err = cl.PostForm(apiJobPause, header, params)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	job = &Job{}
+	res = &libhttp.EndpointResponse{
+		Data: job,
+	}
+
+	err = json.Unmarshal(resBody, &res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+	if res.Code != http.StatusOK {
+		res.Data = nil
+		return nil, res
+	}
+
+	return job, nil
+}
+
 // JobRun trigger the Job by its path.
 func (cl *Client) JobRun(jobPath string) (job *Job, err error) {
 	var (

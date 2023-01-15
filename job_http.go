@@ -14,7 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/shuLhan/share/lib/clise"
@@ -105,8 +104,6 @@ type JobHttp struct {
 
 	requestMethod libhttp.RequestMethod
 	requestType   libhttp.RequestType
-
-	sync.Mutex
 
 	// HttpInsecure can be set to true if the http_url is HTTPS with
 	// unknown certificate authority.
@@ -517,13 +514,6 @@ func (job *JobHttp) paramsToUrlValues() (url.Values, []byte) {
 	return urlValues, []byte(urlValues.Encode())
 }
 
-func (job *JobHttp) pause() {
-	job.mlog.Outf("pausing...")
-	job.Lock()
-	job.Status = JobStatusPaused
-	job.Unlock()
-}
-
 func (job *JobHttp) resume() {
 	job.mlog.Outf("resuming...")
 	job.Lock()
@@ -548,6 +538,10 @@ func (job *JobHttp) stateLoad() (err error) {
 		}
 		return err
 	}
+
+	job.Lock()
+	defer job.Unlock()
+
 	err = job.unpackState(rawState)
 	if err != nil {
 		return err
@@ -559,6 +553,9 @@ func (job *JobHttp) stateLoad() (err error) {
 func (job *JobHttp) stateSave() (err error) {
 	var rawState []byte
 
+	job.Lock()
+	defer job.Unlock()
+
 	rawState, err = job.packState()
 	if err != nil {
 		return err
@@ -569,11 +566,4 @@ func (job *JobHttp) stateSave() (err error) {
 		return err
 	}
 	return nil
-}
-
-func (job *JobHttp) isPaused() (b bool) {
-	job.Lock()
-	b = job.Status == JobStatusPaused
-	job.Unlock()
-	return b
 }

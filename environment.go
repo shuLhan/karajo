@@ -144,6 +144,19 @@ func ParseEnvironment(content []byte) (env *Environment, err error) {
 	return env, nil
 }
 
+// job get the Job by its ID.
+func (env *Environment) job(id string) *Job {
+	var (
+		v *Job
+	)
+	for _, v = range env.Jobs {
+		if v.ID == id {
+			return v
+		}
+	}
+	return nil
+}
+
 func (env *Environment) jobsLock() {
 	var job *Job
 	for _, job = range env.Jobs {
