@@ -46,7 +46,7 @@ const (
 	apiJobHttpPause  = `/karajo/api/job_http/pause`
 	apiJobHttpResume = `/karajo/api/job_http/resume`
 
-	apiJob    = `/karajo/job`
+	apiJobRun = `/karajo/api/job/run`
 	apiJobLog = `/karajo/api/job/log`
 
 	paramNameID      = "id"
@@ -181,7 +181,7 @@ func New(env *Environment) (k *Karajo, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = k.registerJobs()
+	err = k.registerJobsHook()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
@@ -256,7 +256,8 @@ func (k *Karajo) registerApis() (err error) {
 	return nil
 }
 
-func (k *Karajo) registerJobs() (err error) {
+// registerJobsHook register HTTP API for executing Job using HTTP handler.
+func (k *Karajo) registerJobsHook() (err error) {
 	var job *Job
 
 	for _, job = range k.env.Jobs {
@@ -267,7 +268,7 @@ func (k *Karajo) registerJobs() (err error) {
 
 		err = k.RegisterEndpoint(&libhttp.Endpoint{
 			Method:       libhttp.RequestMethodPost,
-			Path:         path.Join(apiJob, job.Path),
+			Path:         path.Join(apiJobRun, job.Path),
 			RequestType:  libhttp.RequestTypeJSON,
 			ResponseType: libhttp.ResponseTypeJSON,
 			Call:         job.handleHttp,

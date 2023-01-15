@@ -5,8 +5,8 @@ Shulhan <ms@kilabit.info>
 :sectanchors:
 :sectlinks:
 
-Module karajo implement HTTP workers and manager, similar to cron but works
-only on HTTP.
+Module karajo implement HTTP workers and manager, similar to cron but works or
+manageable with HTTP.
 
 karajo has the web user interface (WUI) for monitoring the jobs that run on
 URL http://127.0.0.1:31937/karajo by default and can be configurable.
@@ -27,12 +27,14 @@ Features,
 Work flow on karajo,
 
 ----
-                +-------------------------+
-                | Karajo                  |
-                | +---------+  +-------+  |
-  INTERNET <----- | JobHttp |  | Job   | <--- INTERNET
-                | +---------+  +-------+  |
-                +------------------|------+
+                +----------------------------+
+                | Karajo         +---+       |
+                |                |   | timer |
+                |                |   v       |
+                | +---------+  +-------+     |
+  INTERNET <----- | JobHttp |  | Job   | <----- INTERNET
+                | +---------+  +-------+     |
+                +------------------|---------+
                                    |
                                    v
                         +-----------------+
@@ -162,10 +164,10 @@ It could be plain text or simple HTML.
 `path`:: Set HTTP path where Karajo will listen for request.
 +
 --
-The `path` is automatically prefixed with "/karajo/job", it is not
+The `path` is automatically prefixed with "/karajo/api/job/run", it is not
 static.
 For example, if it set to "/my", then the actual path would be
-"/karajo/job/my".
+"/karajo/api/job/run/my".
 This field is required and unique between Job.
 --
 

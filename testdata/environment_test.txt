@@ -126,7 +126,7 @@ Test LoadEnvironment.
     "Test fail": {
       "Log": null,
       "HttpMethod": "POST",
-      "HttpUrl": "http://127.0.0.1:31937/karajo/job/test-fail",
+      "HttpUrl": "http://127.0.0.1:31937/karajo/api/job/run/test-fail",
       "HttpRequestType": "json",
       "HttpHeaders": [
         "A: B",
@@ -147,7 +147,7 @@ Test LoadEnvironment.
     "Test long running": {
       "Log": null,
       "HttpMethod": "POST",
-      "HttpUrl": "/karajo/job/test-long-running",
+      "HttpUrl": "/karajo/api/job/run/test-long-running",
       "HttpRequestType": "json",
       "HttpHeaders": null,
       "LastRun": "0001-01-01T00:00:00Z",
@@ -165,7 +165,7 @@ Test LoadEnvironment.
     "Test random": {
       "Log": null,
       "HttpMethod": "POST",
-      "HttpUrl": "/karajo/job/test-random",
+      "HttpUrl": "/karajo/api/job/run/test-random",
       "HttpRequestType": "json",
       "HttpHeaders": null,
       "LastRun": "0001-01-01T00:00:00Z",
@@ -183,7 +183,7 @@ Test LoadEnvironment.
     "Test success": {
       "Log": null,
       "HttpMethod": "POST",
-      "HttpUrl": "/karajo/job/test-success",
+      "HttpUrl": "/karajo/api/job/run/test-success",
       "HttpRequestType": "json",
       "HttpHeaders": [
         "X: Y"

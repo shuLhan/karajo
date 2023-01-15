@@ -75,7 +75,7 @@ async function jobRunNow(jobID, jobPath) {
   let hash = CryptoJS.HmacSHA256(body, secret);
   let sign = hash.toString(CryptoJS.enc.Hex);
 
-  let fres = await fetch(`/karajo/job${jobPath}`, {
+  let fres = await fetch(`/karajo/api/job/run${jobPath}`, {
     method: "POST",
     headers: {
       "x-karajo-sign": sign,

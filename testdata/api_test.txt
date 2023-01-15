@@ -83,7 +83,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "IsDevelopment": false
 }
 
-<<< apiJob_success.json
+<<< apiJobRun_success.json
 {
   "Logs": null,
   "Path": "/test-job-success",
@@ -105,7 +105,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "LogRetention": 5
 }
 
-<<< apiJob_notfound.json
+<<< apiJobRun_notfound.json
 {
   "code": 404,
   "message": "job not found: /test-job-notfound",

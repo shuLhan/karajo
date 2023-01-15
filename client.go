@@ -58,12 +58,12 @@ func (cl *Client) Environment() (env *Environment, err error) {
 	return env, nil
 }
 
-// Job trigger the Job by its path.
-func (cl *Client) Job(jobPath string) (job *Job, err error) {
+// JobRun trigger the Job by its path.
+func (cl *Client) JobRun(jobPath string) (job *Job, err error) {
 	var (
 		logp       = `Job`
 		timeNow    = TimeNow()
-		apiJobPath = path.Join(apiJob, jobPath)
+		apiJobPath = path.Join(apiJobRun, jobPath)
 		header     = http.Header{}
 
 		req = JobHttpRequest{
