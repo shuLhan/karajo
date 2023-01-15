@@ -181,7 +181,7 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 		job.ID = libhtml.NormalizeForID(job.ID)
 	}
 
-	job.pathLog = filepath.Join(env.dirLogJob, job.ID)
+	job.pathLog = filepath.Join(env.dirLogJobHttp, job.ID)
 	err = job.initLogger(env)
 	if err != nil {
 		return err
@@ -241,12 +241,12 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 
 // initLogger initialize the job log and its location.
 // By default log are written to os.Stdout and os.Stderr;
-// and then to file named job.ID in Environment.dirLogJob.
+// and then to file named job.ID in Environment.dirLogJobHttp.
 func (job *JobHttp) initLogger(env *Environment) (err error) {
 	var (
 		logp       = "initLogger"
 		lastLog    = make([]byte, defJobLogSizeLoad)
-		mlogPrefix = fmt.Sprintf("%s:  job: %s:", env.Name, job.ID)
+		mlogPrefix = fmt.Sprintf(`%s: job_http: %s:`, env.Name, job.ID)
 
 		fi      os.FileInfo
 		nw      mlog.NamedWriter

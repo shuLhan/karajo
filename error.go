@@ -17,10 +17,10 @@ func errInvalidJobID(id string) error {
 	}
 }
 
-func errHookNotFound(hookPath string) error {
+func errJobNotFound(jobPath string) error {
 	return &liberrors.E{
 		Code:    http.StatusNotFound,
-		Name:    `ERR_HOOK_NOT_FOUND`,
-		Message: `hook not found: ` + hookPath,
+		Name:    `ERR_JOB_NOT_FOUND`,
+		Message: `job not found: ` + jobPath,
 	}
 }

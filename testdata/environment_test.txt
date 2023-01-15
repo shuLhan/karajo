@@ -2,14 +2,14 @@ Test LoadEnvironment.
 
 <<< environment.json
 {
-  "Hooks": {
+  "Jobs": {
     "Test interval 1m": {
       "Logs": null,
       "Path": "",
       "HeaderSign": "",
       "Commands": [
-        "echo Test hook interval 1m",
-        "echo Counter is $KARAJO_HOOK_COUNTER"
+        "echo Test job interval 1m",
+        "echo Counter is $KARAJO_JOB_COUNTER"
       ],
       "LastRun": "0001-01-01T00:00:00Z",
       "NextRun": "0001-01-01T00:00:00Z",
@@ -33,7 +33,7 @@ Test LoadEnvironment.
       "NextRun": "0001-01-01T00:00:00Z",
       "ID": "",
       "Name": "",
-      "Description": "The hook to test log refresh.",
+      "Description": "The job to test log refresh.",
       "Status": "",
       "Interval": 0,
       "MaxRunning": 0,
@@ -45,14 +45,14 @@ Test LoadEnvironment.
       "Path": "/test-manual-run",
       "HeaderSign": "",
       "Commands": [
-        "echo Test hook manual run",
-        "echo Counter is $KARAJO_HOOK_COUNTER"
+        "echo Test job manual run",
+        "echo Counter is $KARAJO_JOB_COUNTER"
       ],
       "LastRun": "0001-01-01T00:00:00Z",
       "NextRun": "0001-01-01T00:00:00Z",
       "ID": "",
       "Name": "",
-      "Description": "The hook to test manual run.",
+      "Description": "The job to test manual run.",
       "Status": "",
       "Interval": 0,
       "MaxRunning": 0,
@@ -64,8 +64,8 @@ Test LoadEnvironment.
       "Path": "/test-fail",
       "HeaderSign": "",
       "Commands": [
-        "echo Test hook fail",
-        "echo Counter is $KARAJO_HOOK_COUNTER",
+        "echo Test job fail",
+        "echo Counter is $KARAJO_JOB_COUNTER",
         "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x",
         "command-not-found"
       ],
@@ -85,8 +85,8 @@ Test LoadEnvironment.
       "Path": "/test-random",
       "HeaderSign": "",
       "Commands": [
-        "echo Test hook random",
-        "echo Counter is $KARAJO_HOOK_COUNTER",
+        "echo Test job random",
+        "echo Counter is $KARAJO_JOB_COUNTER",
         "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x",
         "rand=$(($RANDOM%2)) \u0026\u0026 echo $rand \u0026\u0026 exit $rand"
       ],
@@ -106,8 +106,8 @@ Test LoadEnvironment.
       "Path": "/test-success",
       "HeaderSign": "",
       "Commands": [
-        "echo Test hook success",
-        "echo Counter is $KARAJO_HOOK_COUNTER",
+        "echo Test job success",
+        "echo Counter is $KARAJO_JOB_COUNTER",
         "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
       ],
       "LastRun": "0001-01-01T00:00:00Z",
@@ -126,7 +126,7 @@ Test LoadEnvironment.
     "Test fail": {
       "Log": null,
       "HttpMethod": "POST",
-      "HttpUrl": "http://127.0.0.1:31937/karajo/hook/test-fail",
+      "HttpUrl": "http://127.0.0.1:31937/karajo/job/test-fail",
       "HttpRequestType": "json",
       "HttpHeaders": [
         "A: B",
@@ -147,14 +147,14 @@ Test LoadEnvironment.
     "Test long running": {
       "Log": null,
       "HttpMethod": "POST",
-      "HttpUrl": "/karajo/hook/test-long-running",
+      "HttpUrl": "/karajo/job/test-long-running",
       "HttpRequestType": "json",
       "HttpHeaders": null,
       "LastRun": "0001-01-01T00:00:00Z",
       "NextRun": "0001-01-01T00:00:00Z",
       "ID": "",
       "Name": "",
-      "Description": "The job to test hook log refresh.",
+      "Description": "The job to test job log refresh.",
       "Status": "",
       "Interval": 120000000000,
       "MaxRunning": 1,
@@ -165,14 +165,14 @@ Test LoadEnvironment.
     "Test random": {
       "Log": null,
       "HttpMethod": "POST",
-      "HttpUrl": "/karajo/hook/test-random",
+      "HttpUrl": "/karajo/job/test-random",
       "HttpRequestType": "json",
       "HttpHeaders": null,
       "LastRun": "0001-01-01T00:00:00Z",
       "NextRun": "0001-01-01T00:00:00Z",
       "ID": "",
       "Name": "",
-      "Description": "Test triggering hook /test-random",
+      "Description": "Test triggering job /test-random",
       "Status": "",
       "Interval": 0,
       "MaxRunning": 1,
@@ -183,7 +183,7 @@ Test LoadEnvironment.
     "Test success": {
       "Log": null,
       "HttpMethod": "POST",
-      "HttpUrl": "/karajo/hook/test-success",
+      "HttpUrl": "/karajo/job/test-success",
       "HttpRequestType": "json",
       "HttpHeaders": [
         "X: Y"
@@ -206,6 +206,6 @@ Test LoadEnvironment.
   "DirBase": "testdata",
   "DirPublic": "testdata",
   "HttpTimeout": 300000000000,
-  "MaxHookRunning": 2,
+  "MaxJobRunning": 2,
   "IsDevelopment": false
 }

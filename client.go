@@ -58,15 +58,15 @@ func (cl *Client) Environment() (env *Environment, err error) {
 	return env, nil
 }
 
-// Hook trigger the Hook by its path.
-func (cl *Client) Hook(hookPath string) (hook *Hook, err error) {
+// Job trigger the Job by its path.
+func (cl *Client) Job(jobPath string) (job *Job, err error) {
 	var (
-		logp        = `Hook`
-		timeNow     = TimeNow()
-		apiHookPath = path.Join(apiHook, hookPath)
-		header      = http.Header{}
+		logp       = `Job`
+		timeNow    = TimeNow()
+		apiJobPath = path.Join(apiJob, jobPath)
+		header     = http.Header{}
 
-		req = HookRequest{
+		req = JobHttpRequest{
 			Epoch: timeNow.Unix(),
 		}
 
@@ -85,55 +85,55 @@ func (cl *Client) Hook(hookPath string) (hook *Hook, err error) {
 	sign = Sign(reqBody, []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	httpRes, resBody, err = cl.PostJSON(apiHookPath, header, &req)
+	httpRes, resBody, err = cl.PostJSON(apiJobPath, header, &req)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 	if httpRes.StatusCode == http.StatusNotFound {
-		return nil, errHookNotFound(hookPath)
+		return nil, errJobNotFound(jobPath)
 	}
 
 	res = &libhttp.EndpointResponse{
-		Data: &hook,
+		Data: &job,
 	}
 	err = json.Unmarshal(resBody, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 	if res.Code == 200 {
-		return hook, nil
+		return job, nil
 	}
 	res.Data = nil
 	return nil, res
 }
 
-// HookLog get the Hook log by its ID and counter.
-func (cl *Client) HookLog(hookID string, counter int) (hooklog *HookLog, err error) {
+// JobLog get the Job log by its ID and counter.
+func (cl *Client) JobLog(jobID string, counter int) (joblog *JobLog, err error) {
 	var (
-		logp   = `HookLog`
+		logp   = `JobLog`
 		params = url.Values{}
 
 		res     *libhttp.EndpointResponse
 		resBody []byte
 	)
 
-	params.Set(paramNameID, hookID)
+	params.Set(paramNameID, jobID)
 	params.Set(paramNameCounter, strconv.Itoa(counter))
 
-	_, resBody, err = cl.Get(apiHookLog, nil, params)
+	_, resBody, err = cl.Get(apiJobLog, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	res = &libhttp.EndpointResponse{
-		Data: &hooklog,
+		Data: &joblog,
 	}
 	err = json.Unmarshal(resBody, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 	if res.Code == 200 {
-		return hooklog, nil
+		return joblog, nil
 	}
 	res.Data = nil
 	return nil, res

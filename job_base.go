@@ -27,7 +27,7 @@ type JobBase struct {
 	finished chan bool
 	stopped  chan bool
 
-	// The last time the Hook is finished running, in UTC.
+	// The last time the job is finished running, in UTC.
 	LastRun time.Time `ini:"-"`
 
 	// The next time the job will running, in UTC.

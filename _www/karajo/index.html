@@ -64,14 +64,14 @@
         background: lightgrey;
       }
 
-      .hook-log {
+      .job-log {
         padding: 5px;
         display: inline-block;
       }
-      .hook-log.failed {
+      .job-log.failed {
         background: lightpink;
       }
-      .hook-log.success {
+      .job-log.success {
         background: lightgreen;
       }
 
@@ -127,12 +127,12 @@
         <label for="_secret">Secret: </label>
         <input id="_secret" />
         <div class="hint">
-          Secret is required to pause job, resume job, or running a hook.
+          Secret is required to pause, resume, or running a job.
         </div>
       </div>
 
-      <h3>Hooks</h3>
-      <div id="hooks"></div>
+      <h3>Jobs</h3>
+      <div id="jobs"></div>
 
       <h3>HTTP Jobs</h3>
       <div id="http_jobs"></div>

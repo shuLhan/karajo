@@ -46,8 +46,8 @@ const (
 	apiJobHttpPause  = `/karajo/api/job_http/pause`
 	apiJobHttpResume = `/karajo/api/job_http/resume`
 
-	apiHook    = "/karajo/hook"
-	apiHookLog = "/karajo/api/hook/log"
+	apiJob    = `/karajo/job`
+	apiJobLog = `/karajo/api/job/log`
 
 	paramNameID      = "id"
 	paramNameCounter = "counter"
@@ -181,7 +181,7 @@ func New(env *Environment) (k *Karajo, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = k.registerHooks()
+	err = k.registerJobs()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
@@ -203,10 +203,10 @@ func (k *Karajo) registerApis() (err error) {
 
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         apiHookLog,
+		Path:         apiJobLog,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiHookLog,
+		Call:         k.apiJobLog,
 	})
 	if err != nil {
 		return err
@@ -256,21 +256,21 @@ func (k *Karajo) registerApis() (err error) {
 	return nil
 }
 
-func (k *Karajo) registerHooks() (err error) {
-	var hook *Hook
+func (k *Karajo) registerJobs() (err error) {
+	var job *Job
 
-	for _, hook = range k.env.Hooks {
-		if len(hook.Path) == 0 {
-			// Ignore any hook that does not have path.
+	for _, job = range k.env.Jobs {
+		if len(job.Path) == 0 {
+			// Ignore any job that does not have path.
 			continue
 		}
 
 		err = k.RegisterEndpoint(&libhttp.Endpoint{
 			Method:       libhttp.RequestMethodPost,
-			Path:         path.Join(apiHook, hook.Path),
+			Path:         path.Join(apiJob, job.Path),
 			RequestType:  libhttp.RequestTypeJSON,
 			ResponseType: libhttp.ResponseTypeJSON,
-			Call:         hook.handleHttp,
+			Call:         job.handleHttp,
 		})
 		if err != nil {
 			return err
@@ -284,16 +284,16 @@ func (k *Karajo) registerHooks() (err error) {
 func (k *Karajo) Start() (err error) {
 	var (
 		jobHttp *JobHttp
-		hook    *Hook
+		job     *Job
 	)
 
 	mlog.Outf("started the karajo server at http://%s/karajo", k.Server.Addr)
 
-	for _, hook = range k.env.Hooks {
-		if hook.Interval <= 0 {
+	for _, job = range k.env.Jobs {
+		if job.Interval <= 0 {
 			continue
 		}
-		go hook.Start()
+		go job.Start()
 	}
 	for _, jobHttp = range k.env.httpJobs {
 		go jobHttp.Start()
@@ -306,22 +306,22 @@ func (k *Karajo) Start() (err error) {
 func (k *Karajo) Stop() (err error) {
 	var (
 		jobHttp *JobHttp
-		hook    *Hook
+		job     *Job
 	)
 
 	for _, jobHttp = range k.env.httpJobs {
 		jobHttp.Stop()
 	}
-	err = k.env.jobsSave()
+	err = k.env.httpJobsSave()
 	if err != nil {
 		mlog.Errf("Stop: %s", err)
 	}
 
-	for _, hook = range k.env.Hooks {
-		if hook.Interval <= 0 {
+	for _, job = range k.env.Jobs {
+		if job.Interval <= 0 {
 			continue
 		}
-		hook.Stop()
+		job.Stop()
 	}
 
 	return k.Server.Stop(5 * time.Second)
@@ -333,45 +333,45 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 	res.Data = k.env
 
 	k.env.jobsLock()
-	k.env.hooksLock()
+	k.env.httpJobsLock()
 	resbody, err = json.Marshal(res)
-	k.env.hooksUnlock()
+	k.env.httpJobsUnlock()
 	k.env.jobsUnlock()
 
 	return resbody, err
 }
 
-// apiHookLog get the hook log by its ID and counter.
+// apiJobLog get the job log by its ID and counter.
 //
 // # Request
 //
 // Format,
 //
-//	GET /karajo/api/hook/log?id=<hookID>&counter=<counter>
+//	GET /karajo/api/job/log?id=<jobID>&counter=<counter>
 //
 // # Response
 //
-// If the hookID and counter exist it will return the HookLog object as JSON.
-func (k *Karajo) apiHookLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+// If the jobID and counter exist it will return the JobLog object as JSON.
+func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
 		res               = &libhttp.EndpointResponse{}
 		id         string = epr.HttpRequest.Form.Get(paramNameID)
 		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
 
-		hook    *Hook
-		hlog    *HookLog
+		job     *Job
+		hlog    *JobLog
 		counter int64
 	)
 
 	id = strings.ToLower(id)
-	for _, hook = range k.env.Hooks {
-		if hook.ID == id {
+	for _, job = range k.env.Jobs {
+		if job.ID == id {
 			break
 		}
 	}
-	if hook == nil {
+	if job == nil {
 		res.Code = http.StatusNotFound
-		res.Message = fmt.Sprintf("hook id %s not found", id)
+		res.Message = fmt.Sprintf("job id %s not found", id)
 		return nil, res
 	}
 
@@ -382,16 +382,16 @@ func (k *Karajo) apiHookLog(epr *libhttp.EndpointRequest) (resbody []byte, err e
 		return nil, res
 	}
 
-	hook.Lock()
-	var v *HookLog
-	for _, v = range hook.Logs {
+	job.Lock()
+	var v *JobLog
+	for _, v = range job.Logs {
 		if v.Counter != counter {
 			continue
 		}
 		hlog = v
 		break
 	}
-	hook.Unlock()
+	job.Unlock()
 
 	if hlog == nil {
 		res.Code = http.StatusNotFound

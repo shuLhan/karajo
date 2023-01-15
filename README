@@ -19,7 +19,9 @@ Features,
 * Running job on specific interval
 * Preserve the job states on restart
 * Able to pause and resume specific job
-* Receiving hook and running commands
+* Trigger internal job using HTTP request (hook) and handle it by code or
+  running commands
+* Trigger external job by sending HTTP request to external server
 * HTTP APIs to programmatically interact with karajo
 
 Work flow on karajo,
@@ -28,7 +30,7 @@ Work flow on karajo,
                 +-------------------------+
                 | Karajo                  |
                 | +---------+  +-------+  |
-  INTERNET <----- | JobHttp |  | Hook  | <--- INTERNET
+  INTERNET <----- | JobHttp |  | Job   | <--- INTERNET
                 | +---------+  +-------+  |
                 +------------------|------+
                                    |
@@ -45,7 +47,8 @@ This section describe the file format when loading karajo environment from
 file.
 
 There are three configuration sections: one to configure the server, one to
-configure the hooks, and another one to configure the jobs to be executed.
+configure the internal Job, and another one to configure the external Job HTTP
+to be executed.
 
 Default values,
 
@@ -64,7 +67,7 @@ http_timeout = [<duration>]
 dir_base = <path>
 dir_public = <path>
 secret = <string>
-max_hook_running = <number>
+max_job_running = <number>
 ----
 
 `name`:: Define the name of the service.
@@ -94,13 +97,13 @@ $DirBase
 |
 +-- /etc/karajo/karajo.conf
 |
-+-- /var/lib/karajo/hook/$Job.ID
++-- /var/lib/karajo/job/$Job.ID
 |
-+-- /var/log/karajo +-- /hook/$Hook.id
-|                   |
-|                   +-- /job/$Job.ID
++-- /var/log/karajo/job/$Job.ID
 |
-+-- /var/run/karajo +-- /job/$Job.ID
++-- /var/log/karajo/job_http/$Job.ID
+|
++-- /var/run/karajo/job/$Job.ID
 ----
 
 Each job log stored under directory /var/log/karajo/job and the job state
@@ -126,20 +129,20 @@ The signature then sent in HTTP header "x-karajo-sign" as hex.
 This field is required.
 --
 
-`max_hook_running`:: Define the maximum hook running at the same time.
+`max_job_running`:: Define the global maximum job running at the same time.
 This field is optional default to 1.
 
 
-[#config_hook]
-===  Hook
+[#config_job]
+===  Job
 
-Hook is the HTTP endpoint that run a function or list of commands upon
-receiving request.
+Job is the worker that run a function or list of commands triggered from
+external HTTP request or by timer.
 
-The hook configuration have the following format,
+The Job configuration have the following format,
 
 ----
-[hook "name"]
+[job "name"]
 description = <string>
 path = <string>
 secret = <string>
@@ -149,21 +152,21 @@ command = <string>
 command = <string>
 ----
 
-`name`:: Define the hook name.
-The hook name is used for logging, normalized to ID.
-This field is required and should unique between Hook.
+`name`:: Define the job name.
+The job name is used for logging, normalized to ID.
+This field is required and should unique between Job.
 
-`description`:: Define the hook description.
+`description`:: Define the job description.
 It could be plain text or simple HTML.
 
 `path`:: Set HTTP path where Karajo will listen for request.
 +
 --
-The `path` is automatically prefixed with "/karajo/hook", it is not
+The `path` is automatically prefixed with "/karajo/job", it is not
 static.
 For example, if it set to "/my", then the actual path would be
-"/karajo/hook/my".
-This field is required and unique between Hook.
+"/karajo/job/my".
+This field is required and unique between Job.
 --
 
 `header_sign`:: Define custom HTTP header where the signature is read.
@@ -192,7 +195,7 @@ It contains command to be executed, in order from top to bottom.
 --
 The following environment variables are available inside the command:
 
-* KARAJO_HOOK_COUNTER: contains the current hook counter.
+* KARAJO_JOB_COUNTER: contains the current job counter.
 --
 
 
@@ -200,7 +203,7 @@ The following environment variables are available inside the command:
 === HTTP Job
 
 An HTTP job is a periodic job that send HTTP request to external HTTP server
-(or to karajo Hook itself).
+(or to karajo Job itself).
 
 Each HTTP job has the following configuration,
 
@@ -318,8 +321,8 @@ JSON format,
 
 ----
 {
-	"Hooks": {<Hook.Name>: <Hook>, ...},
 	"Jobs": {<Job.Name>: <Job>, ...},
+	"HttpJobs": {<JobHttp.Name>: <JobHttp>, ...},
 
 	"Name": <string>,
 	"ListenAddress": <string>,
@@ -331,8 +334,8 @@ JSON format,
 }
 ----
 
-* `Hooks`: list of Hook.
 * `Jobs`: list of Job.
+* `HttpJobs`: list of JobHttp.
 
 * `Name`: the karajo server name.
 * `ListenAddress`: the address where karajo HTTP server listening for request.
@@ -343,8 +346,8 @@ JSON format,
 * `IsDevelopment`: true if current karajo server run for testing.
 
 
-[#schema_hook]
-==== Hook
+[#schema_job]
+==== Job
 
 JSON format,
 
@@ -357,19 +360,19 @@ JSON format,
 	"LogRetention": <number>,
 	"Commands": [<string>, ...],
 	"Status": <"success"|"fail">,
-	"Logs": [<HookLog>, ...]
+	"Logs": [<JobLog>, ...]
 }
 ----
 
 
-[#schema_hooklog]
-==== HookLog
+[#schema_joblog]
+==== JobLog
 
 JSON format,
 
 ----
 {
-	"HookID": <string>,
+	"JobID": <string>,
 	"Name": <string>,
 	"Status": <string>,
 	"Content": <base64>,
@@ -377,9 +380,9 @@ JSON format,
 }
 ----
 
-* `HookID`: the ID of hook that own the log.
-* `Name`: the Name of log in the format `HookID.Counter.Status`.
-* `Status`: the status of hook, its either "success" or "fail".
+* `JobID`: the ID of Job that own the log.
+* `Name`: the Name of log in the format `JobID.Counter.Status`.
+* `Status`: the status of job, its either "success" or "fail".
 * `Content`: the content of log.
 * `Counter`: the log number.
 
@@ -462,26 +465,26 @@ On success, it will return the Environment object,
 }
 ----
 
-[#http_api_hook_log]
-=== Get hook log
+[#http_api_job_log]
+=== Get job log
 
-HTTP API to get the hook log by its ID and counter.
+HTTP API to get the job log by its ID and counter.
 
 **Request**
 
 ----
-GET /karajo/api/hook/log?id=<hookID>&counter=<logCounter>
+GET /karajo/api/job/log?id=<jobID>&counter=<logCounter>
 ----
 
 Parameters,
 
-* `hookID`: the hook ID
+* `jobID`: the job ID
 * `logCounter`: the log number.
 
 **Response**
 
 On success, it will return the
-link:#HookLog[HookLog]
+link:#JobLog[JobLog]
 object as JSON.
 
 

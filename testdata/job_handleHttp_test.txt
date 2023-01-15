@@ -1,4 +1,4 @@
-Test running Hook with handleHttp.
+Test running Job with handleHttp.
 
 <<< handleHttp_response.json
 {
@@ -6,13 +6,13 @@ Test running Hook with handleHttp.
   "message": "OK",
   "data": {
     "Logs": null,
-    "Path": "/test-hook-handle-http",
+    "Path": "/test-job-handle-http",
     "HeaderSign": "x-karajo-sign",
     "Commands": null,
     "LastRun": "0001-01-01T00:00:00Z",
     "NextRun": "0001-01-01T00:00:00Z",
-    "ID": "test_hook_handle_http",
-    "Name": "Test hook handle HTTP",
+    "ID": "test_job_handle_http",
+    "Name": "Test job handle HTTP",
     "Description": "",
     "Status": "started",
     "Interval": 0,
@@ -22,24 +22,24 @@ Test running Hook with handleHttp.
   }
 }
 
-<<< hook_after.json
+<<< job_after.json
 {
   "Logs": [
     {
-      "HookID": "test_hook_handle_http",
-      "Name": "test_hook_handle_http.1.success",
+      "JobID": "test_job_handle_http",
+      "Name": "test_job_handle_http.1.success",
       "Status": "success",
       "Counter": 1,
       "Content": "T3V0cHV0IGZyb20gQ2FsbA=="
     }
   ],
-  "Path": "/test-hook-handle-http",
+  "Path": "/test-job-handle-http",
   "HeaderSign": "x-karajo-sign",
   "Commands": null,
   "LastRun": "2023-01-09T00:00:00Z",
   "NextRun": "0001-01-01T00:00:00Z",
-  "ID": "test_hook_handle_http",
-  "Name": "Test hook handle HTTP",
+  "ID": "test_job_handle_http",
+  "Name": "Test job handle HTTP",
   "Description": "",
   "Status": "success",
   "Interval": 0,

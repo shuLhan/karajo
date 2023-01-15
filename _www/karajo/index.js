@@ -3,7 +3,7 @@
 
 let _env = {};
 let _httpJobs = {};
-let _hooks = {};
+let _jobs = {};
 
 async function main() {
   runTimer();
@@ -33,7 +33,7 @@ async function doRefresh() {
   _env = res.data;
   setTitle();
 
-  renderHooks(_env.Hooks);
+  renderJobs(_env.Jobs);
   renderHttpJobs(_env.HttpJobs);
 }
 
@@ -50,21 +50,21 @@ function runTimer() {
   }, 1000);
 }
 
-async function hookInfo(hookID) {
-  let hook = _hooks[hookID];
-  let el = document.getElementById(hook._idInfo);
+async function jobInfo(jobID) {
+  let job = _jobs[jobID];
+  let el = document.getElementById(job._idInfo);
   let delay = 10000;
 
   if (el.style.display === "block") {
     el.style.display = "none";
-    hook._display = "none";
+    job._display = "none";
   } else {
     el.style.display = "block";
-    hook._display = "block";
+    job._display = "block";
   }
 }
 
-async function hookRunNow(hookID, hookPath) {
+async function jobRunNow(jobID, jobPath) {
   let secret = document.getElementById("_secret").value;
   let epoch = parseInt(new Date().valueOf() / 1000);
   let req = {
@@ -75,7 +75,7 @@ async function hookRunNow(hookID, hookPath) {
   let hash = CryptoJS.HmacSHA256(body, secret);
   let sign = hash.toString(CryptoJS.enc.Hex);
 
-  let fres = await fetch(`/karajo/hook${hookPath}`, {
+  let fres = await fetch(`/karajo/job${jobPath}`, {
     method: "POST",
     headers: {
       "x-karajo-sign": sign,
@@ -88,8 +88,8 @@ async function hookRunNow(hookID, hookPath) {
     return;
   }
 
-  let hook = res.data;
-  renderHooks([hook]);
+  let job = res.data;
+  renderJobs([job]);
 }
 
 async function jobHttpInfo(jobID) {
@@ -156,37 +156,37 @@ async function jobHttpResume(id) {
   renderJobHttp(job);
 }
 
-// renderHook render single hook.
-function renderHook(hook) {
-  renderHookAttributes(hook);
-  renderHookLastRun(hook);
-  renderHookStatus(hook);
+// renderJob render single job.
+function renderJob(job) {
+  renderJobAttributes(job);
+  renderJobLastRun(job);
+  renderJobStatus(job);
 }
 
-function renderHookAttributes(hook) {
-  let el = document.getElementById(hook._idAttrs);
+function renderJobAttributes(job) {
+  let el = document.getElementById(job._idAttrs);
   let out = `
-    <div>${hook.Description}</div>
+    <div>${job.Description}</div>
     <br/>
-    <div>ID: ${hook.ID}</div>
-    <div>Path: ${hook.Path}</div>
-    <div>Last run: ${hook.LastRun}</div>
+    <div>ID: ${job.ID}</div>
+    <div>Path: ${job.Path}</div>
+    <div>Last run: ${job.LastRun}</div>
   `;
 
-  if (hook.Interval > 0) {
+  if (job.Interval > 0) {
     out += `
-      <div>Interval: ${hook.Interval / 1e9} seconds</div>
-      <div>Next run: ${hook.NextRun}</div>
+      <div>Interval: ${job.Interval / 1e9} seconds</div>
+      <div>Next run: ${job.NextRun}</div>
     `;
   }
 
   out += `
     <br/>
-    <div class="hook_commands">
+    <div class="job_commands">
       Commands:
   `;
 
-  hook.Commands.forEach(function (cmd, idx, list) {
+  job.Commands.forEach(function (cmd, idx, list) {
     out += `<div> ${idx}: <tt>${cmd}</tt> </div>`;
   });
 
@@ -197,35 +197,35 @@ function renderHookAttributes(hook) {
     <div>
   `;
 
-  if (hook.Logs == null) {
-    hook.Logs = [];
+  if (job.Logs == null) {
+    job.Logs = [];
   }
 
-  hook.Logs.forEach(function (log, idx, list) {
+  job.Logs.forEach(function (log, idx, list) {
     out += `<a
-      href="/karajo/hook/log?id=${hook.ID}&counter=${log.Counter}"
+      href="/karajo/job/log?id=${job.ID}&counter=${log.Counter}"
       target="_blank"
-      class="hook-log ${log.Status}"
+      class="job-log ${log.Status}"
     >
         #${log.Counter}
     </a>`;
   });
 
-  out += `&nbsp;<button onclick="hookRunNow('${hook.ID}', '${hook.Path}')">Run now</button>`;
+  out += `&nbsp;<button onclick="jobRunNow('${job.ID}', '${job.Path}')">Run now</button>`;
 
   out += "</div>";
 
   el.innerHTML = out;
 }
 
-function renderHookLastRun(hook) {
-  let elLastRun = document.getElementById(hook._idLastRun);
+function renderJobLastRun(job) {
+  let elLastRun = document.getElementById(job._idLastRun);
 
   let now = new Date();
-  let lastRun = new Date(hook.LastRun);
+  let lastRun = new Date(job.LastRun);
 
   if (lastRun <= 0) {
-    if (hook.Status != "") {
+    if (job.Status != "") {
       elLastRun.innerText = "Running ...";
     }
     return;
@@ -238,60 +238,60 @@ function renderHookLastRun(hook) {
   elLastRun.innerText = `Last run ${hours}h  ${minutes}m ${remSeconds}s ago`;
 }
 
-function renderHookStatus(hook) {
-  let el = document.getElementById(hook._idStatus);
-  el.className = `name ${hook.Status}`;
+function renderJobStatus(job) {
+  let el = document.getElementById(job._idStatus);
+  el.className = `name ${job.Status}`;
 }
 
-// renderHooks render list of hooks.
-function renderHooks(hooks) {
-  let elHooks = document.getElementById("hooks");
+// renderJobs render list of jobs.
+function renderJobs(jobs) {
+  let elJobs = document.getElementById("jobs");
 
-  for (let name in hooks) {
-    let hook = hooks[name];
+  for (let name in jobs) {
+    let job = jobs[name];
 
-    hook._id = `hook_${hook.ID}`;
-    hook._idAttrs = `hook_${hook.ID}_attrs`;
-    hook._idInfo = `hook_${hook.ID}_info`;
-    hook._idLastRun = `hook_${hook.ID}_last_run`;
-    hook._idStatus = `hook_${hook.ID}_status`;
-    hook._display = "none";
+    job._id = `job_${job.ID}`;
+    job._idAttrs = `job_${job.ID}_attrs`;
+    job._idInfo = `job_${job.ID}_info`;
+    job._idLastRun = `job_${job.ID}_last_run`;
+    job._idStatus = `job_${job.ID}_status`;
+    job._display = "none";
 
-    if (_hooks != null) {
-      let prevHook = _hooks[hook.ID];
-      if (prevHook != null) {
-        hook._display = prevHook._display;
+    if (_jobs != null) {
+      let prevJob = _jobs[job.ID];
+      if (prevJob != null) {
+        job._display = prevJob._display;
       }
     }
 
-    _hooks[hook.ID] = hook;
+    _jobs[job.ID] = job;
 
-    let elHookInfo = document.getElementById(hook._idInfo);
-    if (elHookInfo != null) {
-      renderHook(hook);
+    let elJobInfo = document.getElementById(job._idInfo);
+    if (elJobInfo != null) {
+      renderJob(job);
       continue;
     }
 
     let out = `
-      <div id="${hook._id}" class="hook">
-        <div id="${hook._idStatus}" class="name ${hook.Status}">
-          <a href="#${hook._id}" onclick='hookInfo("${hook.ID}")'>
-            ${hook.Name}
+      <div id="${job._id}" class="job">
+        <div id="${job._idStatus}" class="name ${job.Status}">
+          <a href="#${job._id}" onclick='jobInfo("${job.ID}")'>
+            ${job.Name}
           </a>
-          <span id="${hook._idLastRun}" class="last_run"></span>
+          <span id="${job._idLastRun}" class="last_run"></span>
         </div>
 
-        <div id="${hook._idInfo}" style="display: ${hook._display};">
-          <div id="${hook._idAttrs}" class="attrs"></div>
+        <div id="${job._idInfo}" style="display: ${job._display};">
+          <div id="${job._idAttrs}" class="attrs"></div>
         </div>
       </div>
     `;
 
-    let elHook = document.createElement("div");
-    elHook.innerHTML = out;
-    elHooks.appendChild(elHook);
+    let elJob = document.createElement("div");
+    elJob.innerHTML = out;
+    elJobs.appendChild(elJob);
 
-    renderHook(hook);
+    renderJob(job);
   }
 }
 
@@ -366,53 +366,53 @@ function renderJobHttpStatus(job) {
   el.className = `name ${job.Status}`;
 }
 
-function renderHttpJobs(jobs) {
+function renderHttpJobs(httpJobs) {
   let out = "";
-  let elJobs = document.getElementById("http_jobs");
+  let elHttpJobs = document.getElementById("http_jobs");
 
-  for (let name in jobs) {
-    let job = jobs[name];
+  for (let name in httpJobs) {
+    let httpJob = httpJobs[name];
 
-    job._id = `job_${job.ID}`;
-    job._idAttrs = `job_${job.ID}_attrs`;
-    job._idInfo = `job_${job.ID}_info`;
-    job._idLog = `job_${job.ID}_log`;
-    job._idStatus = `job_${job.ID}_status`;
-    job._idNextRun = `job_${job.ID}_next_run`;
-    job._display = "none";
+    httpJob._id = `jobhttp_${httpJob.ID}`;
+    httpJob._idAttrs = `jobhttp_${httpJob.ID}_attrs`;
+    httpJob._idInfo = `jobhttp_${httpJob.ID}_info`;
+    httpJob._idLog = `jobhttp_${httpJob.ID}_log`;
+    httpJob._idStatus = `jobhttp_${httpJob.ID}_status`;
+    httpJob._idNextRun = `jobhttp_${httpJob.ID}_next_run`;
+    httpJob._display = "none";
 
     if (_httpJobs != null) {
-      let prevJob = _httpJobs[job.ID];
+      let prevJob = _httpJobs[httpJob.ID];
       if (prevJob != null) {
-        job._display = prevJob._display;
+        httpJob._display = prevJob._display;
       }
     }
 
-    _httpJobs[job.ID] = job;
+    _httpJobs[httpJob.ID] = httpJob;
 
-    let elJob = document.getElementById(job._id);
+    let elJob = document.getElementById(httpJob._id);
     if (elJob != null) {
-      renderJobHttp(job);
+      renderJobHttp(httpJob);
       continue;
     }
 
     out = `
-      <div id="${job._id}" class="job">
-        <div id="${job._idStatus}" class="name ${job.Status}">
-          <a href="#${job._id}" onclick='jobHttpInfo("${job.ID}")'>
-            ${job.Name}
+      <div id="${httpJob._id}" class="jobhttp">
+        <div id="${httpJob._idStatus}" class="name ${httpJob.Status}">
+          <a href="#${httpJob._id}" onclick='jobHttpInfo("${httpJob.ID}")'>
+            ${httpJob.Name}
           </a>
-          <span id="${job._idNextRun}" class="next_run"></span>
+          <span id="${httpJob._idNextRun}" class="next_run"></span>
         </div>
 
-        <div id="${job._idInfo}" style="display: ${job._display};">
-          <div id="${job._idAttrs}" class="attrs"></div>
-          <div id="${job._idLog}" class="log"></div>
+        <div id="${httpJob._idInfo}" style="display: ${httpJob._display};">
+          <div id="${httpJob._idAttrs}" class="attrs"></div>
+          <div id="${httpJob._idLog}" class="log"></div>
         </div>
       </div>
     `;
 
-    elJobs.innerHTML += out;
-    renderJobHttp(job);
+    elHttpJobs.innerHTML += out;
+    renderJobHttp(httpJob);
   }
 }

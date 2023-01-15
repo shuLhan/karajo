@@ -9,7 +9,7 @@ name = My karajo
 listen_address = 127.0.0.1:32000
 http_timeout = 5m0s
 secret = s3cret
-max_hook_running = 1
+max_job_running = 1
 
 [job.http "Test success"]
 description = HTTP job to for a <i>success</i> call.
@@ -17,33 +17,33 @@ secret = s3cret
 interval = 1m
 max_running = 1
 http_method = POST
-http_url = /karajo/hook/test-hook-success
+http_url = /karajo/job/test-job-success
 http_request_type = json
 http_header = X: Y
 
-[hook "Test hook success"]
-path = /test-hook-success
+[job "Test job success"]
+path = /test-job-success
 secret = s3cret
-command = echo "Test hook success"
-command = echo "Counter is $KARAJO_HOOK_COUNTER"
+command = echo "Test job success"
+command = echo "Counter is $KARAJO_JOB_COUNTER"
 command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiEnvironment.json
 {
-  "Hooks": {
-    "Test hook success": {
+  "Jobs": {
+    "Test job success": {
       "Logs": null,
-      "Path": "/test-hook-success",
+      "Path": "/test-job-success",
       "HeaderSign": "x-karajo-sign",
       "Commands": [
-        "echo Test hook success",
-        "echo Counter is $KARAJO_HOOK_COUNTER",
+        "echo Test job success",
+        "echo Counter is $KARAJO_JOB_COUNTER",
         "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
       ],
       "LastRun": "0001-01-01T00:00:00Z",
       "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "test_hook_success",
-      "Name": "Test hook success",
+      "ID": "test_job_success",
+      "Name": "Test job success",
       "Description": "",
       "Status": "",
       "Interval": 0,
@@ -56,7 +56,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
     "Test success": {
       "Log": [],
       "HttpMethod": "POST",
-      "HttpUrl": "/karajo/hook/test-hook-success",
+      "HttpUrl": "/karajo/job/test-job-success",
       "HttpRequestType": "json",
       "HttpHeaders": [
         "X: Y"
@@ -79,24 +79,24 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "DirBase": "\u003cREDACTED\u003e",
   "DirPublic": "",
   "HttpTimeout": 300000000000,
-  "MaxHookRunning": 1,
+  "MaxJobRunning": 1,
   "IsDevelopment": false
 }
 
-<<< apiHook_success.json
+<<< apiJob_success.json
 {
   "Logs": null,
-  "Path": "/test-hook-success",
+  "Path": "/test-job-success",
   "HeaderSign": "x-karajo-sign",
   "Commands": [
-    "echo Test hook success",
-    "echo Counter is $KARAJO_HOOK_COUNTER",
+    "echo Test job success",
+    "echo Counter is $KARAJO_JOB_COUNTER",
     "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
   "LastRun": "0001-01-01T00:00:00Z",
   "NextRun": "0001-01-01T00:00:00Z",
-  "ID": "test_hook_success",
-  "Name": "Test hook success",
+  "ID": "test_job_success",
+  "Name": "Test job success",
   "Description": "",
   "Status": "started",
   "Interval": 0,
@@ -105,27 +105,27 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "LogRetention": 5
 }
 
-<<< apiHook_notfound.json
+<<< apiJob_notfound.json
 {
   "code": 404,
-  "message": "hook not found: /test-hook-notfound",
-  "name": "ERR_HOOK_NOT_FOUND"
+  "message": "job not found: /test-job-notfound",
+  "name": "ERR_JOB_NOT_FOUND"
 }
 
-<<< apiHookLog.json
+<<< apiJobLog.json
 {
-  "HookID": "test_hook_success",
-  "Name": "test_hook_success.1",
+  "JobID": "test_job_success",
+  "Name": "test_job_success.1",
   "Status": "started",
   "Counter": 1,
   "Content": "PFJFREFDVEVEPg=="
 }
 
-<<< apiJob_success.json
+<<< apiJobHttp_success.json
 {
   "Log": [],
   "HttpMethod": "POST",
-  "HttpUrl": "/karajo/hook/test-hook-success",
+  "HttpUrl": "/karajo/job/test-job-success",
   "HttpRequestType": "json",
   "HttpHeaders": [
     "X: Y"
@@ -143,25 +143,25 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "HttpInsecure": false
 }
 
-<<< apiJob_notfound.json
+<<< apiJobHttp_notfound.json
 {
   "code": 400,
   "message": "invalid or empty job id: test_notfound",
   "name": "ERR_INVALID_JOB_ID"
 }
 
-<<< apiJobLogs.json
+<<< apiJobHttpLogs.json
 [
   "The first log"
 ]
 
-<<< apiJobPause.json
+<<< apiJobHttpPause.json
 {
   "Log": [
     "The first log"
   ],
   "HttpMethod": "POST",
-  "HttpUrl": "/karajo/hook/test-hook-success",
+  "HttpUrl": "/karajo/job/test-job-success",
   "HttpRequestType": "json",
   "HttpHeaders": [
     "X: Y"
@@ -179,13 +179,13 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "HttpInsecure": false
 }
 
-<<< apiJobResume.json
+<<< apiJobHttpResume.json
 {
   "Log": [
     "The first log"
   ],
   "HttpMethod": "POST",
-  "HttpUrl": "/karajo/hook/test-hook-success",
+  "HttpUrl": "/karajo/job/test-job-success",
   "HttpRequestType": "json",
   "HttpHeaders": [
     "X: Y"

@@ -16,19 +16,19 @@ import (
 	"github.com/shuLhan/share/lib/test"
 )
 
-// TestHook_handleHttp test Hook's Call with HTTP request.
-func TestHook_handleHttp(t *testing.T) {
+// TestJob_handleHttp test Job's Call with HTTP request.
+func TestJob_handleHttp(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
 		env         = Environment{
 			DirBase: testBaseDir,
 			Secret:  `s3cret`,
 		}
-		hook = Hook{
+		job = Job{
 			JobBase: JobBase{
-				Name: `Test hook handle HTTP`,
+				Name: `Test job handle HTTP`,
 			},
-			Path:   `/test-hook-handle-http`,
+			Path:   `/test-job-handle-http`,
 			Secret: `s3cret`,
 			Call: func(hlog io.Writer, _ *libhttp.EndpointRequest) error {
 				fmt.Fprintf(hlog, `Output from Call`)
@@ -40,7 +40,7 @@ func TestHook_handleHttp(t *testing.T) {
 		err   error
 	)
 
-	tdata, err = test.LoadData(`testdata/hook_handleHttp_test.txt`)
+	tdata, err = test.LoadData(`testdata/job_handleHttp_test.txt`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,13 +50,13 @@ func TestHook_handleHttp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = hook.init(&env, hook.Name)
+	err = job.init(&env, job.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var (
-		hookReq = HookRequest{
+		jobReq = JobHttpRequest{
 			Epoch: testTimeNow.Unix(),
 		}
 		epr = libhttp.EndpointRequest{
@@ -67,12 +67,12 @@ func TestHook_handleHttp(t *testing.T) {
 		sign string
 	)
 
-	epr.RequestBody, err = json.Marshal(&hookReq)
+	epr.RequestBody, err = json.Marshal(&jobReq)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	sign = Sign(epr.RequestBody, []byte(hook.Secret))
+	sign = Sign(epr.RequestBody, []byte(job.Secret))
 	epr.HttpRequest.Header.Set(HeaderNameXKarajoSign, sign)
 
 	var (
@@ -81,7 +81,7 @@ func TestHook_handleHttp(t *testing.T) {
 		exp []byte
 	)
 
-	got, err = hook.handleHttp(&epr)
+	got, err = job.handleHttp(&epr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,34 +95,34 @@ func TestHook_handleHttp(t *testing.T) {
 	exp = tdata.Output[`handleHttp_response.json`]
 	test.Assert(t, `handleHttp_response`, string(exp), string(got))
 
-	<-hook.finished
+	<-job.finished
 
-	hook.Lock()
-	got, err = json.MarshalIndent(&hook, ``, `  `)
+	job.Lock()
+	got, err = json.MarshalIndent(&job, ``, `  `)
 	if err != nil {
-		hook.Unlock()
+		job.Unlock()
 		t.Fatal(err)
 	}
-	hook.Unlock()
+	job.Unlock()
 
-	exp = tdata.Output[`hook_after.json`]
-	test.Assert(t, `TestHook_Call`, string(exp), string(got))
+	exp = tdata.Output[`job_after.json`]
+	test.Assert(t, `TestJob_Call`, string(exp), string(got))
 }
 
-// TestHook_Start test Hook's Call with timer.
-func TestHook_Start(t *testing.T) {
+// TestJob_Start test Job's Call with timer.
+func TestJob_Start(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
 		env         = Environment{
 			DirBase: testBaseDir,
 			Secret:  `s3cret`,
 		}
-		hook = Hook{
+		job = Job{
 			JobBase: JobBase{
-				Name:     `Test hook timer`,
+				Name:     `Test job timer`,
 				Interval: time.Minute,
 			},
-			Path:   `/test-hook-timer`,
+			Path:   `/test-job-timer`,
 			Secret: `s3cret`,
 			Call: func(hlog io.Writer, _ *libhttp.EndpointRequest) error {
 				fmt.Fprintf(hlog, `Output from Call`)
@@ -136,7 +136,7 @@ func TestHook_Start(t *testing.T) {
 		err   error
 	)
 
-	tdata, err = test.LoadData(`testdata/hook_Start_test.txt`)
+	tdata, err = test.LoadData(`testdata/job_Start_test.txt`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,24 +146,24 @@ func TestHook_Start(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = hook.init(&env, hook.Name)
+	err = job.init(&env, job.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	go hook.Start()
-	defer hook.Stop()
+	go job.Start()
+	defer job.Stop()
 
-	<-hook.finished
+	<-job.finished
 
-	hook.Lock()
-	got, err = json.MarshalIndent(&hook, ``, `  `)
+	job.Lock()
+	got, err = json.MarshalIndent(&job, ``, `  `)
 	if err != nil {
-		hook.Unlock()
+		job.Unlock()
 		t.Fatal(err)
 	}
-	hook.Unlock()
+	job.Unlock()
 
-	exp = tdata.Output[`hook_after.json`]
-	test.Assert(t, `TestHook_Call`, string(exp), string(got))
+	exp = tdata.Output[`job_after.json`]
+	test.Assert(t, `TestJob_Call`, string(exp), string(got))
 }

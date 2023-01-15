@@ -3,8 +3,8 @@
 
 package karajo
 
-// HookRequest define the base request for triggering Hook using HTTP POST
+// JobHttpRequest define the base request for triggering Job using HTTP POST
 // with JSON body.
-type HookRequest struct {
+type JobHttpRequest struct {
 	Epoch int64 `json:"_karajo_epoch"`
 }

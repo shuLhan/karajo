@@ -14,20 +14,20 @@ import (
 )
 
 const (
-	defEnvName        = "karajo"
-	defHttpTimeout    = 5 * time.Minute
-	defListenAddress  = ":31937"
-	defMaxHookRunning = 1
+	defEnvName       = `karajo`
+	defHttpTimeout   = 5 * time.Minute
+	defListenAddress = `:31937`
+	defMaxJobRunning = 1
 )
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
 type Environment struct {
-	Hooks map[string]*Hook `ini:"hook"`
+	Jobs map[string]*Job `ini:"job"`
 
-	// hookq is the channel that limit the number of hook running at the
+	// jobq is the channel that limit the number of job running at the
 	// same time.
-	// This limit can be overwritten by MaxHookRunning.
-	hookq chan struct{}
+	// This limit can be overwritten by MaxJobRunning.
+	jobq chan struct{}
 
 	// List of Job by name.
 	HttpJobs map[string]*JobHttp `ini:"job.http"`
@@ -52,13 +52,13 @@ type Environment struct {
 	//	|
 	//	+-- /etc/karajo/karajo.conf
 	//	|
-	//	+-- /var/lib/karajo/hook/$Job.ID
+	//	+-- /var/lib/karajo/job/$Job.ID
 	//	|
-	//	+-- /var/log/karajo +-- /hook/$Hook.id
-	//	|                   |
-	//	|                   +-- /job/$Job.ID
-	//      |
-	//	+-- /var/run/karajo +-- /job/$Job.ID
+	//	+-- /var/log/karajo/job/$Job.ID
+	//	|
+	//	+-- /var/log/karajo/job_http/$Job.ID
+	//	|
+	//	+-- /var/run/karajo/job/$Job.ID
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
@@ -66,12 +66,10 @@ type Environment struct {
 	dirConfig  string
 	dirCurrent string // The current directory where program running.
 
-	dirLibHook string
-
-	dirLogHook string
-	dirLogJob  string
-
-	dirRunJob string
+	dirLibJob     string
+	dirLogJob     string
+	dirLogJobHttp string
+	dirRunJob     string
 
 	file string
 
@@ -97,9 +95,9 @@ type Environment struct {
 	// This field is optional, default to 5 minutes.
 	HttpTimeout time.Duration `ini:"karajo::http_timeout"`
 
-	// MaxHookRunning define the maximum hook running at the same time.
+	// MaxJobRunning define the maximum job running at the same time.
 	// This field is optional default to 1.
-	MaxHookRunning int `ini:"karajo::max_hook_running"`
+	MaxJobRunning int `ini:"karajo::max_job_running"`
 
 	// IsDevelopment if its true, the assets will be loaded directly from
 	// disk instead from memory (memfs).
@@ -146,17 +144,17 @@ func ParseEnvironment(content []byte) (env *Environment, err error) {
 	return env, nil
 }
 
-func (env *Environment) hooksLock() {
-	var hook *Hook
-	for _, hook = range env.Hooks {
-		hook.Lock()
+func (env *Environment) jobsLock() {
+	var job *Job
+	for _, job = range env.Jobs {
+		job.Lock()
 	}
 }
 
-func (env *Environment) hooksUnlock() {
-	var hook *Hook
-	for _, hook = range env.Hooks {
-		hook.Unlock()
+func (env *Environment) jobsUnlock() {
+	var job *Job
+	for _, job = range env.Jobs {
+		job.Unlock()
 	}
 }
 
@@ -164,7 +162,7 @@ func (env *Environment) init() (err error) {
 	var (
 		logp = "init"
 
-		hook    *Hook
+		job     *Job
 		jobHttp *JobHttp
 		name    string
 	)
@@ -180,10 +178,10 @@ func (env *Environment) init() (err error) {
 	if env.HttpTimeout == 0 {
 		env.HttpTimeout = defHttpTimeout
 	}
-	if env.MaxHookRunning <= 0 {
-		env.MaxHookRunning = defMaxHookRunning
+	if env.MaxJobRunning <= 0 {
+		env.MaxJobRunning = defMaxJobRunning
 	}
-	env.hookq = make(chan struct{}, env.MaxHookRunning)
+	env.jobq = make(chan struct{}, env.MaxJobRunning)
 
 	if len(env.Secret) == 0 {
 		return fmt.Errorf("%s: empty secret", logp)
@@ -195,8 +193,8 @@ func (env *Environment) init() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	for name, hook = range env.Hooks {
-		err = hook.init(env, name)
+	for name, job = range env.Jobs {
+		err = job.init(env, name)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
@@ -227,22 +225,22 @@ func (env *Environment) initDirs() (err error) {
 
 	env.dirConfig = filepath.Join(env.DirBase, "etc", defEnvName)
 
-	env.dirLibHook = filepath.Join(env.DirBase, "var", "lib", defEnvName, "hook")
-	err = os.MkdirAll(env.dirLibHook, 0700)
+	env.dirLibJob = filepath.Join(env.DirBase, `var`, `lib`, defEnvName, `job`)
+	err = os.MkdirAll(env.dirLibJob, 0700)
 	if err != nil {
-		return fmt.Errorf("%s: %w", env.dirLibHook, err)
-	}
-
-	env.dirLogHook = filepath.Join(env.DirBase, "var", "log", defEnvName, "hook")
-	err = os.MkdirAll(env.dirLogHook, 0700)
-	if err != nil {
-		return fmt.Errorf("%s: %w", env.dirLogHook, err)
+		return fmt.Errorf(`%s: %w`, env.dirLibJob, err)
 	}
 
 	env.dirLogJob = filepath.Join(env.DirBase, "var", "log", defEnvName, "job")
 	err = os.MkdirAll(env.dirLogJob, 0700)
 	if err != nil {
 		return fmt.Errorf("%s: %w", env.dirLogJob, err)
+	}
+
+	env.dirLogJobHttp = filepath.Join(env.DirBase, `var`, `log`, defEnvName, `job_http`)
+	err = os.MkdirAll(env.dirLogJobHttp, 0700)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, env.dirLogJobHttp, err)
 	}
 
 	env.dirRunJob = filepath.Join(env.DirBase, "var", "run", defEnvName, "job")
@@ -254,15 +252,15 @@ func (env *Environment) initDirs() (err error) {
 	return nil
 }
 
-// jobsLock lock all the jobs.
-func (env *Environment) jobsLock() {
+// httpJobsLock lock all the jobs.
+func (env *Environment) httpJobsLock() {
 	var jobHttp *JobHttp
 	for _, jobHttp = range env.httpJobs {
 		jobHttp.Lock()
 	}
 }
 
-func (env *Environment) jobsSave() (err error) {
+func (env *Environment) httpJobsSave() (err error) {
 	var jobHttp *JobHttp
 	for _, jobHttp = range env.httpJobs {
 		err = jobHttp.stateSave()
@@ -273,8 +271,8 @@ func (env *Environment) jobsSave() (err error) {
 	return nil
 }
 
-// jobsUnlock unlock all the jobs.
-func (env *Environment) jobsUnlock() {
+// httpJobsUnlock unlock all the jobs.
+func (env *Environment) httpJobsUnlock() {
 	var jobHttp *JobHttp
 	for _, jobHttp = range env.httpJobs {
 		jobHttp.Unlock()

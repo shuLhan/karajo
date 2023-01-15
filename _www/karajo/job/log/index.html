@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="/karajo/favicon.png" />
-    <title>karajo - hook log</title>
+    <title>karajo - job log</title>
     <style>
       .log {
         font-size: 12px;
@@ -38,7 +38,7 @@
       async function main() {
         let elContent = document.getElementById("content");
 
-        let res = await getHookLog();
+        let res = await getJobLog();
         if (res.code != 200) {
           elContent.innerHTML = res.message;
           return;
@@ -46,7 +46,7 @@
 
         let log = res.data;
 
-        document.title = `${log.HookID} #${log.Counter}`;
+        document.title = `${log.JobID} #${log.Counter}`;
 
         let elTitle = document.createElement("h2");
         elTitle.innerText = document.title;
@@ -64,7 +64,7 @@
         }
 
         let refreshInterval = setInterval(async () => {
-          res = await getHookLog();
+          res = await getJobLog();
           if (res.code != 200) {
             return;
           }
@@ -78,9 +78,9 @@
         }, 5000);
       }
 
-      async function getHookLog() {
+      async function getJobLog() {
         let httpRes = await fetch(
-          "/karajo/api/hook/log" + window.location.search
+          "/karajo/api/job/log" + window.location.search
         );
 
         return await httpRes.json();
