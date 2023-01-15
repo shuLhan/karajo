@@ -96,6 +96,10 @@ func TestKarajo_apis(t *testing.T) {
 	t.Run(`apiJobPause`, func(tt *testing.T) {
 		testKarajo_apiJobPause(tt, tdata, testClient)
 	})
+	t.Run(`apiJobResume`, func(tt *testing.T) {
+		testKarajo_apiJobResume(tt, tdata, testClient)
+	})
+
 	t.Run(`apiJobRun_success`, func(tt *testing.T) {
 		testKarajo_apiJobRun_success(tt, tdata, testClient)
 	})
@@ -285,6 +289,32 @@ func testKarajo_apiJobLog(t *testing.T, tdata *test.Data, cl *Client) {
 	}
 
 	test.Assert(t, `apiJobLog`, string(exp), string(got))
+}
+
+func testKarajo_apiJobResume(t *testing.T, tdata *test.Data, cl *Client) {
+	var (
+		exp []byte = tdata.Output[`apiJobResume.json`]
+
+		job  *Job
+		data interface{}
+		got  []byte
+		err  error
+	)
+
+	job, err = testClient.JobResume(`test_job_success`)
+	if err != nil {
+		data = err
+	} else {
+		job.Logs = nil
+		data = job
+	}
+
+	got, err = json.MarshalIndent(data, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	test.Assert(t, `apiJobResume`, string(exp), string(got))
 }
 
 func testKarajo_apiJobHttp_success(t *testing.T, tdata *test.Data, cl *Client) {

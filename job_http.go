@@ -514,13 +514,6 @@ func (job *JobHttp) paramsToUrlValues() (url.Values, []byte) {
 	return urlValues, []byte(urlValues.Encode())
 }
 
-func (job *JobHttp) resume() {
-	job.mlog.Outf("resuming...")
-	job.Lock()
-	job.Status = JobStatusStarted
-	job.Unlock()
-}
-
 func (job *JobHttp) setStatus(status string) {
 	job.Lock()
 	job.Status = status

@@ -119,6 +119,33 @@ async function jobPause(id) {
   renderJobs([job]);
 }
 
+async function jobResume(id) {
+  let secret = document.getElementById("_secret").value;
+  let epoch = parseInt(new Date().valueOf() / 1000);
+  let body = `_karajo_epoch=${epoch}&id=${id}`;
+
+  let hash = CryptoJS.HmacSHA256(body, secret);
+  let sign = hash.toString(CryptoJS.enc.Hex);
+
+  let fres = await fetch("/karajo/api/job/resume", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      "x-karajo-sign": sign,
+    },
+    body: body,
+  });
+
+  let res = await fres.json();
+  if (res.code !== 200) {
+    console.error(res.message);
+    return;
+  }
+
+  let job = res.data;
+  renderJobs([job]);
+}
+
 async function jobHttpInfo(jobID) {
   let job = _httpJobs[jobID];
   let el = document.getElementById(job._idInfo);
@@ -241,6 +268,7 @@ function renderJobAttributes(job) {
 
   out += `&nbsp;<button onclick="jobRunNow('${job.ID}', '${job.Path}')">Run now</button>`;
   out += `&nbsp;<button onclick="jobPause('${job.ID}')">Pause</button>`;
+  out += `&nbsp;<button onclick="jobResume('${job.ID}')">Resume</button>`;
 
   out += "</div>";
 

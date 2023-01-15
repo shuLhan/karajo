@@ -469,7 +469,7 @@ On success, it will return the Environment object,
 
 
 [#http_api_job_pause]
-=== Pause Job
+=== Pause job
 
 Pause the Job for being executed.
 Any HTTP request that trigger the job after paused will return 412
@@ -479,6 +479,28 @@ Precondition Failed.
 
 ----
 POST /karajo/api/job/pause
+Content-Type: application/x-www-form-urlencoded
+
+_karajo_epoch=&id=
+----
+
+**Response**
+
+List of know response,
+
+* 200: OK, if job ID is valid.
+* 404: If job ID not found.
+
+
+[#http_api_job_resume]
+=== Resume job
+
+Resume the Job execution.
+
+**Request**
+
+----
+POST /karajo/api/job/resume
 Content-Type: application/x-www-form-urlencoded
 
 _karajo_epoch=&id=

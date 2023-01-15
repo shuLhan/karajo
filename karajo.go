@@ -46,9 +46,10 @@ const (
 	apiJobHttpPause  = `/karajo/api/job_http/pause`
 	apiJobHttpResume = `/karajo/api/job_http/resume`
 
-	apiJobLog   = `/karajo/api/job/log`
-	apiJobPause = `/karajo/api/job/pause`
-	apiJobRun   = `/karajo/api/job/run`
+	apiJobLog    = `/karajo/api/job/log`
+	apiJobPause  = `/karajo/api/job/pause`
+	apiJobResume = `/karajo/api/job/resume`
+	apiJobRun    = `/karajo/api/job/run`
 
 	paramNameCounter     = `counter`
 	paramNameID          = `id`
@@ -226,6 +227,16 @@ func (k *Karajo) registerApis() (err error) {
 	})
 	if err != nil {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobPause, err)
+	}
+	err = k.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         apiJobResume,
+		RequestType:  libhttp.RequestTypeForm,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         k.apiJobResume,
+	})
+	if err != nil {
+		return fmt.Errorf(`%s: %s: %w`, logp, apiJobResume, err)
 	}
 
 	err = k.RegisterEndpoint(&libhttp.Endpoint{
@@ -473,6 +484,52 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err err
 	return json.Marshal(res)
 }
 
+// apiJobResume resume the paused Job.
+//
+// # Request
+//
+//	POST /karajo/api/job/resume
+//	Content-Type: application/x-www-form-urlencoded
+//
+//	_karajo_epoch=&id=
+//
+// # Response
+//
+//   - 200: OK, if job ID is valid.
+//   - 404: If job ID not found.
+func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+	var (
+		logp = `apiJobResume`
+
+		res *libhttp.EndpointResponse
+		job *Job
+		id  string
+	)
+
+	err = k.httpAuthorize(epr, epr.RequestBody)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	id = epr.HttpRequest.Form.Get(paramNameID)
+
+	job = k.env.job(id)
+	if job == nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, errJobNotFound(id))
+	}
+
+	job.resume(``)
+
+	job.Lock()
+	defer job.Unlock()
+
+	res = &libhttp.EndpointResponse{}
+	res.Code = http.StatusOK
+	res.Data = job
+
+	return json.Marshal(res)
+}
+
 // apiJobHttp HTTP API to get the JobHttp information by its ID.
 func (k *Karajo) apiJobHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
@@ -562,7 +619,8 @@ func (k *Karajo) apiJobHttpResume(epr *libhttp.EndpointRequest) (resb []byte, er
 		return nil, errInvalidJobID(id)
 	}
 
-	jobHttp.resume()
+	jobHttp.mlog.Outf(`resuming...`)
+	jobHttp.resume(JobStatusStarted)
 
 	res.Code = http.StatusOK
 	res.Data = jobHttp

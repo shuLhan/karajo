@@ -101,6 +101,13 @@ func (job *JobBase) pause() {
 	job.Unlock()
 }
 
+// resume the job execution.
+func (job *JobBase) resume(status string) {
+	job.Lock()
+	job.Status = status
+	job.Unlock()
+}
+
 // runIncrement increment the number of job currently running.
 // It will return true if NumRunning <= MaxRunning.
 func (job *JobHttp) runIncrement() (ok bool) {
