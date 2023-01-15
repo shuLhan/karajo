@@ -92,6 +92,7 @@ type Job struct {
 	// Each request sign the body with HMAC + SHA-256 using this secret.
 	// The signature then sent in HTTP header "X-Karajo-Sign" as hex.
 	// This field is required if Path is not empty.
+	// If its empty, it will be set to global Secret from Environment.
 	Secret string `ini:"::secret" json:"-"`
 
 	// dirWork define the directory on the system where all commands
@@ -158,6 +159,9 @@ func (job *Job) init(env *Environment, name string) (err error) {
 
 	job.Path = strings.TrimSpace(job.Path)
 	job.Secret = strings.TrimSpace(job.Secret)
+	if len(job.Secret) == 0 {
+		job.Secret = env.Secret
+	}
 	if len(job.Path) != 0 && len(job.Secret) == 0 {
 		return &ErrJobInvalidSecret
 	}
