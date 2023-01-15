@@ -351,6 +351,7 @@ func (job *Job) Start() {
 
 	var (
 		now          time.Time
+		zeroTime     time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
 		ever         bool
@@ -370,6 +371,17 @@ func (job *Job) Start() {
 		for ever {
 			select {
 			case <-timer.C:
+				if job.isPaused() {
+					job.finish(nil, JobStatusPaused)
+					ever = false
+					continue
+				}
+
+				job.Lock()
+				job.Status = JobStatusStarted
+				job.LastRun = zeroTime
+				job.Unlock()
+
 				job.execute(nil)
 				// The execute will trigger the finished
 				// channel.
@@ -396,11 +408,6 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) {
 		err     error
 		x       int
 	)
-
-	if job.isPaused() {
-		job.finish(hlog, JobStatusPaused)
-		return
-	}
 
 	job.env.jobq <- struct{}{}
 	mlog.Outf("job: %s: started ...", job.ID)
