@@ -48,9 +48,9 @@ const (
 	jobEnvPathValue = `/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl`
 )
 
-// JobHttpHandler define a function signature for running a Job using HTTP
-// request.
-// The log parameter should be used to log all output and error.
+// JobHttpHandler define an handler for triggering a Job using HTTP.
+//
+// The log parameter is used to log all output and error.
 // The epr parameter contains HTTP request, body, and response writer.
 type JobHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 
@@ -107,37 +107,6 @@ type Job struct {
 
 	LogRetention int `ini:"::log_retention"`
 	lastCounter  int64
-}
-
-// finish mark the job as finished with status.
-func (job *Job) finish(hlog *JobLog, status string) {
-	var (
-		err error
-	)
-
-	if hlog != nil {
-		hlog.setStatus(status)
-		err = hlog.flush()
-		if err != nil {
-			mlog.Errf(`job: %s: %s`, job.ID, err)
-		}
-	}
-
-	job.Lock()
-	job.NumRunning--
-	job.LastRun = TimeNow().UTC().Round(time.Second)
-	job.Status = status
-	if job.Interval > 0 {
-		job.NextRun = job.LastRun.Add(job.Interval)
-	}
-
-	select {
-	case job.finished <- true:
-	default:
-	}
-	job.Unlock()
-
-	mlog.Outf(`job: %s: %s`, job.ID, status)
 }
 
 func (job *Job) generateCmdEnvs() (env []string) {
@@ -300,27 +269,16 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	var (
 		logp = `handleHttp`
 
-		res      libhttp.EndpointResponse
-		zeroTime time.Time
-		expSign  string
-		gotSign  string
+		res     libhttp.EndpointResponse
+		expSign string
+		gotSign string
 	)
-
-	if job.isPaused() {
-		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, ErrJobPaused)
-	}
-
-	job.Lock()
-	job.Status = JobStatusStarted
-	job.LastRun = zeroTime
-	job.Unlock()
 
 	// Authenticated request by checking the request body.
 	gotSign = epr.HttpRequest.Header.Get(job.HeaderSign)
 	if len(gotSign) == 0 {
 		gotSign = epr.HttpRequest.Header.Get(HeaderNameXKarajoSign)
 		if len(gotSign) == 0 {
-			job.finish(nil, JobStatusFailed)
 			return nil, &ErrJobForbidden
 		}
 	}
@@ -330,11 +288,22 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	expSign = Sign(epr.RequestBody, []byte(job.Secret))
 	if expSign != gotSign {
 		mlog.Outf(`job: %s: expecting signature %s got %s`, job.ID, expSign, gotSign)
-		job.finish(nil, JobStatusFailed)
 		return nil, &ErrJobForbidden
 	}
 
-	go job.execute(epr)
+	err = job.start()
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, err)
+	}
+
+	go func() {
+		var (
+			jlog *JobLog
+			err  error
+		)
+		jlog, err = job.execute(epr)
+		job.finish(jlog, err)
+	}()
 
 	res.Code = http.StatusOK
 	res.Message = "OK"
@@ -355,9 +324,10 @@ func (job *Job) Start() {
 
 	var (
 		now          time.Time
-		zeroTime     time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
+		jlog         *JobLog
+		err          error
 		ever         bool
 	)
 
@@ -375,20 +345,16 @@ func (job *Job) Start() {
 		for ever {
 			select {
 			case <-timer.C:
-				if job.isPaused() {
-					job.finish(nil, JobStatusPaused)
+				err = job.start()
+				if err != nil {
+					timer.Stop()
 					ever = false
 					continue
 				}
 
-				job.Lock()
-				job.Status = JobStatusStarted
-				job.LastRun = zeroTime
-				job.Unlock()
-
-				job.execute(nil)
-				// The execute will trigger the finished
-				// channel.
+				jlog, err = job.execute(nil)
+				job.finish(jlog, err)
+				// The finish will trigger the finished channel.
 
 			case <-job.finished:
 				timer.Stop()
@@ -403,13 +369,13 @@ func (job *Job) Start() {
 }
 
 // execute the job Call or commands.
-func (job *Job) execute(epr *libhttp.EndpointRequest) {
+func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
 	var (
-		hlog    *JobLog
+		now = TimeNow().UTC().Round(time.Second)
+
 		execCmd exec.Cmd
-		now     time.Time
+		logTime string
 		cmd     string
-		err     error
 		x       int
 	)
 
@@ -420,49 +386,41 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) {
 	}()
 
 	job.Lock()
-	job.NumRunning++
+	job.Status = JobStatusRunning
 	job.lastCounter++
-	hlog = newJobLog(job.ID, job.dirLog, job.lastCounter)
-
-	job.Logs = append(job.Logs, hlog)
+	jlog = newJobLog(job.ID, job.dirLog, job.lastCounter)
+	job.Logs = append(job.Logs, jlog)
 	job.logsPrune()
 	job.Unlock()
 
 	// Call the job.
 	if job.Call != nil {
-		err = job.Call(hlog, epr)
-		if err != nil {
-			_, _ = hlog.Write([]byte(err.Error()))
-			job.finish(hlog, JobStatusFailed)
-		} else {
-			job.finish(hlog, JobStatusSuccess)
-		}
-		return
+		err = job.Call(jlog, epr)
+		return jlog, err
 	}
 
 	// Run commands.
 	for x, cmd = range job.Commands {
 		now = TimeNow().UTC()
-		fmt.Fprintf(hlog, "\n%s === Execute %2d: %s\n", now.Format(defTimeLayout), x, cmd)
+		logTime = now.Format(defTimeLayout)
+		fmt.Fprintf(jlog, "\n%s === Execute %2d: %s\n", logTime, x, cmd)
 
 		execCmd = exec.Cmd{
 			Path:   "/bin/sh",
 			Dir:    job.dirWork,
 			Args:   []string{"/bin/sh", "-c", cmd},
 			Env:    job.generateCmdEnvs(),
-			Stdout: hlog,
-			Stderr: hlog,
+			Stdout: jlog,
+			Stderr: jlog,
 		}
 
 		err = execCmd.Run()
 		if err != nil {
-			_, _ = hlog.Write([]byte(err.Error()))
-			job.finish(hlog, JobStatusFailed)
-			return
+			return jlog, err
 		}
 	}
 
-	job.finish(hlog, JobStatusSuccess)
+	return jlog, nil
 }
 
 // Stop the Job timer execution.

@@ -112,46 +112,68 @@ type JobHttp struct {
 
 func (job *JobHttp) Start() {
 	var (
-		now        = TimeNow().UTC().Round(time.Second)
-		firstTimer = job.computeNextInterval(now)
-		ever       = true
-
-		t    *time.Timer
-		tick *time.Ticker
+		now          time.Time
+		nextInterval time.Duration
+		timer        *time.Timer
+		log          string
+		logTime      string
+		err          error
+		ever         bool
 	)
 
-	job.NumRunning = 0
-
-	job.NextRun = now.Add(firstTimer)
-	job.mlog.Outf("running the first HTTP job in %s ...", firstTimer)
-
-	t = time.NewTimer(firstTimer)
-	for ever {
-		select {
-		case <-t.C:
-			job.execute()
-			t.Stop()
-			ever = false
-		case <-job.stopped:
-			return
-		}
-	}
-
-	job.Lock()
-	job.NextRun = job.LastRun.Add(job.Interval)
-	job.Unlock()
-
-	tick = time.NewTicker(job.Interval)
 	for {
-		select {
-		case <-tick.C:
-			job.execute()
-			job.Lock()
-			job.NextRun = job.LastRun.Add(job.Interval)
-			job.Unlock()
+		job.Lock()
+		now = TimeNow().UTC()
+		nextInterval = job.computeNextInterval(now)
+		job.NextRun = now.Add(nextInterval)
+		job.Unlock()
 
-		case <-job.stopped:
-			return
+		mlog.Outf(`job_http: %s: next running in %s ...`, job.ID, nextInterval)
+
+		timer = time.NewTimer(nextInterval)
+		ever = true
+		for ever {
+			select {
+			case <-timer.C:
+				err = job.start()
+				if err != nil {
+					now = TimeNow().UTC()
+					logTime = now.Format(defTimeLayout)
+
+					job.mlog.Errf(`!!! %s: %s`, job.ID, err)
+					log = fmt.Sprintf("%s %s: %s", logTime, job.ID, err)
+					job.Log.Push(log)
+
+					timer.Stop()
+					ever = false
+					continue
+				}
+
+				_, err = job.execute()
+
+				now = TimeNow().UTC().Round(time.Second)
+				logTime = now.Format(defTimeLayout)
+
+				if err != nil {
+					job.mlog.Errf(`!!! %s: %s`, job.ID, err)
+					log = fmt.Sprintf(`%s %s: %s`, logTime, job.ID, err)
+				} else {
+					job.mlog.Outf(`%s: finished`, job.ID)
+					log = fmt.Sprintf(`%s %s: finished`, logTime, job.ID)
+				}
+				job.Log.Push(log)
+
+				job.finish(nil, err)
+				// The finish will trigger the finished channel.
+
+			case <-job.finished:
+				timer.Stop()
+				ever = false
+
+			case <-job.stopped:
+				timer.Stop()
+				return
+			}
 		}
 	}
 }
@@ -395,8 +417,9 @@ func (job *JobHttp) initHttpHeaders() (err error) {
 	return nil
 }
 
-func (job *JobHttp) execute() {
+func (job *JobHttp) execute() (jlog *JobLog, err error) {
 	var (
+		logp    = `execute`
 		now     = TimeNow().UTC().Round(time.Second)
 		logTime = now.Format(defTimeLayout)
 		headers = http.Header{}
@@ -404,28 +427,10 @@ func (job *JobHttp) execute() {
 		params  interface{}
 		httpReq *http.Request
 		httpRes *http.Response
-		log     string
-		sign    string
-		err     error
 		payload []byte
 	)
 
-	if job.isPaused() {
-		job.mlog.Outf(JobStatusPaused)
-		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, JobStatusPaused))
-		job.LastRun = now
-		return
-	}
-
-	if !job.runIncrement() {
-		log = fmt.Sprintf("!!! maximum requests %d has been reached", job.MaxRunning)
-		job.mlog.Errf(log)
-		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-		return
-	}
-	defer job.runDecrement()
-
-	job.setStatus(JobStatusStarted)
+	job.setStatus(JobStatusRunning)
 
 	job.params[defJosParamEpoch] = now.Unix()
 
@@ -436,60 +441,33 @@ func (job *JobHttp) execute() {
 	case libhttp.RequestTypeJSON:
 		params, payload, err = job.paramsToJson()
 		if err != nil {
-			log = fmt.Sprintf("!!! %s", err)
-			job.mlog.Errf(log)
-			job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-			return
+			return nil, fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 
 	if len(job.Secret) != 0 {
-		sign = Sign(payload, []byte(job.Secret))
+		var sign = Sign(payload, []byte(job.Secret))
 		headers.Set(HeaderNameXKarajoSign, sign)
 	}
 
 	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestUri, job.requestType, headers, params)
 	if err != nil {
-		log = fmt.Sprintf("!!! %s", err)
-		job.mlog.Errf(log)
-		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-		return
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	log = "started ..."
-	job.mlog.Outf(log)
-	job.Log.Push(fmt.Sprintf("%s: %s", logTime, log))
+	job.mlog.Outf(`running ...`)
+	job.Log.Push(fmt.Sprintf(`%s: running ...`, logTime))
 
 	httpRes, _, err = job.httpc.Do(httpReq)
 	if err != nil {
-		log = fmt.Sprintf("!!! %s", err)
-		job.mlog.Errf(log)
-		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-		job.Lock()
-		job.Status = JobStatusFailed
-		job.LastRun = now
-		job.Unlock()
-		return
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	if httpRes.StatusCode != http.StatusOK {
-		log = fmt.Sprintf("!!! %s", httpRes.Status)
-		job.mlog.Errf(log)
-		job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-		job.Lock()
-		job.Status = JobStatusFailed
-		job.LastRun = now
-		job.Unlock()
-		return
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	log = "finished"
-	job.mlog.Outf(log)
-	job.Log.Push(fmt.Sprintf("%s %s: %s", logTime, job.ID, log))
-	job.Lock()
-	job.Status = JobStatusSuccess
-	job.LastRun = now
-	job.Unlock()
+	return nil, nil
 }
 
 func (job *JobHttp) paramsToJson() (obj map[string]interface{}, raw []byte, err error) {

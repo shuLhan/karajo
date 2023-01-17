@@ -15,6 +15,12 @@ var ErrJobPaused error = &liberrors.E{
 	Message: `job is paused`,
 }
 
+var ErrJobMaxReached error = &liberrors.E{
+	Code:    http.StatusTooManyRequests,
+	Name:    `ERR_JOB_MAX_REACHED`,
+	Message: `job has reached maximum running`,
+}
+
 func errInvalidJobID(id string) error {
 	return &liberrors.E{
 		Code:    http.StatusBadRequest,

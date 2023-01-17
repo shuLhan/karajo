@@ -7,10 +7,13 @@ import (
 	"bytes"
 	"sync"
 	"time"
+
+	"github.com/shuLhan/share/lib/mlog"
 )
 
 // List of job status.
 const (
+	JobStatusRunning = `running`
 	JobStatusStarted = "started"
 	JobStatusSuccess = "success"
 	JobStatusFailed  = "failed"
@@ -73,6 +76,72 @@ func (job *JobBase) init() {
 	}
 }
 
+// start check if the job can run, the job is not paused and has not reach
+// maximum run.
+// If its can run, the status changes to "started" and its NumRunning
+// increased by one.
+//
+// If the job is paused, the LastRun will be set to current time and return
+// ErrJobPaused.
+// if the max running has reached it will return ErrJobMaxReached.
+func (job *JobBase) start() (err error) {
+	job.Lock()
+	defer job.Unlock()
+
+	if job.Status == JobStatusPaused {
+		// Always set the LastRun to the current time, otherwise it
+		// will run with 0s duration for interval based job.
+		job.LastRun = TimeNow()
+		return ErrJobPaused
+	}
+	if job.NumRunning+1 > job.MaxRunning {
+		return ErrJobMaxReached
+	}
+
+	job.NumRunning++
+	job.Status = JobStatusStarted
+
+	return nil
+}
+
+// finish mark the job as finished.
+// If the err is not nil, it will set the status to failed; otherwise to
+// success.
+func (job *JobBase) finish(jlog *JobLog, err error) {
+	job.Lock()
+	defer job.Unlock()
+
+	if err != nil {
+		job.Status = JobStatusFailed
+		if jlog != nil {
+			_, _ = jlog.Write([]byte(err.Error()))
+		}
+	} else {
+		job.Status = JobStatusSuccess
+	}
+
+	if jlog != nil {
+		jlog.setStatus(job.Status)
+		err = jlog.flush()
+		if err != nil {
+			mlog.Errf(`job %s: %s`, job.ID, err)
+		}
+	}
+
+	job.NumRunning--
+	job.LastRun = TimeNow()
+	if job.Interval > 0 {
+		job.NextRun = job.LastRun.Add(job.Interval)
+	}
+
+	select {
+	case job.finished <- true:
+	default:
+	}
+
+	mlog.Outf(`job %s: %s`, job.ID, job.Status)
+}
+
 // computeNextInterval compute the duration when the job will be running based
 // on last time run and interval.
 //
@@ -86,14 +155,6 @@ func (job *JobBase) computeNextInterval(now time.Time) time.Duration {
 	return lastTime.Sub(now)
 }
 
-// isPaused return true if the job status is "paused".
-func (job *JobBase) isPaused() (b bool) {
-	job.Lock()
-	b = job.Status == JobStatusPaused
-	job.Unlock()
-	return b
-}
-
 // pause the job execution.
 func (job *JobBase) pause() {
 	job.Lock()
@@ -105,25 +166,6 @@ func (job *JobBase) pause() {
 func (job *JobBase) resume(status string) {
 	job.Lock()
 	job.Status = status
-	job.Unlock()
-}
-
-// runIncrement increment the number of job currently running.
-// It will return true if NumRunning <= MaxRunning.
-func (job *JobHttp) runIncrement() (ok bool) {
-	job.Lock()
-	if job.NumRunning+1 <= job.MaxRunning {
-		job.NumRunning++
-		ok = true
-	}
-	job.Unlock()
-	return ok
-}
-
-// runDecrement decrement the number of job currently running.
-func (job *JobHttp) runDecrement() {
-	job.Lock()
-	job.NumRunning--
 	job.Unlock()
 }
 

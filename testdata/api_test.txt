@@ -122,7 +122,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
     "echo Counter is $KARAJO_JOB_COUNTER",
     "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
-  "LastRun": "0001-01-01T00:00:00Z",
+  "LastRun": "2023-01-09T00:00:00Z",
   "NextRun": "0001-01-01T00:00:00Z",
   "ID": "test_job_success",
   "Name": "Test job success",
@@ -144,7 +144,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
     "echo Counter is $KARAJO_JOB_COUNTER",
     "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
-  "LastRun": "0001-01-01T00:00:00Z",
+  "LastRun": "2023-01-09T00:00:00Z",
   "NextRun": "0001-01-01T00:00:00Z",
   "ID": "test_job_success",
   "Name": "Test job success",
@@ -152,7 +152,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "Status": "started",
   "Interval": 0,
   "MaxRunning": 1,
-  "NumRunning": 0,
+  "NumRunning": 1,
   "LogRetention": 5
 }
 

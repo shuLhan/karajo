@@ -17,7 +17,7 @@ Test running Job with handleHttp.
     "Status": "started",
     "Interval": 0,
     "MaxRunning": 1,
-    "NumRunning": 0,
+    "NumRunning": 1,
     "LogRetention": 5
   }
 }
