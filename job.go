@@ -15,29 +15,9 @@ import (
 	"strings"
 	"time"
 
-	liberrors "github.com/shuLhan/share/lib/errors"
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/mlog"
 	libhtml "github.com/shuLhan/share/lib/net/html"
-)
-
-// List of errors.
-var (
-	ErrJobEmptyCommandsOrCall = liberrors.E{
-		Code:    http.StatusBadRequest,
-		Name:    `ERR_JOB_EMPTY_COMMANDS_OR_CALL`,
-		Message: "empty commands or call handle",
-	}
-	ErrJobForbidden = liberrors.E{
-		Code:    http.StatusForbidden,
-		Name:    `ERR_JOB_FORBIDDEN`,
-		Message: "forbidden",
-	}
-	ErrJobInvalidSecret = liberrors.E{
-		Code:    http.StatusBadRequest,
-		Name:    `ERR_JOB_INVALID_SECRET`,
-		Message: "invalid or empty secret",
-	}
 )
 
 const (
@@ -132,11 +112,11 @@ func (job *Job) init(env *Environment, name string) (err error) {
 		job.Secret = env.Secret
 	}
 	if len(job.Path) != 0 && len(job.Secret) == 0 {
-		return &ErrJobInvalidSecret
+		return ErrJobInvalidSecret
 	}
 
 	if len(job.Commands) == 0 && job.Call == nil {
-		return &ErrJobEmptyCommandsOrCall
+		return ErrJobEmptyCommandsOrCall
 	}
 
 	job.env = env
@@ -279,7 +259,7 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	if len(gotSign) == 0 {
 		gotSign = epr.HttpRequest.Header.Get(HeaderNameXKarajoSign)
 		if len(gotSign) == 0 {
-			return nil, &ErrJobForbidden
+			return nil, ErrJobForbidden
 		}
 	}
 
@@ -288,7 +268,7 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	expSign = Sign(epr.RequestBody, []byte(job.Secret))
 	if expSign != gotSign {
 		mlog.Outf(`job: %s: expecting signature %s got %s`, job.ID, expSign, gotSign)
-		return nil, &ErrJobForbidden
+		return nil, ErrJobForbidden
 	}
 
 	err = job.start()
