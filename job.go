@@ -56,12 +56,12 @@ type Job struct {
 	// code.
 	Call JobHttpHandler `json:"-" ini:"-"`
 
-	// HTTP path where Karajo will listen for request.
-	// The Path is automatically prefixed with "/karajo/job", it is not
-	// static.
+	// HTTP path where Job can be triggered using HTTP.
+	// The Path is automatically prefixed with "/karajo/api/job/run", it
+	// is not static.
 	// For example, if it set to "/my", then the actual path would be
-	// "/karajo/job/my".
-	// This field is required and unique between Job.
+	// "/karajo/api/job/run/my".
+	// This field is optional and unique between Job.
 	Path string `ini:"::path"`
 
 	// HeaderSign define the HTTP header where the signature is read.

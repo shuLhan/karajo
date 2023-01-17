@@ -110,7 +110,7 @@ func TestKarajo_apis(t *testing.T) {
 		testKarajo_apiJobLog(tt, tdata, testClient)
 	})
 
-	t.Run(`apiJobHtpp_success`, func(tt *testing.T) {
+	t.Run(`apiJobHttp_success`, func(tt *testing.T) {
 		testKarajo_apiJobHttp_success(tt, tdata, testClient)
 	})
 	t.Run(`apiJobHttp_notfound`, func(tt *testing.T) {
@@ -369,7 +369,9 @@ func testKarajo_apiJobHttp_notfound(t *testing.T, tdata *test.Data, cl *Client) 
 
 func testKarajo_apiJobHttpLogs(t *testing.T, tdata *test.Data, cl *Client) {
 	var (
-		exp []byte = tdata.Output[`apiJobHttpLogs.json`]
+		exp     []byte = tdata.Output[`apiJobHttpLogs.json`]
+		id             = `test_success`
+		jobHttp        = testEnv.jobHttp(id)
 
 		data interface{}
 		logs []string
@@ -378,9 +380,9 @@ func testKarajo_apiJobHttpLogs(t *testing.T, tdata *test.Data, cl *Client) {
 	)
 
 	// Add dummy logs.
-	testEnv.httpJobs[`test_success`].Log.Push(`The first log`)
+	jobHttp.Log.Push(`The first log`)
 
-	logs, err = testClient.JobHttpLogs(`test_success`)
+	logs, err = testClient.JobHttpLogs(id)
 	if err != nil {
 		data = err
 	} else {

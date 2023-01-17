@@ -31,7 +31,6 @@ type Environment struct {
 
 	// List of Job by name.
 	HttpJobs map[string]*JobHttp `ini:"job.http"`
-	httpJobs map[string]*JobHttp // List of Job indexed by ID.
 
 	// Name of the service.
 	// The Name will be used for title on the web user interface, as log
@@ -54,11 +53,11 @@ type Environment struct {
 	//	|
 	//	+-- /var/lib/karajo/job/$Job.ID
 	//	|
-	//	+-- /var/log/karajo/job/$Job.ID
+	//	+-- /var/log/karajo +-- /job/$Job.ID
+	//	|                   |
+	//	|                   +-- /job_http/$Job.ID
 	//	|
-	//	+-- /var/log/karajo/job_http/$Job.ID
-	//	|
-	//	+-- /var/run/karajo/job/$Job.ID
+	//	+-- /var/run/karajo/job_http/$Job.ID
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
@@ -76,9 +75,9 @@ type Environment struct {
 	file string
 
 	// DirPublic define a path to serve to public.
-	// While the WUI is served under "/karajo", a directory dir_public
+	// While the WUI is served under "/karajo", a directory DirPublic
 	// will be served under "/".
-	// A dir_public can contains sub directory as long as its name is not
+	// A DirPublic can contains sub directory as long as its name is not
 	// "karajo".
 	DirPublic string `ini:"karajo::dir_public"`
 
@@ -147,13 +146,20 @@ func ParseEnvironment(content []byte) (env *Environment, err error) {
 }
 
 // job get the Job by its ID.
-func (env *Environment) job(id string) *Job {
-	var (
-		v *Job
-	)
-	for _, v = range env.Jobs {
-		if v.ID == id {
-			return v
+func (env *Environment) job(id string) (job *Job) {
+	for _, job = range env.Jobs {
+		if job.ID == id {
+			return job
+		}
+	}
+	return nil
+}
+
+// jobHttp get the registered JobHttp by its ID.
+func (env *Environment) jobHttp(id string) (job *JobHttp) {
+	for _, job = range env.HttpJobs {
+		if job.ID == id {
+			return job
 		}
 	}
 	return nil
@@ -215,13 +221,11 @@ func (env *Environment) init() (err error) {
 		}
 	}
 
-	env.httpJobs = make(map[string]*JobHttp, len(env.HttpJobs))
 	for name, jobHttp = range env.HttpJobs {
 		err = jobHttp.init(env, name)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
-		env.httpJobs[jobHttp.ID] = jobHttp
 	}
 
 	return nil
@@ -270,14 +274,14 @@ func (env *Environment) initDirs() (err error) {
 // httpJobsLock lock all the jobs.
 func (env *Environment) httpJobsLock() {
 	var jobHttp *JobHttp
-	for _, jobHttp = range env.httpJobs {
+	for _, jobHttp = range env.HttpJobs {
 		jobHttp.Lock()
 	}
 }
 
 func (env *Environment) httpJobsSave() (err error) {
 	var jobHttp *JobHttp
-	for _, jobHttp = range env.httpJobs {
+	for _, jobHttp = range env.HttpJobs {
 		err = jobHttp.stateSave()
 		if err != nil {
 			return err
@@ -289,7 +293,7 @@ func (env *Environment) httpJobsSave() (err error) {
 // httpJobsUnlock unlock all the jobs.
 func (env *Environment) httpJobsUnlock() {
 	var jobHttp *JobHttp
-	for _, jobHttp = range env.httpJobs {
+	for _, jobHttp = range env.HttpJobs {
 		jobHttp.Unlock()
 	}
 }

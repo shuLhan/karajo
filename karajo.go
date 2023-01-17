@@ -323,7 +323,7 @@ func (k *Karajo) Start() (err error) {
 		}
 		go job.Start()
 	}
-	for _, jobHttp = range k.env.httpJobs {
+	for _, jobHttp = range k.env.HttpJobs {
 		go jobHttp.Start()
 	}
 
@@ -337,7 +337,7 @@ func (k *Karajo) Stop() (err error) {
 		job     *Job
 	)
 
-	for _, jobHttp = range k.env.httpJobs {
+	for _, jobHttp = range k.env.HttpJobs {
 		jobHttp.Stop()
 	}
 	err = k.env.httpJobsSave()
@@ -535,7 +535,7 @@ func (k *Karajo) apiJobHttp(epr *libhttp.EndpointRequest) (resbody []byte, err e
 	var (
 		res              = &libhttp.EndpointResponse{}
 		id      string   = epr.HttpRequest.Form.Get(paramNameID)
-		jobHttp *JobHttp = k.env.httpJobs[id]
+		jobHttp *JobHttp = k.env.jobHttp(id)
 	)
 
 	if jobHttp == nil {
@@ -557,7 +557,7 @@ func (k *Karajo) apiJobHttpLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	var (
 		res              = &libhttp.EndpointResponse{}
 		id      string   = epr.HttpRequest.Form.Get(paramNameID)
-		jobHttp *JobHttp = k.env.httpJobs[id]
+		jobHttp *JobHttp = k.env.jobHttp(id)
 	)
 
 	if jobHttp == nil {
@@ -585,7 +585,7 @@ func (k *Karajo) apiJobHttpPause(epr *libhttp.EndpointRequest) (resb []byte, err
 	}
 
 	id = epr.HttpRequest.Form.Get(paramNameID)
-	jobHttp = k.env.httpJobs[id]
+	jobHttp = k.env.jobHttp(id)
 	if jobHttp == nil {
 		return nil, errInvalidJobID(id)
 	}
@@ -614,7 +614,7 @@ func (k *Karajo) apiJobHttpResume(epr *libhttp.EndpointRequest) (resb []byte, er
 	}
 
 	id = epr.HttpRequest.Form.Get(paramNameID)
-	jobHttp = k.env.httpJobs[id]
+	jobHttp = k.env.jobHttp(id)
 	if jobHttp == nil {
 		return nil, errInvalidJobID(id)
 	}
