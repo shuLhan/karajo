@@ -124,7 +124,7 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 		jlog.setStatus(job.Status)
 		err = jlog.flush()
 		if err != nil {
-			mlog.Errf(`job %s: %s`, job.ID, err)
+			mlog.Errf(`job: %s: %s`, job.ID, err)
 		}
 	}
 
@@ -138,8 +138,6 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 	case job.finished <- true:
 	default:
 	}
-
-	mlog.Outf(`job %s: %s`, job.ID, job.Status)
 }
 
 // computeNextInterval compute the duration when the job will be running based

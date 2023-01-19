@@ -267,7 +267,7 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 
 	expSign = Sign(epr.RequestBody, []byte(job.Secret))
 	if expSign != gotSign {
-		mlog.Outf(`job: %s: expecting signature %s got %s`, job.ID, expSign, gotSign)
+		mlog.Errf(`job: %s: expecting signature %s got %s`, job.ID, expSign, gotSign)
 		return nil, ErrJobForbidden
 	}
 
@@ -282,6 +282,11 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 			err  error
 		)
 		jlog, err = job.execute(epr)
+		if err != nil {
+			mlog.Errf(`!!! job: %s: failed: %s.`, job.ID, err)
+		} else {
+			mlog.Outf(`job: %s: finished.`, job.ID)
+		}
 		job.finish(jlog, err)
 	}()
 
@@ -327,12 +332,18 @@ func (job *Job) Start() {
 			case <-timer.C:
 				err = job.start()
 				if err != nil {
+					mlog.Errf(`!!! job: %s: %s`, job.ID, err)
 					timer.Stop()
 					ever = false
 					continue
 				}
 
 				jlog, err = job.execute(nil)
+				if err != nil {
+					mlog.Errf(`!!! job: %s: failed: %s.`, job.ID, err)
+				} else {
+					mlog.Outf(`job: %s: finished.`, job.ID)
+				}
 				job.finish(jlog, err)
 				// The finish will trigger the finished channel.
 
@@ -372,6 +383,8 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 	job.Logs = append(job.Logs, jlog)
 	job.logsPrune()
 	job.Unlock()
+
+	mlog.Outf(`job: %s: running ...`, job.ID)
 
 	// Call the job.
 	if job.Call != nil {
