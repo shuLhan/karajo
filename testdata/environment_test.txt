@@ -124,7 +124,6 @@ Test LoadEnvironment.
   },
   "HttpJobs": {
     "Test fail": {
-      "Log": null,
       "HttpMethod": "POST",
       "HttpUrl": "http://127.0.0.1:31937/karajo/api/job/run/test-fail",
       "HttpRequestType": "json",
@@ -145,7 +144,6 @@ Test LoadEnvironment.
       "HttpInsecure": false
     },
     "Test long running": {
-      "Log": null,
       "HttpMethod": "POST",
       "HttpUrl": "/karajo/api/job/run/test-long-running",
       "HttpRequestType": "json",
@@ -163,7 +161,6 @@ Test LoadEnvironment.
       "HttpInsecure": false
     },
     "Test random": {
-      "Log": null,
       "HttpMethod": "POST",
       "HttpUrl": "/karajo/api/job/run/test-random",
       "HttpRequestType": "json",
@@ -181,7 +178,6 @@ Test LoadEnvironment.
       "HttpInsecure": false
     },
     "Test success": {
-      "Log": null,
       "HttpMethod": "POST",
       "HttpUrl": "/karajo/api/job/run/test-success",
       "HttpRequestType": "json",

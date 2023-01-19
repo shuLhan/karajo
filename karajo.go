@@ -565,7 +565,7 @@ func (k *Karajo) apiJobHttpLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	}
 
 	res.Code = http.StatusOK
-	res.Data = jobHttp.Log
+	res.Data = jobHttp.clog
 
 	return json.Marshal(res)
 }

@@ -44,11 +44,10 @@ const (
 type JobHttp struct {
 	headers http.Header
 
-	// Log contains the Job output.
+	// clog contains fixed, circular JobHttp output.
 	// Upon started it will load several kilobytes lines from previous
-	// log.
-	Log *clise.Clise
-
+	// log file.
+	clog *clise.Clise
 	mlog *mlog.MultiLogger
 	flog *os.File
 
@@ -115,20 +114,18 @@ func (job *JobHttp) Start() {
 		now          time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
-		log          string
-		logTime      string
 		err          error
 		ever         bool
 	)
 
 	for {
 		job.Lock()
-		now = TimeNow().UTC()
+		now = TimeNow().UTC().Round(time.Second)
 		nextInterval = job.computeNextInterval(now)
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
 
-		mlog.Outf(`job_http: %s: next running in %s ...`, job.ID, nextInterval)
+		job.mlog.Outf(`next running in %s ...`, nextInterval)
 
 		timer = time.NewTimer(nextInterval)
 		ever = true
@@ -137,32 +134,18 @@ func (job *JobHttp) Start() {
 			case <-timer.C:
 				err = job.start()
 				if err != nil {
-					now = TimeNow().UTC()
-					logTime = now.Format(defTimeLayout)
-
-					job.mlog.Errf(`!!! %s: %s`, job.ID, err)
-					log = fmt.Sprintf("%s %s: %s", logTime, job.ID, err)
-					job.Log.Push(log)
-
+					job.mlog.Errf(`!!! %s`, err)
 					timer.Stop()
 					ever = false
 					continue
 				}
 
 				_, err = job.execute()
-
-				now = TimeNow().UTC().Round(time.Second)
-				logTime = now.Format(defTimeLayout)
-
 				if err != nil {
-					job.mlog.Errf(`!!! %s: %s`, job.ID, err)
-					log = fmt.Sprintf(`%s %s: %s`, logTime, job.ID, err)
+					job.mlog.Errf(`!!! %s`, err)
 				} else {
-					job.mlog.Outf(`%s: finished`, job.ID)
-					log = fmt.Sprintf(`%s %s: finished`, logTime, job.ID)
+					job.mlog.Outf(`finished`)
 				}
-				job.Log.Push(log)
-
 				job.finish(nil, err)
 				// The finish will trigger the finished channel.
 
@@ -274,22 +257,26 @@ func (job *JobHttp) initLogger(env *Environment) (err error) {
 		readOff int64
 	)
 
-	job.Log = clise.New(defJobLogSize)
-
 	job.mlog = mlog.NewMultiLogger(defTimeLayout, mlogPrefix, nil, nil)
-	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter("stderr", os.Stderr))
-	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter("stdout", os.Stdout))
+	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter(`stderr`, os.Stderr))
+	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter(`stdout`, os.Stdout))
 
-	job.flog, err = os.OpenFile(job.pathLog, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0600)
-	if err != nil {
-		return fmt.Errorf("%s %s: %w", logp, job.pathLog, err)
-	}
+	job.clog = clise.New(defJobLogSize)
+
+	nw = mlog.NewNamedWriter(`clog`, job.clog)
+	job.mlog.RegisterErrorWriter(nw)
+	job.mlog.RegisterOutputWriter(nw)
 
 	// Load the last logs.
 
+	job.flog, err = os.OpenFile(job.pathLog, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0600)
+	if err != nil {
+		return fmt.Errorf(`%s %s: %w`, logp, job.pathLog, err)
+	}
+
 	fi, err = job.flog.Stat()
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	readOff = fi.Size() - defJobLogSizeLoad
@@ -300,7 +287,7 @@ func (job *JobHttp) initLogger(env *Environment) (err error) {
 	_, err = job.flog.ReadAt(lastLog, readOff)
 	if err != nil {
 		if !errors.Is(err, io.EOF) {
-			return fmt.Errorf("%s: %w", logp, err)
+			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 
@@ -308,14 +295,13 @@ func (job *JobHttp) initLogger(env *Environment) (err error) {
 	if len(logs) > 0 {
 		// Skip the first line, since it may not a complete log line.
 		for _, logLine = range logs[1:] {
-			job.Log.Push(string(logLine))
+			_, _ = job.clog.Write(logLine)
 		}
 	}
 
 	// Forward the log to file.
 
 	nw = mlog.NewNamedWriter(job.ID, job.flog)
-
 	job.mlog.RegisterErrorWriter(nw)
 	job.mlog.RegisterOutputWriter(nw)
 
@@ -421,7 +407,6 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 	var (
 		logp    = `execute`
 		now     = TimeNow().UTC().Round(time.Second)
-		logTime = now.Format(defTimeLayout)
 		headers = http.Header{}
 
 		params  interface{}
@@ -456,7 +441,6 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 	}
 
 	job.mlog.Outf(`running ...`)
-	job.Log.Push(fmt.Sprintf(`%s: running ...`, logTime))
 
 	httpRes, _, err = job.httpc.Do(httpReq)
 	if err != nil {

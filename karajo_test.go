@@ -146,11 +146,10 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data, cl *Client) {
 	var (
 		exp []byte = tdata.Output[`apiEnvironment.json`]
 
-		gotEnv  *Environment
-		httpJob *JobHttp
-		job     *Job
-		got     []byte
-		err     error
+		gotEnv *Environment
+		job    *Job
+		got    []byte
+		err    error
 	)
 
 	gotEnv, err = testClient.Environment()
@@ -158,10 +157,6 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data, cl *Client) {
 		t.Fatal(err)
 	}
 
-	// Clear the log and overwrite the LastRun to fixed time.
-	for _, httpJob = range gotEnv.HttpJobs {
-		httpJob.Log.Reset()
-	}
 	for _, job = range gotEnv.Jobs {
 		job.Logs = nil
 	}
@@ -331,8 +326,6 @@ func testKarajo_apiJobHttp_success(t *testing.T, tdata *test.Data, cl *Client) {
 		t.Fatal(err)
 	}
 
-	gotJob.Log.Reset()
-
 	got, err = json.MarshalIndent(gotJob, ``, `  `)
 	if err != nil {
 		t.Fatal(err)
@@ -355,7 +348,7 @@ func testKarajo_apiJobHttp_notfound(t *testing.T, tdata *test.Data, cl *Client) 
 		data = err
 	} else {
 		if gotJob != nil {
-			gotJob.Log.Reset()
+			gotJob.clog.Reset()
 		}
 		data = gotJob
 	}
@@ -380,7 +373,8 @@ func testKarajo_apiJobHttpLogs(t *testing.T, tdata *test.Data, cl *Client) {
 	)
 
 	// Add dummy logs.
-	jobHttp.Log.Push(`The first log`)
+	jobHttp.clog.Reset()
+	jobHttp.clog.Push(`The first log`)
 
 	logs, err = testClient.JobHttpLogs(id)
 	if err != nil {

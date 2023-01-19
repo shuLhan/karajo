@@ -154,10 +154,33 @@ async function jobHttpInfo(jobID) {
   if (el.style.display === "block") {
     el.style.display = "none";
     job._display = "none";
+
+    if (job._logTimer != null) {
+      clearInterval(job._logTimer);
+      job._logTimer = null;
+    }
   } else {
     el.style.display = "block";
     job._display = "block";
+
+    jobHttpLogs(job);
+
+    job._logTimer = setInterval(() => {
+      jobHttpLogs(job);
+    }, delay);
   }
+}
+
+async function jobHttpLogs(job) {
+  let fres = await fetch("/karajo/api/job_http/logs?id=" + job.ID);
+  let res = await fres.json();
+  if (res.code !== 200) {
+    console.error(res.message);
+    return;
+  }
+
+  job._log = res.data;
+  renderJobHttpLog(job);
 }
 
 async function jobHttpPause(id) {
@@ -354,7 +377,6 @@ function renderJobs(jobs) {
 
 function renderJobHttp(job) {
   renderJobHttpAttrs(job);
-  renderJobHttpLog(job);
   renderJobHttpNextRun(job);
   renderJobHttpStatus(job);
 }
@@ -392,8 +414,8 @@ function renderJobHttpLog(job) {
   let el = document.getElementById(job._idLog);
   let out = "";
 
-  for (let x = 0; x < job.Log.length; x++) {
-    out += `<p>${job.Log[x]}</p>`;
+  for (let x = 0; x < job._log.length; x++) {
+    out += `<p>${atob(job._log[x])}</p>`;
   }
 
   el.innerHTML = out;
@@ -437,11 +459,13 @@ function renderHttpJobs(httpJobs) {
     httpJob._idStatus = `jobhttp_${httpJob.ID}_status`;
     httpJob._idNextRun = `jobhttp_${httpJob.ID}_next_run`;
     httpJob._display = "none";
+    httpJob._logTimer = null;
 
     if (_httpJobs != null) {
       let prevJob = _httpJobs[httpJob.ID];
       if (prevJob != null) {
         httpJob._display = prevJob._display;
+        httpJob._logTimer = prevJob._logTimer;
       }
     }
 

@@ -54,7 +54,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   },
   "HttpJobs": {
     "Test success": {
-      "Log": [],
       "HttpMethod": "POST",
       "HttpUrl": "/karajo/job/test-job-success",
       "HttpRequestType": "json",
@@ -174,7 +173,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiJobHttp_success.json
 {
-  "Log": [],
   "HttpMethod": "POST",
   "HttpUrl": "/karajo/job/test-job-success",
   "HttpRequestType": "json",
@@ -208,9 +206,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiJobHttpPause.json
 {
-  "Log": [
-    "The first log"
-  ],
   "HttpMethod": "POST",
   "HttpUrl": "/karajo/job/test-job-success",
   "HttpRequestType": "json",
@@ -232,9 +227,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiJobHttpResume.json
 {
-  "Log": [
-    "The first log"
-  ],
   "HttpMethod": "POST",
   "HttpUrl": "/karajo/job/test-job-success",
   "HttpRequestType": "json",
