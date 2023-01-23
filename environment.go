@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	defDirBase       = `/`
 	defEnvName       = `karajo`
 	defHttpTimeout   = 5 * time.Minute
 	defListenAddress = `:31937`
@@ -78,9 +79,6 @@ type Environment struct {
 	// This is to simplify managing JobHttp by splitting it per file.
 	// Each JobHttp configuration end with `.conf`.
 	dirConfigJobHttpd string
-
-	// dirCurrent the current directory where program running.
-	dirCurrent string
 
 	dirLibJob     string
 	dirLogJob     string
@@ -260,13 +258,8 @@ func (env *Environment) init() (err error) {
 
 // initDirs create all job and log directories.
 func (env *Environment) initDirs() (err error) {
-	env.dirCurrent, err = os.Getwd()
-	if err != nil {
-		return err
-	}
-
 	if len(env.DirBase) == 0 {
-		env.DirBase = env.dirCurrent
+		env.DirBase = defDirBase
 	}
 
 	env.dirConfig = filepath.Join(env.DirBase, "etc", defEnvName)
