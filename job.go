@@ -394,7 +394,7 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 
 	// Run commands.
 	for x, cmd = range job.Commands {
-		now = TimeNow().UTC()
+		now = TimeNow().UTC().Round(time.Second)
 		logTime = now.Format(defTimeLayout)
 		fmt.Fprintf(jlog, "\n%s === Execute %2d: %s\n", logTime, x, cmd)
 

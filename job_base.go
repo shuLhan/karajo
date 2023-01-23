@@ -91,7 +91,7 @@ func (job *JobBase) start() (err error) {
 	if job.Status == JobStatusPaused {
 		// Always set the LastRun to the current time, otherwise it
 		// will run with 0s duration for interval based job.
-		job.LastRun = TimeNow()
+		job.LastRun = TimeNow().UTC().Round(time.Second)
 		return ErrJobPaused
 	}
 	if job.NumRunning+1 > job.MaxRunning {
@@ -129,7 +129,7 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 	}
 
 	job.NumRunning--
-	job.LastRun = TimeNow()
+	job.LastRun = TimeNow().UTC().Round(time.Second)
 	if job.Interval > 0 {
 		job.NextRun = job.LastRun.Add(job.Interval)
 	}
@@ -150,7 +150,7 @@ func (job *JobBase) computeNextInterval(now time.Time) time.Duration {
 	if lastTime.Before(now) {
 		return 0
 	}
-	return lastTime.Sub(now)
+	return lastTime.Sub(now).Round(time.Second)
 }
 
 // pause the job execution.
