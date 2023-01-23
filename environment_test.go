@@ -29,6 +29,16 @@ func TestLoadEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	err = env.initDirs()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = env.loadJobd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	got, err = json.MarshalIndent(env, ``, `  `)
 	if err != nil {
 		t.Fatal(err)
@@ -37,4 +47,32 @@ func TestLoadEnvironment(t *testing.T) {
 	exp = tdata.Output[`environment.json`]
 
 	test.Assert(t, `LoadEnvironment`, string(exp), string(got))
+}
+
+func TestEnvironment_loadJobs(t *testing.T) {
+	var (
+		env = &Environment{
+			dirConfigJobd: `testdata/etc/karajo/job.d`,
+		}
+		expJobs = map[string]*Job{
+			`test success`: &Job{
+				Path:   `/test-success`,
+				Secret: `s3cret`,
+				Commands: []string{
+					`echo Test job success`,
+					`echo Counter is $KARAJO_JOB_COUNTER`,
+					`x=$(($RANDOM%10)) && echo sleep in ${x}s && sleep $x`,
+				},
+			},
+		}
+
+		err error
+	)
+
+	err = env.loadJobd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	test.Assert(t, `loadJobs`, expJobs, env.Jobs)
 }

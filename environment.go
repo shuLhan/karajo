@@ -4,9 +4,12 @@
 package karajo
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/shuLhan/share/lib/ini"
@@ -49,21 +52,28 @@ type Environment struct {
 	//
 	//	$DirBase
 	//	|
-	//	+-- /etc/karajo/karajo.conf
+	//	+-- /etc/karajo/ +-- karajo.conf
+	//	|                +-- job.d/
 	//	|
 	//	+-- /var/lib/karajo/job/$Job.ID
 	//	|
-	//	+-- /var/log/karajo +-- /job/$Job.ID
-	//	|                   |
-	//	|                   +-- /job_http/$Job.ID
+	//	+-- /var/log/karajo/ +-- job/$Job.ID
+	//	|                    +-- job_http/$Job.ID
 	//	|
 	//	+-- /var/run/karajo/job_http/$Job.ID
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
-	DirBase    string `ini:"karajo::dir_base"`
-	dirConfig  string
-	dirCurrent string // The current directory where program running.
+	DirBase   string `ini:"karajo::dir_base"`
+	dirConfig string
+
+	// dirConfigJobd is the directory where job configuration loaded.
+	// This is to simplify managing job by splitting it per file.
+	// Each job configuration end with `.conf`.
+	dirConfigJobd string
+
+	// dirCurrent the current directory where program running.
+	dirCurrent string
 
 	dirLibJob     string
 	dirLogJob     string
@@ -211,7 +221,12 @@ func (env *Environment) init() (err error) {
 
 	err = env.initDirs()
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	err = env.loadJobd()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	for name, job = range env.Jobs {
@@ -243,6 +258,7 @@ func (env *Environment) initDirs() (err error) {
 	}
 
 	env.dirConfig = filepath.Join(env.DirBase, "etc", defEnvName)
+	env.dirConfigJobd = filepath.Join(env.DirBase, `etc`, defEnvName, `job.d`)
 
 	env.dirLibJob = filepath.Join(env.DirBase, `var`, `lib`, defEnvName, `job`)
 	err = os.MkdirAll(env.dirLibJob, 0700)
@@ -296,4 +312,98 @@ func (env *Environment) httpJobsUnlock() {
 	for _, jobHttp = range env.HttpJobs {
 		jobHttp.Unlock()
 	}
+}
+
+// loadConfigJob load jobs configuration from file.
+func (env *Environment) loadConfigJob(conf string) (jobs map[string]*Job, err error) {
+	type jobContainer struct {
+		Jobs map[string]*Job `ini:"job"`
+	}
+
+	var (
+		logp = `loadConfigJob`
+
+		cfg *ini.Ini
+	)
+
+	cfg, err = ini.Open(conf)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %s: %w`, logp, conf, err)
+	}
+
+	var jobc = jobContainer{}
+
+	err = cfg.Unmarshal(&jobc)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %s: %w`, logp, conf, err)
+	}
+
+	jobs = jobc.Jobs
+	jobc.Jobs = nil
+
+	return jobs, nil
+}
+
+// loadJobd load all job configurations from a directory.
+func (env *Environment) loadJobd() (err error) {
+	var (
+		logp = `loadJobd`
+
+		jobd    *os.File
+		listde  []os.DirEntry
+		de      os.DirEntry
+		fm      os.FileMode
+		name    string
+		jobConf string
+		jobs    map[string]*Job
+		job     *Job
+	)
+
+	jobd, err = os.Open(env.dirConfigJobd)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	listde, err = jobd.ReadDir(0)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	if env.Jobs == nil {
+		env.Jobs = make(map[string]*Job)
+	}
+
+	for _, de = range listde {
+		if de.IsDir() {
+			continue
+		}
+		fm = de.Type()
+		if !fm.IsRegular() {
+			continue
+		}
+		name = de.Name()
+
+		if name[0] == '.' {
+			// Exclude hidden file.
+			continue
+		}
+		if !strings.HasSuffix(name, `.conf`) {
+			continue
+		}
+
+		jobConf = filepath.Join(env.dirConfigJobd, name)
+
+		jobs, err = env.loadConfigJob(jobConf)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
+		for name, job = range jobs {
+			env.Jobs[name] = job
+		}
+	}
+	return nil
 }

@@ -97,13 +97,13 @@ The structure of directory follow the UNIX system,
 ----
 $DirBase
 |
-+-- /etc/karajo/karajo.conf
++-- /etc/karajo/ +-- karajo.conf
+|                +-- job.d/
 |
 +-- /var/lib/karajo/job/$Job.ID
 |
-+-- /var/log/karajo/job/$Job.ID
-|
-+-- /var/log/karajo/job_http/$Job.ID
++-- /var/log/karajo/ +-- job/$Job.ID
+|                    +-- job_http/$Job.ID
 |
 +-- /var/run/karajo/job/$Job.ID
 ----
@@ -141,6 +141,9 @@ This field is optional default to 1.
 Job is the worker that run a function or list of commands triggered from
 external HTTP request or by timer.
 
+A job configuration can be defined inside the main configuration,
+`karajo.conf` or split into separate files inside the
+`$DirBase/etc/karajo/job.d/`, with suffix `.conf`.
 The Job configuration have the following format,
 
 ----
