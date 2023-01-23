@@ -3,6 +3,10 @@ Upstream-Name: karajo
 Upstream-Contact: Shulhan <ms@kilabit.info>
 Source: https://git.sr.ht/~shulhan/karajo
 
+Files: _AUR/*
+Copyright: 2023 Shulhan <ms@kilabit.info>
+License: GPL-3.0-or-later
+
 Files: CHANGELOG.adoc
 Copyright: 2021 Shulhan <ms@kilabit.info>
 License: GPL-3.0-or-later

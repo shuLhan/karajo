@@ -1,0 +1,5 @@
+d /var/lib/karajo 0750
+d /var/log/karajo 0750
+Z /etc/karajo     0750 karajo karajo
+Z /var/lib/karajo -    karajo karajo
+Z /var/log/karajo -    karajo karajo

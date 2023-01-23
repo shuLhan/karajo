@@ -1,0 +1,14 @@
+pkgbase = karajo-git
+	pkgdesc = Worker, scheduler, and WebHook with HTTP supports.
+	pkgver = 0.5.0.r32.g3476488
+	pkgrel = 1
+	url = https://git.sr.ht/~shulhan/karajo
+	arch = x86_64
+	license = GPL3
+	makedepends = go
+	makedepends = git
+	provides = karajo
+	source = karajo-git::git+https://git.sr.ht/~shulhan/karajo
+	md5sums = SKIP
+
+pkgname = karajo-git
