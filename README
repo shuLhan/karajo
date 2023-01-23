@@ -99,6 +99,7 @@ $DirBase
 |
 +-- /etc/karajo/ +-- karajo.conf
 |                +-- job.d/
+|                +-- job_http.d/
 |
 +-- /var/lib/karajo/job/$Job.ID
 |
@@ -209,6 +210,10 @@ The following environment variables are available inside the command:
 
 An JobHttp is a periodic job that send HTTP request to external HTTP server
 (or to karajo Job itself).
+
+A JobHttp configuration can be defined inside the main configuration,
+`karajo.conf` or split into separate files inside the
+`$DirBase/etc/karajo/job_http.d/`, with suffix `.conf`.
 
 Each JobHttp has the following configuration,
 

@@ -39,6 +39,11 @@ func TestLoadEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	err = env.loadJobHttpd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	got, err = json.MarshalIndent(env, ``, `  `)
 	if err != nil {
 		t.Fatal(err)
