@@ -32,13 +32,13 @@ import (
 	"github.com/shuLhan/share/lib/mlog"
 )
 
+// Version of this library and program.
+const Version = `0.5.0`
+
+// HeaderNameXKarajoSign the header key for the signature of body.
+const HeaderNameXKarajoSign = `X-Karajo-Sign`
+
 const (
-	Version = "0.5.0"
-
-	// HeaderNameXKarajoSign define the header key for the signature of
-	// body.
-	HeaderNameXKarajoSign = "x-karajo-sign"
-
 	apiEnvironment = "/karajo/api/environment"
 
 	apiJobHttp       = `/karajo/api/job_http`

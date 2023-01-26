@@ -34,7 +34,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
     "Test job success": {
       "Logs": null,
       "Path": "/test-job-success",
-      "HeaderSign": "x-karajo-sign",
+      "HeaderSign": "X-Karajo-Sign",
       "Commands": [
         "echo Test job success",
         "echo Counter is $KARAJO_JOB_COUNTER",
@@ -86,7 +86,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "Logs": null,
   "Path": "/test-job-success",
-  "HeaderSign": "x-karajo-sign",
+  "HeaderSign": "X-Karajo-Sign",
   "Commands": [
     "echo Test job success",
     "echo Counter is $KARAJO_JOB_COUNTER",
@@ -115,7 +115,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "Logs": null,
   "Path": "/test-job-success",
-  "HeaderSign": "x-karajo-sign",
+  "HeaderSign": "X-Karajo-Sign",
   "Commands": [
     "echo Test job success",
     "echo Counter is $KARAJO_JOB_COUNTER",
@@ -137,7 +137,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "Logs": null,
   "Path": "/test-job-success",
-  "HeaderSign": "x-karajo-sign",
+  "HeaderSign": "X-Karajo-Sign",
   "Commands": [
     "echo Test job success",
     "echo Counter is $KARAJO_JOB_COUNTER",

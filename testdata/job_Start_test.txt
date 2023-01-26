@@ -12,7 +12,7 @@ Test running Job with Call using timer.
     }
   ],
   "Path": "/test-job-timer",
-  "HeaderSign": "x-karajo-sign",
+  "HeaderSign": "X-Karajo-Sign",
   "Commands": null,
   "LastRun": "2023-01-09T00:00:00Z",
   "NextRun": "2023-01-09T00:01:00Z",
