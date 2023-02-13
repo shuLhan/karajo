@@ -5,6 +5,8 @@ package karajo
 
 import (
 	"bytes"
+	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +17,181 @@ import (
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/test"
 )
+
+func TestJob_authGithub(t *testing.T) {
+	type testCase struct {
+		headers  http.Header
+		desc     string
+		expError string
+		reqbody  []byte
+	}
+
+	var (
+		jhook = Job{
+			Secret:   `s3cret`,
+			AuthKind: JobAuthKindGithub,
+		}
+
+		payload = []byte(`_karajo_sign=123`)
+		sign256 = Sign(payload, []byte(jhook.Secret))
+		sign1   = signHmacSha1(payload, []byte(jhook.Secret))
+	)
+
+	var cases = []testCase{{
+		desc: `with valid sha256 signature`,
+		headers: http.Header{
+			githubHeaderSign256: []string{`sha256=` + sign256},
+		},
+		reqbody: payload,
+	}, {
+		desc: `with valid sha1 signature`,
+		headers: http.Header{
+			githubHeaderSign: []string{sign1},
+		},
+		reqbody: payload,
+	}, {
+		desc: `with invalid payload`,
+		headers: http.Header{
+			githubHeaderSign256: []string{`sha256=` + sign256},
+		},
+		reqbody:  []byte(`_karajo_sign=1234`),
+		expError: fmt.Sprintf(`authGithub: %s`, ErrJobForbidden),
+	}}
+
+	var (
+		c   testCase
+		err error
+	)
+
+	for _, c = range cases {
+		var gotError string
+
+		err = jhook.authGithub(c.headers, c.reqbody)
+		if err != nil {
+			gotError = err.Error()
+		}
+
+		test.Assert(t, c.desc, c.expError, gotError)
+	}
+}
+
+func TestJob_authSourcehut(t *testing.T) {
+	type testCase struct {
+		headers  http.Header
+		desc     string
+		expError string
+		reqbody  []byte
+	}
+
+	var (
+		jhook = Job{
+			AuthKind: JobAuthKindSourcehut,
+		}
+		payload = []byte(`_karajo_sign=123`)
+		nonce   = `4`
+
+		msg     bytes.Buffer
+		pubKey  ed25519.PublicKey
+		privKey ed25519.PrivateKey
+		err     error
+	)
+
+	pubKey, privKey, err = ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg.Write(payload)
+	msg.WriteString(nonce)
+
+	var (
+		sign    = ed25519.Sign(privKey, msg.Bytes())
+		signb64 = base64.StdEncoding.EncodeToString(sign)
+	)
+
+	var cases = []testCase{{
+		desc: `with valid signature`,
+		headers: http.Header{
+			sourcehutHeaderSign:  []string{signb64},
+			sourcehutHeaderNonce: []string{nonce},
+		},
+		reqbody: payload,
+	}, {
+		desc: `with invalid payload`,
+		headers: http.Header{
+			sourcehutHeaderSign:  []string{signb64},
+			sourcehutHeaderNonce: []string{nonce},
+		},
+		reqbody:  []byte(`_karajo_sign=1234`),
+		expError: fmt.Sprintf(`authSourcehut: %s`, ErrJobForbidden),
+	}}
+
+	var (
+		c testCase
+	)
+
+	for _, c = range cases {
+		var gotError string
+
+		err = jhook.authSourcehut(c.headers, c.reqbody, pubKey)
+		if err != nil {
+			gotError = err.Error()
+		}
+
+		test.Assert(t, c.desc, c.expError, gotError)
+	}
+}
+
+func TestJob_authHmacSha256(t *testing.T) {
+	type testCase struct {
+		headers  http.Header
+		desc     string
+		expError string
+		reqbody  []byte
+	}
+
+	var (
+		jhook = Job{
+			AuthKind:   JobAuthKindHmacSha256,
+			Secret:     `s3cret`,
+			HeaderSign: HeaderNameXKarajoSign,
+		}
+
+		payload = []byte(`_karajo_sign=123`)
+		sign256 = Sign(payload, []byte(jhook.Secret))
+	)
+
+	var cases = []testCase{{
+		desc: `with valid signature`,
+		headers: http.Header{
+			HeaderNameXKarajoSign: []string{sign256},
+		},
+		reqbody: payload,
+	}, {
+		desc: `with invalid payload`,
+		headers: http.Header{
+			HeaderNameXKarajoSign: []string{sign256},
+		},
+		reqbody:  []byte(`_karajo_sign=1234`),
+		expError: fmt.Sprintf(`authHmacSha256: %s`, ErrJobForbidden),
+	}}
+
+	var (
+		c   testCase
+		err error
+	)
+
+	for _, c = range cases {
+		var gotError string
+
+		err = jhook.authHmacSha256(c.headers, c.reqbody)
+		if err != nil {
+			gotError = err.Error()
+		}
+
+		test.Assert(t, c.desc, c.expError, gotError)
+	}
+}
 
 // TestJob_handleHttp test Job's Call with HTTP request.
 func TestJob_handleHttp(t *testing.T) {
@@ -73,7 +250,7 @@ func TestJob_handleHttp(t *testing.T) {
 	}
 
 	sign = Sign(epr.RequestBody, []byte(job.Secret))
-	epr.HttpRequest.Header.Set(HeaderNameXKarajoSign, sign)
+	epr.HttpRequest.Header.Set(job.HeaderSign, sign)
 
 	var (
 		buf bytes.Buffer

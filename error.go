@@ -21,11 +21,6 @@ var (
 		Name:    `ERR_JOB_FORBIDDEN`,
 		Message: "forbidden",
 	}
-	ErrJobInvalidSecret error = &liberrors.E{
-		Code:    http.StatusBadRequest,
-		Name:    `ERR_JOB_INVALID_SECRET`,
-		Message: "invalid or empty secret",
-	}
 	ErrJobMaxReached error = &liberrors.E{
 		Code:    http.StatusTooManyRequests,
 		Name:    `ERR_JOB_MAX_REACHED`,

@@ -34,6 +34,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
     "Test job success": {
       "Logs": null,
       "Path": "/test-job-success",
+      "AuthKind": "hmac-sha256",
       "HeaderSign": "X-Karajo-Sign",
       "Commands": [
         "echo Test job success",
@@ -86,6 +87,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "Logs": null,
   "Path": "/test-job-success",
+  "AuthKind": "hmac-sha256",
   "HeaderSign": "X-Karajo-Sign",
   "Commands": [
     "echo Test job success",
@@ -115,6 +117,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "Logs": null,
   "Path": "/test-job-success",
+  "AuthKind": "hmac-sha256",
   "HeaderSign": "X-Karajo-Sign",
   "Commands": [
     "echo Test job success",
@@ -137,6 +140,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "Logs": null,
   "Path": "/test-job-success",
+  "AuthKind": "hmac-sha256",
   "HeaderSign": "X-Karajo-Sign",
   "Commands": [
     "echo Test job success",

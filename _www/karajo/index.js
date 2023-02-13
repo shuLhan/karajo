@@ -65,6 +65,7 @@ async function jobInfo(jobID) {
 }
 
 async function jobRunNow(jobID, jobPath) {
+  let job = _jobs[jobID];
   let secret = document.getElementById("_secret").value;
   let epoch = parseInt(new Date().valueOf() / 1000);
   let req = {
@@ -74,21 +75,31 @@ async function jobRunNow(jobID, jobPath) {
 
   let hash = CryptoJS.HmacSHA256(body, secret);
   let sign = hash.toString(CryptoJS.enc.Hex);
+  let headers = {};
+
+  switch (job.AuthKind) {
+    case "github":
+      headers["X-Hub-Signature-256"] = sign;
+      break;
+    case "hmac-sha256":
+      headers["X-Karajo-Sign"] = sign;
+      break;
+    // TODO: CryptoJS does not support ed25519 so we cannot support sourcehut auth right now.
+  }
 
   let fres = await fetch(`/karajo/api/job/run${jobPath}`, {
     method: "POST",
-    headers: {
-      "x-karajo-sign": sign,
-    },
+    headers: headers,
     body: body,
   });
+
   let res = await fres.json();
   if (res.code !== 200) {
     console.error(res.message);
     return;
   }
 
-  let job = res.data;
+  job = res.data;
   renderJobs([job]);
 }
 

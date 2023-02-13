@@ -283,7 +283,7 @@ func (k *Karajo) registerApis() (err error) {
 	return nil
 }
 
-// registerJobsHook register HTTP API for executing Job using HTTP handler.
+// registerJobsHook register endpoint for executing Job using HTTP POST.
 func (k *Karajo) registerJobsHook() (err error) {
 	var job *Job
 

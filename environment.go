@@ -80,7 +80,8 @@ type Environment struct {
 	// Each JobHttp configuration end with `.conf`.
 	dirConfigJobHttpd string
 
-	dirLibJob     string
+	dirLibJob string
+
 	dirLogJob     string
 	dirLogJobHttp string
 
@@ -258,6 +259,10 @@ func (env *Environment) init() (err error) {
 
 // initDirs create all job and log directories.
 func (env *Environment) initDirs() (err error) {
+	var (
+		logp = `initDirs`
+	)
+
 	if len(env.DirBase) == 0 {
 		env.DirBase = defDirBase
 	}
@@ -269,25 +274,25 @@ func (env *Environment) initDirs() (err error) {
 	env.dirLibJob = filepath.Join(env.DirBase, `var`, `lib`, defEnvName, `job`)
 	err = os.MkdirAll(env.dirLibJob, 0700)
 	if err != nil {
-		return fmt.Errorf(`%s: %w`, env.dirLibJob, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLibJob, err)
 	}
 
 	env.dirLogJob = filepath.Join(env.DirBase, "var", "log", defEnvName, "job")
 	err = os.MkdirAll(env.dirLogJob, 0700)
 	if err != nil {
-		return fmt.Errorf("%s: %w", env.dirLogJob, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLogJob, err)
 	}
 
 	env.dirLogJobHttp = filepath.Join(env.DirBase, `var`, `log`, defEnvName, `job_http`)
 	err = os.MkdirAll(env.dirLogJobHttp, 0700)
 	if err != nil {
-		return fmt.Errorf(`%s: %w`, env.dirLogJobHttp, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLogJobHttp, err)
 	}
 
 	env.dirRunJobHttp = filepath.Join(env.DirBase, `var`, `run`, defEnvName, `job_http`)
 	err = os.MkdirAll(env.dirRunJobHttp, 0700)
 	if err != nil {
-		return fmt.Errorf(`%s: %w`, env.dirRunJobHttp, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, env.dirRunJobHttp, err)
 	}
 
 	return nil

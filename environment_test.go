@@ -60,6 +60,14 @@ func TestEnvironment_loadJobs(t *testing.T) {
 			dirConfigJobd: `testdata/etc/karajo/job.d`,
 		}
 		expJobs = map[string]*Job{
+			`Test auth_kind github`: &Job{
+				AuthKind: `github`,
+				Path:     `/github`,
+				Secret:   `s3cret`,
+				Commands: []string{
+					`echo auth_kind is github`,
+				},
+			},
 			`test success`: &Job{
 				Path:   `/test-success`,
 				Secret: `s3cret`,

@@ -19,8 +19,8 @@ Features,
 * Running job on specific interval
 * Preserve the job states on restart
 * Able to pause and resume specific job
-* Trigger internal job using HTTP request (hook) and handle it by code or
-  running commands
+* Trigger job using HTTP request (WebHook). Supported auth are `github`,
+  `sourcehut`, or `hmac-sha256` (default).
 * Trigger external job by sending HTTP request to external server
 * HTTP APIs to programmatically interact with karajo
 
@@ -122,13 +122,12 @@ A dir_public can contains sub directory as long as its name is not
 "karajo".
 --
 
-`secret`:: Define the secret to authorize the incoming request through
-signature.
+`secret`:: Define the default secret to authorize the incoming HTTP request.
 +
 --
 Each request sign the payload (query string or body) with HMAC + SHA-256 using
 this secret.
-The signature then sent in HTTP header "x-karajo-sign" as hex.
+The signature then sent in HTTP header "X-Karajo-Sign" as hex string.
 This field is required.
 --
 
@@ -150,8 +149,10 @@ The Job configuration have the following format,
 ----
 [job "name"]
 description = <string>
+auth_kind = <string>
 path = <string>
 secret = <string>
+interval = <duration>
 log_retention = <number>
 command = <string>
 ...
@@ -165,18 +166,36 @@ This field is required and should unique between Job.
 `description`:: Define the job description.
 It could be plain text or simple HTML.
 
-`path`:: Set HTTP path where Karajo will listen for request.
+`auth_kind`:: Define the kind of authorization to trigger Job.
++
+--
+Supported AuthKind are,
+
+* `github`: the signature read from "X-Hub-Signature-256" and
+  compare it by signing request body with Secret using HMAC-SHA256.
+  If the header is empty, it will check another header "X-Hub-Signature" and
+  then sign the request body with Secret using HMAC-SHA1.
+
+* `hmac-sha256` (default): the signature read from HeaderSign and compare it
+  by signing request body with Secret using HMAC-SHA256.
+
+* `sourcehut`: See https://man.sr.ht/api-conventions.md#webhooks
+--
+
+
+`path`:: Set the Webhook path, where Job can be triggered from outside.
 +
 --
 The `path` is automatically prefixed with "/karajo/api/job/run", it is not
 static.
 For example, if it set to "/my", then the actual path would be
 "/karajo/api/job/run/my".
-This field is required and unique between Job.
+This field is optional and must unique between Job.
 --
 
+
 `header_sign`:: Define custom HTTP header where the signature is read.
-Default to "x-karajo-sign" if its empty.
+Default to "X-Karajo-Sign" if its empty.
 +
 --
 For example, to receive WebHook from GitHub, one can set this value to
@@ -188,9 +207,18 @@ For example, to receive WebHook from GitHub, one can set this value to
 +
 --
 Each request sign the body with HMAC + SHA-256 using this secret.
-The signature then sent in HTTP header "x-karajo-sign" as hex.
+The signature then sent in HTTP header "X-Karajo-Sign" as hex string.
 This field is required.
 --
+
+
+`interval`:: Define the duration when job will be repeatedly executed.
++
+--
+This field is optional, if not set the Job can only run when receiving HTTP
+request.
+--
+
 
 `log_retention`:: Define the maximum number of logs to keep in storage.
 This field is optional, default to 5.
@@ -241,7 +269,7 @@ It could be plain text or simple HTML.
 
 `secret`:: Define a string to sign the request query or body with
 HMAC+SHA-256.
-The signature is sent on HTTP header "x-karajo-sign" as hex string.
+The signature is sent on HTTP header "X-Karajo-Sign" as hex string.
 This field is optional.
 
 `interval`:: Define the duration when job will be repeatedly executed.
@@ -607,7 +635,7 @@ Format,
 
 ----
 POST /karajo/api/job_http/pause?id=<id>
-x-karajo-sign: <query signature>
+X-Karajo-Sign: <query signature>
 ----
 
 Parameters,
@@ -636,7 +664,7 @@ Format,
 
 ----
 POST /karajo/api/job_http/resume?id=<id>
-x-karajo-sign: <query signature>
+X-Karajo-Sign: <query signature>
 ----
 
 Parameters,

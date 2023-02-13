@@ -3,9 +3,29 @@ Test LoadEnvironment.
 <<< environment.json
 {
   "Jobs": {
+    "Test auth_kind github": {
+      "Logs": null,
+      "Path": "/github",
+      "AuthKind": "github",
+      "HeaderSign": "",
+      "Commands": [
+        "echo auth_kind is github"
+      ],
+      "LastRun": "0001-01-01T00:00:00Z",
+      "NextRun": "0001-01-01T00:00:00Z",
+      "ID": "",
+      "Name": "",
+      "Description": "",
+      "Status": "",
+      "Interval": 0,
+      "MaxRunning": 0,
+      "NumRunning": 0,
+      "LogRetention": 0
+    },
     "Test interval 1m": {
       "Logs": null,
       "Path": "",
+      "AuthKind": "",
       "HeaderSign": "",
       "Commands": [
         "echo Test job interval 1m",
@@ -25,6 +45,7 @@ Test LoadEnvironment.
     "Test long running": {
       "Logs": null,
       "Path": "/test-long-running",
+      "AuthKind": "",
       "HeaderSign": "",
       "Commands": [
         "for ((x=0; x\u003c90; x++)); do echo \"$x\"; sleep 1; done"
@@ -43,6 +64,7 @@ Test LoadEnvironment.
     "Test manual run": {
       "Logs": null,
       "Path": "/test-manual-run",
+      "AuthKind": "",
       "HeaderSign": "",
       "Commands": [
         "echo Test job manual run",
@@ -62,6 +84,7 @@ Test LoadEnvironment.
     "test fail": {
       "Logs": null,
       "Path": "/test-fail",
+      "AuthKind": "hmac-sha256",
       "HeaderSign": "",
       "Commands": [
         "echo Test job fail",
@@ -83,6 +106,7 @@ Test LoadEnvironment.
     "test random": {
       "Logs": null,
       "Path": "/test-random",
+      "AuthKind": "",
       "HeaderSign": "",
       "Commands": [
         "echo Test job random",
@@ -104,6 +128,7 @@ Test LoadEnvironment.
     "test success": {
       "Logs": null,
       "Path": "/test-success",
+      "AuthKind": "",
       "HeaderSign": "",
       "Commands": [
         "echo Test job success",
