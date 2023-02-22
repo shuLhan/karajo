@@ -14,10 +14,10 @@ import (
 // List of job status.
 const (
 	JobStatusRunning = `running`
-	JobStatusStarted = "started"
-	JobStatusSuccess = "success"
-	JobStatusFailed  = "failed"
-	JobStatusPaused  = "paused"
+	JobStatusStarted = `started`
+	JobStatusSuccess = `success`
+	JobStatusFailed  = `failed`
+	JobStatusPaused  = `paused`
 )
 
 // DefaultJobMaxRunning define maximum number of job that can be
@@ -78,7 +78,7 @@ func (job *JobBase) init() {
 
 // start check if the job can run, the job is not paused and has not reach
 // maximum run.
-// If its can run, the status changes to "started" and its NumRunning
+// If its can run, the status changes to `started` and its NumRunning
 // increased by one.
 //
 // If the job is paused, the LastRun will be set to current time and return

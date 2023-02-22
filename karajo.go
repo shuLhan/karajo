@@ -39,7 +39,7 @@ const Version = `0.5.0`
 const HeaderNameXKarajoSign = `X-Karajo-Sign`
 
 const (
-	apiEnvironment = "/karajo/api/environment"
+	apiEnvironment = `/karajo/api/environment`
 
 	apiJobHttp       = `/karajo/api/job_http`
 	apiJobHttpLogs   = `/karajo/api/job_http/logs`
@@ -67,7 +67,7 @@ var (
 
 	errUnauthorized = liberrors.E{
 		Code:    http.StatusUnauthorized,
-		Message: "empty or invalid signature",
+		Message: `empty or invalid signature`,
 	}
 )
 
@@ -82,7 +82,7 @@ type Karajo struct {
 func GenerateMemfs() (mfs *memfs.MemFS, err error) {
 	var (
 		opts = memfs.Options{
-			Root: "_www",
+			Root: `_www`,
 			Excludes: []string{
 				`.*\.adoc$`,
 			},
@@ -90,9 +90,9 @@ func GenerateMemfs() (mfs *memfs.MemFS, err error) {
 				CommentHeader: `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 `,
-				PackageName: "karajo",
-				VarName:     "memfsWww",
-				GoFileName:  "memfs_www.go",
+				PackageName: `karajo`,
+				VarName:     `memfsWww`,
+				GoFileName:  `memfs_www.go`,
 			},
 		}
 	)
@@ -120,7 +120,7 @@ func Sign(payload, secret []byte) (sign string) {
 // New create and initialize Karajo from configuration file.
 func New(env *Environment) (k *Karajo, err error) {
 	var (
-		logp       = "New"
+		logp       = `New`
 		serverOpts = libhttp.ServerOptions{
 			Conn: &http.Server{
 				ReadTimeout:    10 * time.Minute,
@@ -138,10 +138,10 @@ func New(env *Environment) (k *Karajo, err error) {
 
 	err = env.init()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	mlog.SetPrefix(env.Name + ":")
+	mlog.SetPrefix(env.Name + `:`)
 
 	serverOpts.Address = k.env.ListenAddress
 
@@ -165,7 +165,7 @@ func New(env *Environment) (k *Karajo, err error) {
 
 		mfs, err = memfs.New(&opts)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", logp, err)
+			return nil, fmt.Errorf(`%s: %w`, logp, err)
 		}
 
 		mfs = memfs.Merge(mfs, memfsWww)
@@ -176,17 +176,17 @@ func New(env *Environment) (k *Karajo, err error) {
 
 	k.Server, err = libhttp.NewServer(&serverOpts)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	err = k.registerApis()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	err = k.registerJobsHook()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	return k, nil
@@ -315,7 +315,7 @@ func (k *Karajo) Start() (err error) {
 		job     *Job
 	)
 
-	mlog.Outf("started the karajo server at http://%s/karajo", k.Server.Addr)
+	mlog.Outf(`started the karajo server at http://%s/karajo`, k.Server.Addr)
 
 	for _, job = range k.env.Jobs {
 		if job.Interval <= 0 {
@@ -342,7 +342,7 @@ func (k *Karajo) Stop() (err error) {
 	}
 	err = k.env.httpJobsSave()
 	if err != nil {
-		mlog.Errf("Stop: %s", err)
+		mlog.Errf(`Stop: %s`, err)
 	}
 
 	for _, job = range k.env.Jobs {
@@ -399,14 +399,14 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	}
 	if job == nil {
 		res.Code = http.StatusNotFound
-		res.Message = fmt.Sprintf("job id %s not found", id)
+		res.Message = fmt.Sprintf(`job ID %s not found`, id)
 		return nil, res
 	}
 
 	counter, err = strconv.ParseInt(counterStr, 10, 64)
 	if err != nil {
 		res.Code = http.StatusNotFound
-		res.Message = fmt.Sprintf("log #%s not found", counterStr)
+		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
 		return nil, res
 	}
 
@@ -423,7 +423,7 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 
 	if hlog == nil {
 		res.Code = http.StatusNotFound
-		res.Message = fmt.Sprintf("log #%s not found", counterStr)
+		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
 	} else {
 		err = hlog.load()
 		if err != nil {

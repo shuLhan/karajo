@@ -163,13 +163,13 @@ func (job *JobHttp) Start() {
 
 // Stop the job.
 func (job *JobHttp) Stop() {
-	job.mlog.Outf("stopping HTTP job ...")
+	job.mlog.Outf(`stopping HTTP job ...`)
 	job.stopped <- true
 
 	job.mlog.Flush()
 	var err error = job.flog.Close()
 	if err != nil {
-		mlog.Errf("Stop JobHttp %s: %s", job.ID, err)
+		mlog.Errf(`Stop JobHttp %s: %s`, job.ID, err)
 	}
 }
 
@@ -246,7 +246,7 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 // and then to file named job.ID in Environment.dirLogJobHttp.
 func (job *JobHttp) initLogger(env *Environment) (err error) {
 	var (
-		logp       = "initLogger"
+		logp       = `initLogger`
 		lastLog    = make([]byte, defJobLogSizeLoad)
 		mlogPrefix = fmt.Sprintf(`%s: job_http: %s:`, env.Name, job.ID)
 
@@ -330,7 +330,7 @@ func (job *JobHttp) initHttpMethod() (err error) {
 	case http.MethodPut:
 		job.requestMethod = libhttp.RequestMethodPut
 	default:
-		return fmt.Errorf("invalid HTTP method %q", vstr)
+		return fmt.Errorf(`invalid HTTP method %q`, vstr)
 	}
 	return nil
 }
@@ -338,21 +338,21 @@ func (job *JobHttp) initHttpMethod() (err error) {
 func (job *JobHttp) initHttpRequestType() (err error) {
 	var vstr = strings.ToLower(job.HttpRequestType)
 	switch vstr {
-	case "", "query":
+	case ``, `query`:
 		job.requestType = libhttp.RequestTypeQuery
-	case "form":
+	case `form`:
 		job.requestType = libhttp.RequestTypeForm
-	case "json":
+	case `json`:
 		job.requestType = libhttp.RequestTypeJSON
 	default:
-		return fmt.Errorf("invalid HTTP request type %q", vstr)
+		return fmt.Errorf(`invalid HTTP request type %q`, vstr)
 	}
 	return nil
 }
 
 func (job *JobHttp) initHttpUrl(serverAddress string) (err error) {
 	if job.HttpUrl[0] == '/' {
-		job.baseUri = fmt.Sprintf("http://%s", serverAddress)
+		job.baseUri = fmt.Sprintf(`http://%s`, serverAddress)
 		job.requestUri = job.HttpUrl
 		return nil
 	}
@@ -364,19 +364,19 @@ func (job *JobHttp) initHttpUrl(serverAddress string) (err error) {
 
 	httpUrl, err = url.Parse(job.HttpUrl)
 	if err != nil {
-		return fmt.Errorf("%s: invalid http_url %q: %w", job.ID, job.HttpUrl, err)
+		return fmt.Errorf(`%s: invalid http_url %q: %w`, job.ID, job.HttpUrl, err)
 	}
 
 	port = httpUrl.Port()
 	if len(port) == 0 {
-		if httpUrl.Scheme == "https" {
-			port = "443"
+		if httpUrl.Scheme == `https` {
+			port = `443`
 		} else {
-			port = "80"
+			port = `80`
 		}
 	}
 
-	job.baseUri = fmt.Sprintf("%s://%s:%s", httpUrl.Scheme, httpUrl.Hostname(), port)
+	job.baseUri = fmt.Sprintf(`%s://%s:%s`, httpUrl.Scheme, httpUrl.Hostname(), port)
 	job.requestUri = httpUrl.RequestURI()
 
 	return nil
@@ -393,9 +393,9 @@ func (job *JobHttp) initHttpHeaders() (err error) {
 	)
 
 	for _, h = range job.HttpHeaders {
-		kv = strings.SplitN(h, ":", 2)
+		kv = strings.SplitN(h, `:`, 2)
 		if len(kv) != 2 {
-			return fmt.Errorf("%s: invalid header %q", job.ID, h)
+			return fmt.Errorf(`%s: invalid header %q`, job.ID, h)
 		}
 
 		job.headers.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
@@ -471,7 +471,7 @@ func (job *JobHttp) paramsToUrlValues() (url.Values, []byte) {
 		v interface{}
 	)
 	for k, v = range job.params {
-		urlValues.Set(k, fmt.Sprintf("%s", v))
+		urlValues.Set(k, fmt.Sprintf(`%s`, v))
 	}
 	return urlValues, []byte(urlValues.Encode())
 }

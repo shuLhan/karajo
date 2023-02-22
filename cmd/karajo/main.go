@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	cmdEmbed = "embed"
+	cmdEmbed = `embed`
 )
 
 func main() {
-	mlog.SetPrefix("karajo:")
+	mlog.SetPrefix(`karajo:`)
 	defer mlog.Flush()
 
 	var (
@@ -37,8 +37,8 @@ func main() {
 		isDev   bool
 	)
 
-	flag.StringVar(&config, "config", "", "the karajo configuration file")
-	flag.BoolVar(&isDev, "dev", false, "enable development mode")
+	flag.StringVar(&config, `config`, ``, `the karajo configuration file`)
+	flag.BoolVar(&isDev, `dev`, false, `enable development mode`)
 	flag.Parse()
 
 	cmd = flag.Arg(0)
@@ -77,7 +77,7 @@ func main() {
 	defer func() {
 		var panicMsg = recover()
 		if panicMsg != nil {
-			mlog.Errf("recover: %s", panicMsg)
+			mlog.Errf(`recover: %s`, panicMsg)
 			mlog.Flush()
 			debug.PrintStack()
 			os.Exit(1)
@@ -147,7 +147,7 @@ func watchWww(running chan bool) {
 				continue
 			}
 
-			mlog.Outf("--- %d changes", nChanges)
+			mlog.Outf(`--- %d changes`, nChanges)
 			err = mfsWww.GoEmbed()
 			if err != nil {
 				mlog.Errf(err.Error())
@@ -161,7 +161,7 @@ func watchWww(running chan bool) {
 
 	// Run GoEmbed for the last time.
 	if nChanges > 0 {
-		mlog.Outf("--- %d changes", nChanges)
+		mlog.Outf(`--- %d changes`, nChanges)
 		err = mfsWww.GoEmbed()
 		if err != nil {
 			mlog.Errf(err.Error())
@@ -173,9 +173,9 @@ func watchWww(running chan bool) {
 
 func watchWwwDoc() {
 	var (
-		logp        = "watchWwwDoc"
+		logp        = `watchWwwDoc`
 		convertOpts = ciigo.ConvertOptions{
-			Root: "_www/karajo/doc",
+			Root: `_www/karajo/doc`,
 		}
 
 		err error
@@ -183,6 +183,6 @@ func watchWwwDoc() {
 
 	err = ciigo.Watch(&convertOpts)
 	if err != nil {
-		mlog.Fatalf("%s: %s", logp, err)
+		mlog.Fatalf(`%s: %s`, logp, err)
 	}
 }

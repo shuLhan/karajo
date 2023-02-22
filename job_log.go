@@ -17,7 +17,8 @@ import (
 // JobLog contains the content, status, and counter for log.
 //
 // Each log file is using the following format:
-// "<job.ID>.<counter>.<status>".
+//
+//	<job.ID>.<counter>.<status>
 //
 // Counter is a number that unique between log, start from 1.
 //
@@ -52,7 +53,7 @@ func newJobLog(jobID, dirLog string, logCounter int64) (jlog *JobLog) {
 // If the name is not valid, the file is removed and it will return nil.
 func parseJobLogName(dir, name string) (jlog *JobLog) {
 	var (
-		logFields []string = strings.Split(name, ".")
+		logFields []string = strings.Split(name, `.`)
 
 		err error
 	)

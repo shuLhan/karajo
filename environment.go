@@ -124,13 +124,13 @@ type Environment struct {
 // LoadEnvironment load the configuration from the ini file format.
 func LoadEnvironment(file string) (env *Environment, err error) {
 	var (
-		logp = "LoadEnvironment"
+		logp = `LoadEnvironment`
 		cfg  *ini.Ini
 	)
 
 	cfg, err = ini.Open(file)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	env = &Environment{
@@ -139,7 +139,7 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 
 	err = cfg.Unmarshal(env)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	return env, nil
@@ -197,7 +197,7 @@ func (env *Environment) jobsUnlock() {
 
 func (env *Environment) init() (err error) {
 	var (
-		logp = "init"
+		logp = `init`
 
 		job     *Job
 		jobHttp *JobHttp
@@ -221,7 +221,7 @@ func (env *Environment) init() (err error) {
 	env.jobq = make(chan struct{}, env.MaxJobRunning)
 
 	if len(env.Secret) == 0 {
-		return fmt.Errorf("%s: empty secret", logp)
+		return fmt.Errorf(`%s: empty secret`, logp)
 	}
 	env.secretb = []byte(env.Secret)
 
@@ -238,7 +238,7 @@ func (env *Environment) init() (err error) {
 	for name, job = range env.Jobs {
 		err = job.init(env, name)
 		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
+			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 
@@ -250,7 +250,7 @@ func (env *Environment) init() (err error) {
 	for name, jobHttp = range env.HttpJobs {
 		err = jobHttp.init(env, name)
 		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
+			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 
@@ -267,7 +267,7 @@ func (env *Environment) initDirs() (err error) {
 		env.DirBase = defDirBase
 	}
 
-	env.dirConfig = filepath.Join(env.DirBase, "etc", defEnvName)
+	env.dirConfig = filepath.Join(env.DirBase, `etc`, defEnvName)
 	env.dirConfigJobd = filepath.Join(env.DirBase, `etc`, defEnvName, `job.d`)
 	env.dirConfigJobHttpd = filepath.Join(env.DirBase, `etc`, defEnvName, `job_http.d`)
 
@@ -277,7 +277,7 @@ func (env *Environment) initDirs() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLibJob, err)
 	}
 
-	env.dirLogJob = filepath.Join(env.DirBase, "var", "log", defEnvName, "job")
+	env.dirLogJob = filepath.Join(env.DirBase, `var`, `log`, defEnvName, `job`)
 	err = os.MkdirAll(env.dirLogJob, 0700)
 	if err != nil {
 		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLogJob, err)

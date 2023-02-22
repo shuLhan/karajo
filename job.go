@@ -436,7 +436,7 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	var res libhttp.EndpointResponse
 
 	res.Code = http.StatusOK
-	res.Message = "OK"
+	res.Message = `OK`
 	res.Data = job
 
 	job.Lock()
@@ -516,7 +516,7 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 	)
 
 	job.env.jobq <- struct{}{}
-	mlog.Outf("job: %s: started ...", job.ID)
+	mlog.Outf(`job: %s: started ...`, job.ID)
 	defer func() {
 		<-job.env.jobq
 	}()
@@ -544,9 +544,9 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 		fmt.Fprintf(jlog, "\n%s === Execute %2d: %s\n", logTime, x, cmd)
 
 		execCmd = exec.Cmd{
-			Path:   "/bin/sh",
+			Path:   `/bin/sh`,
 			Dir:    job.dirWork,
-			Args:   []string{"/bin/sh", "-c", cmd},
+			Args:   []string{`/bin/sh`, `-c`, cmd},
 			Env:    job.generateCmdEnvs(),
 			Stdout: jlog,
 			Stderr: jlog,

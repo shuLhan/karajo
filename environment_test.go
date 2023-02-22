@@ -24,7 +24,7 @@ func TestLoadEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	env, err = LoadEnvironment("testdata/karajo.conf")
+	env, err = LoadEnvironment(`testdata/karajo.conf`)
 	if err != nil {
 		t.Fatal(err)
 	}

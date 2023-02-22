@@ -23,7 +23,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 	)
 
 	var cases = []testCase{{
-		desc: "Last run is -2*interval ",
+		desc: `Last run is -2*interval`,
 		jobHttp: &JobHttp{
 			JobBase: JobBase{
 				LastRun:  now.Add(-2 * interval),
@@ -31,7 +31,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 			},
 		},
 	}, {
-		desc: "Last run is now",
+		desc: `Last run is now`,
 		jobHttp: &JobHttp{
 			JobBase: JobBase{
 				LastRun:  now.UTC(),
@@ -40,7 +40,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 		},
 		exp: interval,
 	}, {
-		desc: "Last run is half-interval ago",
+		desc: `Last run is half-interval ago`,
 		jobHttp: &JobHttp{
 			JobBase: JobBase{
 				LastRun:  now.Add(-1 * (interval / 2)),
@@ -49,7 +49,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 		},
 		exp: interval / 2,
 	}, {
-		desc: "Last run > now?",
+		desc: `Last run > now?`,
 		jobHttp: &JobHttp{
 			JobBase: JobBase{
 				LastRun:  now.Add(1 * interval),

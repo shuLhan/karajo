@@ -14,12 +14,12 @@ var (
 	ErrJobEmptyCommandsOrCall error = &liberrors.E{
 		Code:    http.StatusBadRequest,
 		Name:    `ERR_JOB_EMPTY_COMMANDS_OR_CALL`,
-		Message: "empty commands or call handle",
+		Message: `empty commands or call handle`,
 	}
 	ErrJobForbidden error = &liberrors.E{
 		Code:    http.StatusForbidden,
 		Name:    `ERR_JOB_FORBIDDEN`,
-		Message: "forbidden",
+		Message: `forbidden`,
 	}
 	ErrJobMaxReached error = &liberrors.E{
 		Code:    http.StatusTooManyRequests,
