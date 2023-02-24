@@ -38,18 +38,19 @@ type Environment struct {
 
 	// Name of the service.
 	// The Name will be used for title on the web user interface, as log
-	// prefix, for file prefix on the jobs state, and as file prefix on
+	// prefix, as file prefix on the jobs state, and as file prefix on
 	// log files.
 	// If this value is empty, it will be set to "karajo".
 	Name string `ini:"karajo::name"`
 	name string
 
+	// Define the address for WUI, default to ":31937".
 	ListenAddress string `ini:"karajo::listen_address"`
 
 	// DirBase define the base directory where configuration, job state,
-	// and log stored.
+	// and job log stored.
 	// This field is optional, default to current directory.
-	// The structure of directory follow the UNIX system,
+	// The structure of directory follow the common UNIX system,
 	//
 	//	$DirBase
 	//	|
@@ -97,27 +98,29 @@ type Environment struct {
 	// "karajo".
 	DirPublic string `ini:"karajo::dir_public"`
 
-	// Secret contains string to authorize HTTP API using signature.
+	// Secret define the default secret to authorize the incoming HTTP
+	// request.
 	// The signature is generated from HTTP payload (query or body) with
 	// HMAC+SHA-256.
-	// The signature is read from HTTP header "x-karajo-sign" as hex
+	// The signature is read from HTTP header "X-Karajo-Sign" as hex
 	// string.
-	// This field is optional, if its empty a random secret is generated
-	// before server started and printed to stdout.
+	// This field is optional.
 	Secret  string `ini:"karajo::secret" json:"-"`
 	secretb []byte
 
 	// HttpTimeout define the global HTTP client timeout when executing
 	// each jobs.
 	// This field is optional, default to 5 minutes.
+	// The value of this option is using the Go [time.Duration]
+	// format, for example, "30s" for 30 seconds, "1m" for 1 minute.
 	HttpTimeout time.Duration `ini:"karajo::http_timeout"`
 
 	// MaxJobRunning define the maximum job running at the same time.
 	// This field is optional default to 1.
 	MaxJobRunning int `ini:"karajo::max_job_running"`
 
-	// IsDevelopment if its true, the assets will be loaded directly from
-	// disk instead from memory (memfs).
+	// IsDevelopment if its true, the files in DirPublic will be loaded
+	// directly from disk instead from embedded memfs.
 	IsDevelopment bool
 }
 

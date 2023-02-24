@@ -1,40 +1,44 @@
 = karajo
 Shulhan <ms@kilabit.info>
-14 June 2022
+25 Feb 2023
 :toc:
 :sectanchors:
 :sectlinks:
 
-Module karajo implement HTTP workers and manager, similar to cron but works or
-manageable with HTTP.
+Module karajo implement HTTP workers and manager, similar to cron but works
+and manageable with HTTP.
+A karajo server manage one or more jobs.
+A job is function or list of commands that executed once its triggered either
+by timer or from external HTTP request.
 
-karajo has the web user interface (WUI) for monitoring the jobs that run on
-URL http://127.0.0.1:31937/karajo by default and can be configurable.
+Karajo has the web user interface (WUI) for monitoring the jobs that can be
+accessed at http://127.0.0.1:31937/karajo by default and can be configurable.
 
-A single instance of karajo is configured through code or a configuration file
-using ini file format.
+A single instance of karajo can be configured through code or from file using
+ini file format.
 
 Features,
 
-* Running job on specific interval
-* Preserve the job states on restart
-* Able to pause and resume specific job
-* Trigger job using HTTP request (WebHook). Supported auth are `github`,
-  `sourcehut`, or `hmac-sha256` (default).
-* Trigger external job by sending HTTP request to external server
+* Running job on specific interval.
+* Trigger HTTP request to external server on specific interval.
+* Preserve the job states on restart.
+* Able to pause and resume specific job.
+* Trigger job using HTTP request (WebHook). Supported WebHook are `github`,
+  `sourcehut`, or custom `hmac-sha256` (default).
 * HTTP APIs to programmatically interact with karajo
 
-Work flow on karajo,
+Workflow on karajo,
 
 ----
-                +----------------------------+
-                | Karajo         +---+       |
-                |                |   | timer |
-                |                |   v       |
-                | +---------+  +-------+     |
-  INTERNET <----- | JobHttp |  | Job   | <----- INTERNET
-                | +---------+  +-------+     |
-                +------------------|---------+
+                +-----------------------------+
+                |                             |
+                |   +---+         +---+       |
+                |   |   | timer   |   | timer |
+                |   |   v         |   v       |
+                | +---------+   +-------+     |
+  INTERNET <----- | JobHttp |   | Job   | <----- INTERNET
+                | +---------+   +-------+     |
+                +------------------|----------+
                                    |
                                    v
                         +-----------------+
@@ -52,14 +56,11 @@ There are three configuration sections: one to configure the server, one to
 configure the internal Job, and another one to configure the external Job HTTP
 to be executed.
 
-Default values,
-
-* `DefaultJobMaxRunning`: 1
 
 [#config_server]
 === Server
 
-This section has the following format,
+The server section has the following format,
 
 ----
 [karajo]
@@ -72,27 +73,20 @@ secret = <string>
 max_job_running = <number>
 ----
 
-`name`:: Define the name of the service.
-+
---
-It will be used for title on the web user interface, as log prefix, for file
-prefix on the jobs state, and as file prefix on log files.
+`name`:: Name of the service.
+The Name will be used for title on the web user interface, as log
+prefix, as file prefix on the jobs state, and as file prefix on
+log files.
 If this value is empty, it will be set to "karajo".
---
 
 `listen_address`:: Define the address for WUI, default to ":31937".
 
-`http_timeout`:: Define the HTTP timeout when executing the job, default to 5
-minutes.
-The value of this option is using the Go time.Duration format, for example,
-30s for 30 seconds, 1m for 1 minute.
-
-`dir_base`:: Define the base directory where configuration, job state, and log
-stored.
+`dir_base`:: Define the base directory where configurations, job's state, and
+job's log stored.
 +
 --
 This field is optional, default to current directory.
-The structure of directory follow the UNIX system,
+The structure of directory follow the common UNIX system,
 
 ----
 $DirBase
@@ -114,22 +108,23 @@ under directory /var/run/karajo/job.
 --
 
 `dir_public`:: Define a path to serve to the public.
-+
---
 While the WUI is served under "/karajo", a directory dir_public will be served
 under "/".
-A dir_public can contains sub directory as long as its name is not
-"karajo".
---
+A dir_public can contains sub directory as long as its name is not "karajo".
 
 `secret`:: Define the default secret to authorize the incoming HTTP request.
-+
---
-Each request sign the payload (query string or body) with HMAC + SHA-256 using
-this secret.
-The signature then sent in HTTP header "X-Karajo-Sign" as hex string.
-This field is required.
---
+The signature is generated from HTTP payload (query or body) with
+HMAC+SHA-256.
+The signature is read from HTTP header "X-Karajo-Sign" as hex
+string.
+This field is optional.
+
+`http_timeout`:: Define the global HTTP client timeout when executing
+each jobs.
+This field is optional, default to 5 minutes.
+The value of this option is using the Go
+https://pkg.go.dev/time#Duration[time.Duration]
+format, for example, "30s" for 30 seconds, "1m" for 1 minute.
 
 `max_job_running`:: Define the global maximum job running at the same time.
 This field is optional default to 1.
@@ -141,7 +136,7 @@ This field is optional default to 1.
 Job is the worker that run a function or list of commands triggered from
 external HTTP request or by timer.
 
-A job configuration can be defined inside the main configuration,
+A job configuration can be defined along with main configuration,
 `karajo.conf` or split into separate files inside the
 `$DirBase/etc/karajo/job.d/`, with suffix `.conf`.
 The Job configuration have the following format,
@@ -163,14 +158,27 @@ command = <string>
 The job name is used for logging, normalized to ID.
 This field is required and should unique between Job.
 
-`description`:: Define the job description.
+`description`:: The description of the Job.
 It could be plain text or simple HTML.
 
+`interval`:: Define the duration when job will be repeatedly executed.
+This field is optional, if not set the Job can only run when receiving HTTP
+request.
+
+`max_running`:: Mmaximum number of job running at the same time.
+This field is optional default to the global `max_job_running`.
+
+`path`:: HTTP path where Job can be triggered using HTTP.
+The `path` is automatically prefixed with "/karajo/api/job/run", it is not
+static.
+For example, if it set to "/my", then the actual path would be
+"/karajo/api/job/run/my".
+This field is optional and must unique between Job.
+
 `auth_kind`:: Define the kind of authorization to trigger Job.
+Supported AuthKind are,
 +
 --
-Supported AuthKind are,
-
 * `github`: the signature read from "X-Hub-Signature-256" and
   compare it by signing request body with Secret using HMAC-SHA256.
   If the header is empty, it will check another header "X-Hub-Signature" and
@@ -182,51 +190,21 @@ Supported AuthKind are,
 * `sourcehut`: See https://man.sr.ht/api-conventions.md#webhooks
 --
 
-
-`path`:: Set the Webhook path, where Job can be triggered from outside.
-+
---
-The `path` is automatically prefixed with "/karajo/api/job/run", it is not
-static.
-For example, if it set to "/my", then the actual path would be
-"/karajo/api/job/run/my".
-This field is optional and must unique between Job.
---
-
-
 `header_sign`:: Define custom HTTP header where the signature is read.
 Default to "X-Karajo-Sign" if its empty.
-+
---
-For example, to receive WebHook from GitHub, one can set this value to
-"X-Hub-Signature-256".
---
 
-
-`secret`:: Define a string to check signature of request.
-+
---
-Each request sign the body with HMAC + SHA-256 using this secret.
-The signature then sent in HTTP header "X-Karajo-Sign" as hex string.
-This field is required.
---
-
-
-`interval`:: Define the duration when job will be repeatedly executed.
-+
---
-This field is optional, if not set the Job can only run when receiving HTTP
-request.
---
-
+`secret`:: Define a string to validate the signature of request based on the
+AuthKind.
+If its empty, it will be set to global Secret from Environment.
 
 `log_retention`:: Define the maximum number of logs to keep in storage.
 This field is optional, default to 5.
 
-`command`:: This option can be defined multiple times.
-It contains command to be executed, in order from top to bottom.
+`command`:: List of command to be executed.
 +
 --
+This option can be defined multiple times.
+It contains command to be executed, in order from top to bottom.
 The following environment variables are available inside the command:
 
 * KARAJO_JOB_COUNTER: contains the current job counter.
@@ -236,10 +214,10 @@ The following environment variables are available inside the command:
 [#config_jobhttp]
 === JobHttp
 
-An JobHttp is a periodic job that send HTTP request to external HTTP server
+A JobHttp is a periodic job that send HTTP request to external HTTP server
 (or to karajo Job itself).
 
-A JobHttp configuration can be defined inside the main configuration,
+A JobHttp configuration can be defined along with the main configuration,
 `karajo.conf` or split into separate files inside the
 `$DirBase/etc/karajo/job_http.d/`, with suffix `.conf`.
 
@@ -260,30 +238,27 @@ http_timeout = <duration>
 http_insecure = <bool>
 ----
 
-`name`:: Define the job name.
+`name`:: The job name.
 Each job must have unique name.
 If two or more jobs have the same name only the first one will be processed.
 
-`description`:: Define the job description.
+`description`:: The job description.
 It could be plain text or simple HTML.
 
-`secret`:: Define a string to sign the request query or body with
-HMAC+SHA-256.
+`secret`:: Define a string to sign the request payload with HMAC+SHA-256.
 The signature is sent on HTTP header "X-Karajo-Sign" as hex string.
-This field is optional.
+If its empty, it will be set to global Secret from Environment.
 
-`interval`:: Define the duration when job will be repeatedly executed.
-+
---
+`interval`:: Define the interval when job will be executed.
 This field is required, if not set or invalid it will set to 30 seconds.
 If one have job that need to run less than 30 seconds, it should be run on
 single program.
---
 
 `max_running`:: Define the Maximum number of requests executed by karajo.
-This field is optional default to DefaultJobMaxRunning.
+This field is optional default to server `max_job_running`.
 
-`http_method`:: Define the HTTP method used to request job execution.
+`http_method`:: Define the HTTP method to be used in request for job
+execution.
 Its accept only GET, POST, PUT, or DELETE.
 This field is optional, default to GET.
 
@@ -296,11 +271,12 @@ request.
 --
 Its accept,
 
-* query: no header Content-Type to be set, reserved for future use;
-* form: header Content-Type set to "application/x-www-form-urlencoded";
+* (empty string): no header Content-Type to be set.
+* query: no header Content-Type to be set, reserved for future use.
+* form: header Content-Type set to "application/x-www-form-urlencoded",
 * json: header Content-Type set to "application/json".
 
-The type "form" and "json" only applicable if the method is POST or PUT.
+The type "form" and "json" only applicable if the http_method is POST or PUT.
 This field is optional, default to query.
 
 Each Job execution send the parameter named `_karajo_epoch` with value is
@@ -312,7 +288,7 @@ object, for example `{"_karajo_epoch":1656750073}`.
 --
 
 `http_header`:: Define optional HTTP headers that will send when executing the
-"http_url".
+job.
 This option can be declared more than one.
 
 `http_timeout`:: Define the HTTP timeout when executing the job.
@@ -325,13 +301,13 @@ The value of this option is using the Go time.Duration format, for example,
 --
 
 `http_insecure`:: Can be set to true if the "http_url" is HTTPS with unknown
-certificate authority.
+Certificate Authority.
 
 
 [#http_api]
 == HTTP APIs
 
-The karajo service is a HTTP server.
+The karajo service is an HTTP server.
 Its provide HTTP APIs to interact with the system.
 The following sub-sections describe each HTTP APIs request and response.
 
@@ -368,6 +344,7 @@ JSON format,
 	"DirPublic": <string>,
 
 	"HttpTimeout": <number>,
+	"MaxJobRunning": <number>,
 	"IsDevelopment": <boolean>
 }
 ----
@@ -381,6 +358,7 @@ JSON format,
 * `DirPublic`: The path to directory served to public.
 
 * `HttpTimeout`: default HTTP timeout for job in nano-second.
+* `MaxJobRunning`: default maximum job running at the same time.
 * `IsDevelopment`: true if current karajo server run for testing.
 
 
@@ -391,16 +369,44 @@ JSON format,
 
 ----
 {
+	"LastRun": <RFC3339_time>,
+	"NextRun": <RFC3339_time>,
 	"ID": <string>,
 	"Name": <string>,
 	"Description": <string>,
-	"Path": <string>,
-	"LogRetention": <number>,
-	"Commands": [<string>, ...],
 	"Status": <"success"|"fail">,
-	"Logs": [<JobLog>, ...]
+	"Interval": <number>,
+	"MaxRunning": <number,
+	"NumRunning": <number,
+
+	"Logs": [<JobLog>, ...],
+	"Path": <string>,
+	"AuthKind": <string>,
+	"HeaderSign": <string>,
+	"Commands": [<string>, ...],
+	"LogRetention": <number>
 }
 ----
+
+* `LastRun`: Date and time when the job last run, in the format RFC3339,
+* `NextRun`: Date and time when the next job will be executed, in the format
+  RFC3339.
+
+* `ID`: Unique job ID
+* `Name`: Human representation of job name.
+* `Description`: Job description, can be HTML.
+* `Status`: Status of the last job running, its either "started, "success",
+  "failed", or "paused".
+* `Interval`: A period of nano-seconds when the job will be executed.
+* `MaxRunning`: Maximum number of job can be requested at a time.
+* `NumRunning`: Current number of job running.
+
+* `Logs`: List of job log per execution.
+* `Path`: HTTP path where Job can be triggered using HTTP.
+* `AuthKind`: The kind of authorization to trigger Job.
+* `HeaderSign`: Custom HTTP header where the signature is read.
+* `Commands`: List of command to be executed.
+* `LogRetention`: The maximum number of logs to keep in storage.
 
 
 [#schema_joblog]
@@ -418,29 +424,22 @@ JSON format,
 }
 ----
 
-* `JobID`: the ID of Job that own the log.
-* `Name`: the Name of log in the format `JobID.Counter.Status`.
-* `Status`: the status of job, its either "success" or "fail".
-* `Content`: the content of log.
-* `Counter`: the log number.
+* `JobID`: The ID of Job that own the log.
+* `Name`: The Name of log in the format `JobID.Counter.Status`.
+* `Status`: The status of job, its either "success" or "fail".
+* `Content`: The content of log.
+* `Counter`: The log number.
 
 
-[#http_api_schema_job]
-====  Job
+[#schema_job_http]
+====  JobHttp
 
 JSON format,
 
 ----
 {
-	"Log": [<string>, ...],
-
-	"HttpMethod": <string>,
-	"HttpUrl": <string>,
-	"HttpRequestType": <string>,
-	"HttpHeaders": [<string>],
-
-	"LastRun": <string>,
-	"NextRun": <string>,
+	"LastRun": <RFC3339_time>,
+	"NextRun": <RFC3339_time>,
 	"ID": <string>,
 	"Name": <string>,
 	"Description": <string>,
@@ -449,36 +448,36 @@ JSON format,
 	"MaxRunning": <number>,
 	"NumRunning": <number>,
 
+	"HttpMethod": <string>,
+	"HttpUrl": <string>,
+	"HttpRequestType": <string>,
+	"HttpHeaders": [<string>],
 	"HttpTimeout": <number>,
-
 	"HttpInsecure": <boolean>
 }
 ----
 
-* `LastRun`: date and time when the job last run, in the format RFC3339,
-* `Status`: status of the last job running, its either "started, "success",
-  "failed", or "paused".
-* `NextRun`: date and time when the next job will be executed, in the format
+* `LastRun`: Date and time when the job last run, in the format RFC3339,
+* `NextRun`: Date and time when the next job will be executed, in the format
   RFC3339.
-* `Log`: job logs as array.
 
-* `ID`: unique job ID
-* `Name`: human representation of job name.
-* `Description`: job description, can be HTML.
+* `ID`: Unique job ID
+* `Name`: Human representation of job name.
+* `Description`: Job description, can be HTML.
+* `Status`: Status of the last job running, its either "started, "success",
+  "failed", or "paused".
+* `Interval`: A period of nano-seconds when the job will be executed.
+* `MaxRunning`: Maximum number of job can be requested at a time.
+* `NumRunning`: Current number of job running.
 
-* `HttpMethod`: the HTTP method used to invoke.
-* `HttpUrl`: the URL where job will be executed.
-* `HttpRequestType`: the request type for HTTP.
-* `HttpHeaders`: list of string, in the format of HTTP header "Key: Value",
-  which will be send when invoking the job at `HttpUrl`.
-* `HttpTimeout`: number of nano-seconds when the job will be considered to be
-  timeout.
-
-* `Interval`: a period of nano-seconds when the job will be executed.
-* `MaxRunning`: maximum number of job can be requested at a time.
-* `NumRunning`: current number of job running.
-* `HttpInsecure`: true if the HttpUrl use HTTPS schema with self-signed
-  certificate.
+* `HttpMethod`: The HTTP method used to invoke the HttpUrl.
+* `HttpUrl`: The URL where job will be executed.
+* `HttpRequestType`: The request type for HTTP.
+* `HttpHeaders`: List of string, in the format of "Key: Value",
+  which will be send when invoking the job.
+* `HttpTimeout`: A timeout for HTTP request, in nano-second.
+* `HttpInsecure`: If true, the request to server with unknown certificate
+  will be ignored.
 
 
 [#http_api_environment]
@@ -590,7 +589,9 @@ Parameters,
 
 **Response**
 
-On success, it will return the Job schema.
+On success, it will return the
+link:#schema_job_http[JobHttp]
+schema.
 
 On fail, it will return
 
@@ -644,7 +645,9 @@ Parameters,
 
 **Response**
 
-On success it will return the Job schema with field `Status` set to `paused`.
+On success it will return the
+link:#schema_job_http[JobHttp]
+schema with field `Status` set to `paused`.
 
 On fail it will return
 
@@ -673,8 +676,9 @@ Parameters,
 
 **Response**
 
-On success it will return the Job schema related to the ID with field
-`Status` reset back to `started`.
+On success it will return the
+link:#schema_job_http[JobHttp]
+schema related to the ID with field `Status` reset back to `started`.
 
 
 [#example]

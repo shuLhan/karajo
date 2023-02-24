@@ -51,7 +51,7 @@ type JobBase struct {
 	Description string `ini:"::description"`
 
 	// The last status of the job.
-	Status string
+	Status string `ini:"-"`
 
 	// Interval duration when job will be repeatedly executed.
 	// This field is optional, the minimum value is 1 minute.

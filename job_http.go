@@ -32,8 +32,8 @@ const (
 	defTimeLayout = "2006-01-02 15:04:05 MST"
 )
 
-// JobHttp is a job that trigger HTTP request to the remote server
-// periodically.
+// JobHttp A JobHttp is a periodic job that send HTTP request to external HTTP
+// server (or to karajo Job itself).
 //
 // Each JobHttp execution send the parameter named `_karajo_epoch` with value
 // is current server Unix time.
@@ -58,11 +58,12 @@ type JobHttp struct {
 
 	// Secret define a string to sign the request query or body with
 	// HMAC+SHA-256.
-	// The signature is sent on HTTP header "x-karajo-sign" as hex string.
+	// The signature is sent on HTTP header "X-Karajo-Sign" as hex string.
 	// This field is optional.
 	Secret string `ini:"::secret" json:"-"`
 
-	// HttpMethod to send, accept only GET, POST, PUT, or DELETE.
+	// HttpMethod HTTP method to be used in request for job execution.
+	// Its accept only GET, POST, PUT, or DELETE.
 	// This field is optional, default to GET.
 	HttpMethod string `ini:"::http_method"`
 
@@ -72,7 +73,7 @@ type JobHttp struct {
 	baseUri    string
 	requestUri string
 
-	// HttpRequestType define the HTTP request type, accept only:
+	// HttpRequestType The header Content-Type to be set on request.
 	//
 	//   - (empty string): no header Content-Type set.
 	//   - query: no header Content-Type to be set, reserved for future
@@ -81,7 +82,9 @@ type JobHttp struct {
 	//   "application/x-www-form-urlencoded".
 	//   - json: header Content-Type set to "application/json".
 	//
-	// This field is optional, default to empty.
+	// The type "form" and "json" only applicable if the HttpMethod is
+	// POST or PUT.
+	// This field is optional, default to query.
 	HttpRequestType string `ini:"::http_request_type"`
 
 	// Path to the job log.
@@ -105,7 +108,7 @@ type JobHttp struct {
 	requestType   libhttp.RequestType
 
 	// HttpInsecure can be set to true if the http_url is HTTPS with
-	// unknown certificate authority.
+	// unknown Certificate Authority.
 	HttpInsecure bool `ini:"::http_insecure"`
 }
 

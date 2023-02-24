@@ -57,8 +57,8 @@ const (
 // The epr parameter contains HTTP request, body, and response writer.
 type JobHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 
-// Job is a job that can be triggered manually by sending HTTP POST request
-// or automatically by timer (per interval).
+// Job a job can be triggered manually by sending HTTP POST request or
+// automatically by timer (per interval).
 //
 // For job triggered by HTTP request, the Path and Secret must be set.
 // For job triggered by timer, the Interval must be positive duration, equal
@@ -105,13 +105,10 @@ type Job struct {
 	AuthKind string `ini:"::auth_kind"`
 
 	// HeaderSign define the HTTP header where the signature is read.
-	// Default to "x-karajo-sign" if its empty.
+	// Default to "X-Karajo-Sign" if its empty.
 	HeaderSign string `ini:"::header_sign"`
 
-	// Secret define a string to check signature of request.
-	// Each request sign the body with HMAC + SHA-256 using this secret.
-	// The signature then sent in HTTP header "X-Karajo-Sign" as hex.
-	// This field is required if Path is not empty.
+	// Secret define a string to validate the signature of request.
 	// If its empty, it will be set to global Secret from Environment.
 	Secret string `ini:"::secret" json:"-"`
 
@@ -121,12 +118,20 @@ type Job struct {
 	dirLog  string
 
 	// Commands list of command to be executed.
+	// This option can be defined multiple times.
+	// The following environment variables are available inside the
+	// command:
+	//
+	//   - KARAJO_JOB_COUNTER: contains the current job counter.
 	Commands []string `ini:"::command"`
 
 	JobBase
 
+	// LogRetention define the maximum number of logs to keep in storage.
+	// This field is optional, default to 5.
 	LogRetention int `ini:"::log_retention"`
-	lastCounter  int64
+
+	lastCounter int64
 }
 
 // authorize the hook based on the AuthKind.
