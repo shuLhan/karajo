@@ -4,6 +4,178 @@ Shulhan <ms@kilabit.info>
 :sectanchors:
 :sectlinks:
 
+[#v0_6_0]
+== karajo v0.6.0 (2023-02-26)
+
+This release add Job scheduler, Job as WebHook, loading Job and JobHttp
+configuration from directory, and HTTP APIs for pausing and resuming Job.
+
+
+[#v0_6_0__breaking_changes]
+===  Breaking changes
+
+all: change the API path to execute Job::
++
+--
+Previously, the API path to execute Job is "/karajo/job/$job_path".
+This may become a conflict in the future (if we want to serve any
+information related to job in specific page) and inconsistent API
+path.
+
+This changes the API to execute job to "/karajo/api/job/run/$job_path".
+--
+
+
+[#v0_6_0__new_features]
+===  New features
+
+all: implement job timer with Scheduler::
++
+--
+Unlike using interval, the Scheduler option is more flexible and more
+humanly.  For example, one can run job every day at 10:00 AM using
+
+	schedule = daily@10:00
+--
+
+
+all: implement Job auth_kind::
++
+--
+A job can be triggered from external by sending HTTP POST request to the
+Job's Path.
+Each request is authorized based on the AuthKind and optional Secret.
+
+Supported AuthKind are,
+
+* github: the signature read from "x-hub-signature-256" and
+  compare it by signing request body with Secret using
+  HMAC-SHA256.
+  If the header is empty, it will check another header
+  "x-hub-signature" and then sign the request body with Secret
+  using HMAC-SHA1.
+
+* hmac-sha256 (default): the signature read from HeaderSign and compare
+  it by signing request body with Secret using HMAC-SHA256.
+
+* sourcehut: See https://man.sr.ht/api-conventions.md#webhooks
+--
+
+
+all: implement loading JobHTTP configuration from separate directory::
++
+--
+Previously, all JobHttp configuration must be defined in single
+configuration, karajo.conf.
+
+This changes make karajo configuration more manageable by loading JobHttp
+configuration from all files under directory
+`$DirBase/etc/karajo/job_http.d` as long as the file suffix is ".conf".
+--
+
+
+all: implement loading Job configuration from separate directory::
++
+--
+Previously, all job configuration must be defined in single configuration,
+karajo.conf.
+
+This changes make karajo configuration more manageable by loading jobs
+configuration from all files under directory $DirBase/etc/karajo/job.d
+as long as the file suffix is ".conf".
+--
+
+
+all: implement HTTP API to resume the job execution::
++
+--
+The HTTP API have the following signature
+
+----
+POST /karajo/api/job/resume
+Content-Type: application/x-www-form-urlencoded
+
+_karajo_epoch=&id=
+----
+
+Where id is the job ID to be resumed.
+--
+
+
+all: implement HTTP API to pause a job::
++
+--
+The HTTP API have the following signature
+
+----
+POST /karajo/api/job/pause
+Content-Type: application/x-www-form-urlencoded
+
+_karajo_epoch=&id=
+----
+
+Where id is the job ID to be paused.
+--
+
+
+all: implement interval based Hook::
++
+--
+Previously, Hook can be triggered by sending HTTP POST request to karajo
+server.  In most cases we create JobHttp to trigger it, so we need to
+define one hook and one JobHttp.
+
+To simplify it, we add an Interval to Hook that works similar to JobHttp
+so now we only need to create single Hook.
+--
+
+
+[#v0_6_0__enhancements]
+===  Enhancements
+
+all: set default DirBase to "/"::
++
+--
+Now that configuration and directory structure stable, we set the default
+DirBase to "/".
+
+This is also to allow packaging karajo into OS package.
+--
+
+
+all: implement UI to trigger hook manually::
++
+Inside the Hook information, after list of logs, there are button "Run now"
+that can trigger to run the hook.
+The run feature require the secret to be filled and valid.
+
+
+[#v0_6_0__bug_fixes]
+===  Bug fixes
+
+all: fix double checking for isPaused::
++
+--
+There are two paths where Job.execute is called.  One from handleHttp
+and one from Start.  The one from handleHttp already check if
+job is paused before calling execute.  If we check again inside
+execute then that means we doing it twice.
+
+To fix this we move the check to Start method and set the Status as
+started before it.
+--
+
+
+_www/karajo: fix UI rendering empty hook and with status "Running ..."::
++
+When the hook is first registered, there is no logs and the status is empty.
+
+[#v0_6_0__chores]
+===  Chores
+
+_AUR: add package builder script for Arch Linux::
+
+
 [#v0_5_0]
 == karajo v0.5.0 (2022-08-10)
 
