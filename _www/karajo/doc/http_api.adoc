@@ -1,0 +1,381 @@
+= Karajo HTTP APIs
+Shulhan <ms@kilabit.info>
+26 Feb 2023
+:toc:
+:sectlinks:
+
+[#overview]
+== Overview
+
+The karajo service is an HTTP server.
+Its provide HTTP APIs to interact with the system.
+The following sub-sections describe each HTTP APIs request and response.
+
+All HTTP response is encoded in the JSON format, with the following wrapper,
+
+----
+{
+        "code": <number>,
+        "message": <string>,
+        "data": <array|object>
+}
+----
+
+* `code`: the response code, equal to HTTP status code.
+* `message`: the error message that describe why request is fail.
+* `data`: the dynamic data, specific to each endpoint.
+
+[#http_api_schemas]
+== Schemas
+
+[#schema_environment]
+=== Environment
+
+JSON format,
+
+----
+{
+	"Jobs": {<Job.Name>: <Job>, ...},
+	"HttpJobs": {<JobHttp.Name>: <JobHttp>, ...},
+
+	"Name": <string>,
+	"ListenAddress": <string>,
+	"DirBase": <string>,
+	"DirPublic": <string>,
+
+	"HttpTimeout": <number>,
+	"MaxJobRunning": <number>,
+	"IsDevelopment": <boolean>
+}
+----
+
+* `Jobs`: list of Job.
+* `HttpJobs`: list of JobHttp.
+
+* `Name`: the karajo server name.
+* `ListenAddress`: the address where karajo HTTP server listening for request.
+* `DirBase`: The path to directory used as working directory.
+* `DirPublic`: The path to directory served to public.
+
+* `HttpTimeout`: default HTTP timeout for job in nano-second.
+* `MaxJobRunning`: default maximum job running at the same time.
+* `IsDevelopment`: true if current karajo server run for testing.
+
+
+[#schema_job]
+=== Job
+
+JSON format,
+
+----
+{
+	"LastRun": <RFC3339_time>,
+	"NextRun": <RFC3339_time>,
+	"ID": <string>,
+	"Name": <string>,
+	"Description": <string>,
+	"Status": <"success"|"fail">,
+	"Interval": <number>,
+	"MaxRunning": <number,
+	"NumRunning": <number,
+
+	"Logs": [<JobLog>, ...],
+	"Path": <string>,
+	"AuthKind": <string>,
+	"HeaderSign": <string>,
+	"Commands": [<string>, ...],
+	"LogRetention": <number>
+}
+----
+
+* `LastRun`: Date and time when the job last run, in the format RFC3339,
+* `NextRun`: Date and time when the next job will be executed, in the format
+  RFC3339.
+
+* `ID`: Unique job ID
+* `Name`: Human representation of job name.
+* `Description`: Job description, can be HTML.
+* `Status`: Status of the last job running, its either "started, "success",
+  "failed", or "paused".
+* `Interval`: A period of nano-seconds when the job will be executed.
+* `MaxRunning`: Maximum number of job can be requested at a time.
+* `NumRunning`: Current number of job running.
+
+* `Logs`: List of job log per execution.
+* `Path`: HTTP path where Job can be triggered using HTTP.
+* `AuthKind`: The kind of authorization to trigger Job.
+* `HeaderSign`: Custom HTTP header where the signature is read.
+* `Commands`: List of command to be executed.
+* `LogRetention`: The maximum number of logs to keep in storage.
+
+
+[#schema_joblog]
+=== JobLog
+
+JSON format,
+
+----
+{
+	"JobID": <string>,
+	"Name": <string>,
+	"Status": <string>,
+	"Content": <base64>,
+	"Counter": <number>
+}
+----
+
+* `JobID`: The ID of Job that own the log.
+* `Name`: The Name of log in the format `JobID.Counter.Status`.
+* `Status`: The status of job, its either "success" or "fail".
+* `Content`: The content of log.
+* `Counter`: The log number.
+
+
+[#schema_job_http]
+===  JobHttp
+
+JSON format,
+
+----
+{
+	"LastRun": <RFC3339_time>,
+	"NextRun": <RFC3339_time>,
+	"ID": <string>,
+	"Name": <string>,
+	"Description": <string>,
+	"Status": <string>,
+	"Interval": <number>,
+	"MaxRunning": <number>,
+	"NumRunning": <number>,
+
+	"HttpMethod": <string>,
+	"HttpUrl": <string>,
+	"HttpRequestType": <string>,
+	"HttpHeaders": [<string>],
+	"HttpTimeout": <number>,
+	"HttpInsecure": <boolean>
+}
+----
+
+* `LastRun`: Date and time when the job last run, in the format RFC3339,
+* `NextRun`: Date and time when the next job will be executed, in the format
+  RFC3339.
+
+* `ID`: Unique job ID
+* `Name`: Human representation of job name.
+* `Description`: Job description, can be HTML.
+* `Status`: Status of the last job running, its either "started, "success",
+  "failed", or "paused".
+* `Interval`: A period of nano-seconds when the job will be executed.
+* `MaxRunning`: Maximum number of job can be requested at a time.
+* `NumRunning`: Current number of job running.
+
+* `HttpMethod`: The HTTP method used to invoke the HttpUrl.
+* `HttpUrl`: The URL where job will be executed.
+* `HttpRequestType`: The request type for HTTP.
+* `HttpHeaders`: List of string, in the format of "Key: Value",
+  which will be send when invoking the job.
+* `HttpTimeout`: A timeout for HTTP request, in nano-second.
+* `HttpInsecure`: If true, the request to server with unknown certificate
+  will be ignored.
+
+
+[#http_api_environment]
+== Get environment
+
+Get the current karajo environment.
+
+**Request**
+
+----
+GET /karajo/api/environment
+----
+
+**Response**
+
+On success, it will return the Environment object,
+
+----
+{
+	"code": 200,
+	"data": <Environment>
+}
+----
+
+
+[#http_api_job_pause]
+== Pause job
+
+Pause the Job for being executed.
+Any HTTP request that trigger the job after paused will return 412
+Precondition Failed.
+
+**Request**
+
+----
+POST /karajo/api/job/pause
+Content-Type: application/x-www-form-urlencoded
+
+_karajo_epoch=&id=
+----
+
+**Response**
+
+List of know response,
+
+* 200: OK, if job ID is valid.
+* 404: If job ID not found.
+
+
+[#http_api_job_resume]
+== Resume job
+
+Resume the Job execution.
+
+**Request**
+
+----
+POST /karajo/api/job/resume
+Content-Type: application/x-www-form-urlencoded
+
+_karajo_epoch=&id=
+----
+
+**Response**
+
+List of know response,
+
+* 200: OK, if job ID is valid.
+* 404: If job ID not found.
+
+
+[#http_api_job_log]
+== Get job log
+
+HTTP API to get the Job log by its ID and counter.
+
+**Request**
+
+----
+GET /karajo/api/job/log?id=<jobID>&counter=<logCounter>
+----
+
+Parameters,
+
+* `jobID`: the job ID
+* `logCounter`: the log number.
+
+**Response**
+
+On success, it will return the
+link:#JobLog[JobLog]
+object as JSON.
+
+
+[#http_api_jobhttp]
+== Get JobHttp detail
+
+HTTP API to get a JobHttp information by its ID.
+
+**Request**
+
+----
+GET /karajo/api/job_http?id=<string>
+----
+
+Parameters,
+
+* `id`: the job ID.
+
+**Response**
+
+On success, it will return the
+link:#schema_job_http[JobHttp]
+schema.
+
+On fail, it will return
+
+* `400`: for invalid or empty job ID
+
+
+[#http_api_jobhttp_logs]
+== Get JobHttp logs
+
+Get the last JobHttp logs by its ID.
+
+**Request**
+
+----
+GET /karajo/api/job_http/logs?id=<string>
+----
+
+Parameters,
+
+* `id`: the job ID.
+
+**Response**
+
+On success it will return list of string, contains log execution and the
+response from executing the `HttpUrl`.
+
+On fail, it will return
+
+* `400`: invalid or empty job ID.
+
+
+[#http_api_jobhttp_pause]
+== Pause the JobHttp
+
+Pause the JobHttp timer by its ID.
+
+**Request**
+
+The request is authorization using signature.
+
+Format,
+
+----
+POST /karajo/api/job_http/pause?id=<id>
+X-Karajo-Sign: <query signature>
+----
+
+Parameters,
+
+* `id`: the job ID.
+
+**Response**
+
+On success it will return the
+link:#schema_job_http[JobHttp]
+schema with field `Status` set to `paused`.
+
+On fail it will return
+
+* `400`: invalid or empty job ID.
+
+
+[#http_api_jobhttp_resume]
+== Resume the JobHttp
+
+HTTP API to resume paused JobHttp by its ID.
+
+**Request**
+
+The request is authorization using signature.
+
+Format,
+
+----
+POST /karajo/api/job_http/resume?id=<id>
+X-Karajo-Sign: <query signature>
+----
+
+Parameters,
+
+* `id`: the job ID.
+
+**Response**
+
+On success it will return the
+link:#schema_job_http[JobHttp]
+schema related to the ID with field `Status` reset back to `started`.
