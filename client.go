@@ -38,7 +38,7 @@ func (cl *Client) Environment() (env *Environment, err error) {
 		resBody []byte
 	)
 
-	_, resBody, err = cl.Get(apiEnvironment, nil, nil)
+	_, resBody, err = cl.Client.Get(apiEnvironment, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -80,7 +80,7 @@ func (cl *Client) JobPause(id string) (job *Job, err error) {
 	sign = Sign([]byte(body), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.PostForm(apiJobPause, header, params)
+	_, resBody, err = cl.Client.PostForm(apiJobPause, header, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -124,7 +124,7 @@ func (cl *Client) JobResume(id string) (job *Job, err error) {
 	sign = Sign([]byte(body), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.PostForm(apiJobResume, header, params)
+	_, resBody, err = cl.Client.PostForm(apiJobResume, header, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -173,7 +173,7 @@ func (cl *Client) JobRun(jobPath string) (job *Job, err error) {
 	sign = Sign(reqBody, []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	httpRes, resBody, err = cl.PostJSON(apiJobPath, header, &req)
+	httpRes, resBody, err = cl.Client.PostJSON(apiJobPath, header, &req)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -208,7 +208,7 @@ func (cl *Client) JobLog(jobID string, counter int) (joblog *JobLog, err error) 
 	params.Set(paramNameID, jobID)
 	params.Set(paramNameCounter, strconv.Itoa(counter))
 
-	_, resBody, err = cl.Get(apiJobLog, nil, params)
+	_, resBody, err = cl.Client.Get(apiJobLog, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -239,7 +239,7 @@ func (cl *Client) JobHttp(id string) (httpJob *JobHttp, err error) {
 
 	params.Set(`id`, id)
 
-	_, resBody, err = cl.Get(apiJobHttp, nil, params)
+	_, resBody, err = cl.Client.Get(apiJobHttp, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -271,7 +271,7 @@ func (cl *Client) JobHttpLogs(id string) (logs []string, err error) {
 
 	params.Set(`id`, id)
 
-	_, resBody, err = cl.Get(apiJobHttpLogs, nil, params)
+	_, resBody, err = cl.Client.Get(apiJobHttpLogs, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -308,7 +308,7 @@ func (cl *Client) JobHttpPause(id string) (jobHttp *JobHttp, err error) {
 	sign = Sign([]byte(params.Encode()), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Post(apiJobHttpPause, header, params)
+	_, resBody, err = cl.Client.Post(apiJobHttpPause, header, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -345,7 +345,7 @@ func (cl *Client) JobHttpResume(id string) (jobHttp *JobHttp, err error) {
 	sign = Sign([]byte(params.Encode()), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Post(apiJobHttpResume, header, params)
+	_, resBody, err = cl.Client.Post(apiJobHttpResume, header, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}

@@ -133,7 +133,7 @@ func waitServerAlive(t *testing.T, cl *Client) {
 	)
 
 	for {
-		_, _, err = cl.Get(`/`, nil, nil)
+		_, _, err = cl.Client.Get(`/`, nil, nil)
 		if err != nil {
 			t.Logf(`waitServerAlive: %s`, err)
 			continue
