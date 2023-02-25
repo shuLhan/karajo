@@ -60,6 +60,26 @@ func TestEnvironment_loadJobs(t *testing.T) {
 			dirConfigJobd: `testdata/etc/karajo/job.d`,
 		}
 		expJobs = map[string]*Job{
+			`Scheduler hourly 5m`: &Job{
+				JobBase: JobBase{
+					Schedule: `hourly@0,5,10,15,20,25,30,35,40,45,50,55`,
+				},
+				Path:   `/scheduler-hourly-5m`,
+				Secret: `s3cret`,
+				Commands: []string{
+					`echo Test job scheduler hourly per 5m`,
+				},
+			},
+			`Scheduler minutely`: &Job{
+				JobBase: JobBase{
+					Schedule: `minutely`,
+				},
+				Secret: `s3cret`,
+				Path:   `/scheduler-minutely`,
+				Commands: []string{
+					`echo Test job scheduler per minute`,
+				},
+			},
 			`Test auth_kind github`: &Job{
 				AuthKind: `github`,
 				Path:     `/github`,

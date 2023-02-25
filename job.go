@@ -25,6 +25,7 @@ import (
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/mlog"
 	libhtml "github.com/shuLhan/share/lib/net/html"
+	libtime "github.com/shuLhan/share/lib/time"
 )
 
 const (
@@ -261,6 +262,10 @@ func (job *Job) generateCmdEnvs() (env []string) {
 // It will return an error ErrJobEmptyCommandsOrCall if one of the Call or
 // Commands is not set.
 func (job *Job) init(env *Environment, name string) (err error) {
+	var (
+		logp = `init`
+	)
+
 	job.JobBase.init()
 
 	job.Path = strings.TrimSpace(job.Path)
@@ -290,7 +295,10 @@ func (job *Job) init(env *Environment, name string) (err error) {
 		return err
 	}
 
-	job.initTimer()
+	err = job.initTimer()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
 
 	if len(job.HeaderSign) == 0 {
 		job.HeaderSign = HeaderNameXKarajoSign
@@ -376,14 +384,28 @@ func (job *Job) initLogs() (err error) {
 	return nil
 }
 
-// initTimer init fields that required to run Job with interval.
-func (job *Job) initTimer() {
-	if job.Interval <= 0 {
+// initTimer init fields that required to run Job with Interval or Schedule.
+func (job *Job) initTimer() (err error) {
+	var logp = `initTimer`
+
+	if len(job.Schedule) != 0 {
+		job.scheduler, err = libtime.NewScheduler(job.Schedule)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
+		// Since only Schedule or Interval can be run, unset the
+		// Interval here.
+		job.Interval = 0
+		job.NextRun = job.scheduler.Next()
 		return
 	}
-	if job.Interval < time.Minute {
-		job.Interval = time.Minute
+	if job.Interval > 0 {
+		if job.Interval < time.Minute {
+			job.Interval = time.Minute
+		}
 	}
+	return nil
 }
 
 func (job *Job) logsPrune() {
@@ -453,10 +475,58 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 
 // Start the Job timer only if its Interval is non-zero.
 func (job *Job) Start() {
-	if job.Interval <= 0 {
+	if job.scheduler != nil {
+		job.startScheduler()
 		return
 	}
+	if job.Interval > 0 {
+		job.startInterval()
+	}
+}
 
+func (job *Job) startScheduler() {
+	for {
+		select {
+		case <-job.scheduler.C:
+			var (
+				jlog *JobLog
+				err  error
+			)
+
+			err = job.start()
+			if err != nil {
+				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
+				job.scheduler.Stop()
+				return
+			}
+
+			jlog, err = job.execute(nil)
+			if err != nil {
+				mlog.Errf(`!!! job: %s: failed: %s.`, job.ID, err)
+			} else {
+				mlog.Outf(`job: %s: finished.`, job.ID)
+			}
+			job.finish(jlog, err)
+			// The finish will trigger the finished channel.
+
+		case <-job.finished:
+			go func() {
+				// Make sure the Next has been updated on
+				// scheduler.
+				time.Sleep(time.Second)
+				job.Lock()
+				job.NextRun = job.scheduler.Next()
+				job.Unlock()
+			}()
+
+		case <-job.stopped:
+			job.scheduler.Stop()
+			return
+		}
+	}
+}
+
+func (job *Job) startInterval() {
 	var (
 		now          time.Time
 		nextInterval time.Duration

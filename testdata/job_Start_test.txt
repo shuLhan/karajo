@@ -21,6 +21,7 @@ Test running Job with Call using timer.
   "Name": "Test job timer",
   "Description": "",
   "Status": "success",
+  "Schedule": "",
   "Interval": 60000000000,
   "MaxRunning": 1,
   "NumRunning": 0,

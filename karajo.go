@@ -318,9 +318,6 @@ func (k *Karajo) Start() (err error) {
 	mlog.Outf(`started the karajo server at http://%s/karajo`, k.Server.Addr)
 
 	for _, job = range k.env.Jobs {
-		if job.Interval <= 0 {
-			continue
-		}
 		go job.Start()
 	}
 	for _, jobHttp = range k.env.HttpJobs {
@@ -346,9 +343,6 @@ func (k *Karajo) Stop() (err error) {
 	}
 
 	for _, job = range k.env.Jobs {
-		if job.Interval <= 0 {
-			continue
-		}
 		job.Stop()
 	}
 

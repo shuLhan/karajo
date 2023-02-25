@@ -5,6 +5,9 @@ Shulhan <ms@kilabit.info>
 :sectanchors:
 :sectlinks:
 
+
+== Overview
+
 Module karajo implement HTTP workers and manager, similar to cron but works
 and manageable with HTTP.
 A karajo server manage one or more jobs.
@@ -20,12 +23,13 @@ ini file format.
 Features,
 
 * Running job on specific interval.
+* Running job on specific schedule.
 * Trigger HTTP request to external server on specific interval.
 * Preserve the job states on restart.
 * Able to pause and resume specific job.
 * Trigger job using HTTP request (WebHook). Supported WebHook are `github`,
   `sourcehut`, or custom `hmac-sha256` (default).
-* HTTP APIs to programmatically interact with karajo
+* HTTP APIs to programmatically interact with server
 
 Workflow on karajo,
 
@@ -144,10 +148,13 @@ The Job configuration have the following format,
 ----
 [job "name"]
 description = <string>
-auth_kind = <string>
-path = <string>
-secret = <string>
+schedule = <string>
 interval = <duration>
+max_running = <number>
+path = <string>
+auth_kind = <string>
+header_sign = <string>
+secret = <string>
 log_retention = <number>
 command = <string>
 ...
@@ -161,9 +168,31 @@ This field is required and should unique between Job.
 `description`:: The description of the Job.
 It could be plain text or simple HTML.
 
+
+`schedule`:: A timer that run periodically based on calendar or day time.
++
+--
+A schedule is divided into monthly, weekly, daily, hourly, and minutely.
+A date and time in schedule is in UTC.
+Example of schedules,
+
+* monthly@1,15@18:00 = on day 1 and 15 every month at 6 PM UTC.
+* weekly@Sunday,Tuesday,Friday@15:00 = every Sunday, Tuesday, and Friday on
+  each week at 3 PM UTC.
+* daily@00:00,06:00,12:00,18:00 = every day at midnight, 6 AM, and 12 PM UTC.
+* hourly@0,15,30,45 = on minutes 0, 15, 30, 45 every hour.
+
+See
+https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler[time.Scheduler]
+for format of schedule.
+If both Schedule and Interval set, only Schedule will be processed.
+--
+
+
 `interval`:: Define the duration when job will be repeatedly executed.
 This field is optional, if not set the Job can only run when receiving HTTP
 request.
+If both Schedule and Interval set, only Schedule will be processed.
 
 `max_running`:: Mmaximum number of job running at the same time.
 This field is optional default to the global `max_job_running`.
@@ -227,6 +256,7 @@ Each JobHttp has the following configuration,
 [job.http "name"]
 description = <string>
 secret = <string>
+schedule = <string>
 interval = <duration>
 max_running = <number>
 
@@ -249,10 +279,32 @@ It could be plain text or simple HTML.
 The signature is sent on HTTP header "X-Karajo-Sign" as hex string.
 If its empty, it will be set to global Secret from Environment.
 
+
+`schedule`:: A timer that run periodically based on calendar or day time.
++
+--
+A schedule is divided into monthly, weekly, daily, hourly, and minutely.
+A date and time in schedule is in UTC.
+Example of schedules,
+
+* monthly@1,15@18:00 = on day 1 and 15 every month at 6 PM UTC.
+* weekly@Sunday,Tuesday,Friday@15:00 = every Sunday, Tuesday, and Friday on
+  each week at 3 PM UTC.
+* daily@00:00,06:00,12:00,18:00 = every day at midnight, 6 AM, and 12 PM UTC.
+* hourly@0,15,30,45 = on minutes 0, 15, 30, 45 every hour.
+
+See
+https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler[time.Scheduler]
+for format of schedule.
+If both Schedule and Interval set, only Schedule will be processed.
+--
+
+
 `interval`:: Define the interval when job will be executed.
 This field is required, if not set or invalid it will set to 30 seconds.
 If one have job that need to run less than 30 seconds, it should be run on
 single program.
+If both Schedule and Interval set, only Schedule will be processed.
 
 `max_running`:: Define the Maximum number of requests executed by karajo.
 This field is optional default to server `max_job_running`.

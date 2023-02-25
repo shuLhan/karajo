@@ -262,7 +262,12 @@ function renderJobAttributes(job) {
     <div>Last run: ${job.LastRun}</div>
   `;
 
-  if (job.Interval > 0) {
+  if (job.Schedule != "") {
+    out += `
+      <div>Schedule: ${job.Schedule}</div>
+      <div>Next run: ${job.NextRun}</div>
+    `;
+  } else if (job.Interval > 0) {
     out += `
       <div>Interval: ${job.Interval / 1e9} seconds</div>
       <div>Next run: ${job.NextRun}</div>

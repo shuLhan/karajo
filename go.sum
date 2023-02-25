@@ -3,8 +3,8 @@ git.sr.ht/~shulhan/asciidoctor-go v0.3.1/go.mod h1:Omr72ZgsT8jIDtC7Vofz8D9F3zR47
 git.sr.ht/~shulhan/ciigo v0.9.1 h1:xLX4ikimEw6rhFqTXxzPh61uly9Ii0keCnoQ6UhlFyw=
 git.sr.ht/~shulhan/ciigo v0.9.1/go.mod h1:DqZ0S5ugjvMBQqQeyeCiLpYcebK/+jz7wZkGsE5U4vE=
 github.com/shuLhan/share v0.40.0/go.mod h1:hb3Kis5s4jPume4YD15JELE67naFybtuALshhh9TlOg=
-github.com/shuLhan/share v0.43.1-0.20230224142753-129ad53bffa9 h1:xAGK+pEC/MV8H5SmVbtUIaO/Uu2DOtNevKU2PwwtMHo=
-github.com/shuLhan/share v0.43.1-0.20230224142753-129ad53bffa9/go.mod h1:BnjohSsgDFMeYQ0/ws7kzb1oABZdVbEwDNGbUhOLee4=
+github.com/shuLhan/share v0.43.1-0.20230225125624-fee20f0aeb51 h1:cBr37C9S39/ICD2OcGUscvgIlf9rzXGfoGSpkNcNHZk=
+github.com/shuLhan/share v0.43.1-0.20230225125624-fee20f0aeb51/go.mod h1:BnjohSsgDFMeYQ0/ws7kzb1oABZdVbEwDNGbUhOLee4=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=

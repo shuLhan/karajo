@@ -20,6 +20,7 @@ import (
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/mlog"
 	libhtml "github.com/shuLhan/share/lib/net/html"
+	libtime "github.com/shuLhan/share/lib/time"
 )
 
 const (
@@ -113,6 +114,57 @@ type JobHttp struct {
 }
 
 func (job *JobHttp) Start() {
+	if job.scheduler != nil {
+		job.startScheduler()
+		return
+	}
+	if job.Interval > 0 {
+		job.startInterval()
+	}
+}
+
+func (job *JobHttp) startScheduler() {
+	for {
+		select {
+		case <-job.scheduler.C:
+			var (
+				err error
+			)
+
+			err = job.start()
+			if err != nil {
+				mlog.Errf(`!!! job_http: %s: %s`, job.ID, err)
+				job.scheduler.Stop()
+				return
+			}
+
+			_, err = job.execute()
+			if err != nil {
+				mlog.Errf(`!!! job_http: %s: failed: %s.`, job.ID, err)
+			} else {
+				mlog.Outf(`job_http: %s: finished.`, job.ID)
+			}
+			job.finish(nil, err)
+			// The finish will trigger the finished channel.
+
+		case <-job.finished:
+			go func() {
+				// Make sure the Next has been updated on
+				// scheduler.
+				time.Sleep(time.Second)
+				job.Lock()
+				job.NextRun = job.scheduler.Next()
+				job.Unlock()
+			}()
+
+		case <-job.stopped:
+			job.scheduler.Stop()
+			return
+		}
+	}
+}
+
+func (job *JobHttp) startInterval() {
 	var (
 		now          time.Time
 		nextInterval time.Duration
@@ -178,6 +230,8 @@ func (job *JobHttp) Stop() {
 
 // init initialize the job, compute the last run and the next run.
 func (job *JobHttp) init(env *Environment, name string) (err error) {
+	var logp = `init`
+
 	job.Name = name
 
 	if len(job.ID) == 0 {
@@ -237,8 +291,9 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 
 	job.JobBase.init()
 
-	if job.Interval <= defJobInterval {
-		job.Interval = defJobInterval
+	err = job.initTimer()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	return nil
@@ -402,6 +457,28 @@ func (job *JobHttp) initHttpHeaders() (err error) {
 		}
 
 		job.headers.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
+	}
+	return nil
+}
+
+// initTimer init fields that required to run Job with Interval or Schedule.
+func (job *JobHttp) initTimer() (err error) {
+	var logp = `initTimer`
+
+	if len(job.Schedule) != 0 {
+		job.scheduler, err = libtime.NewScheduler(job.Schedule)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
+		// Since only Schedule or Interval can be run, unset the
+		// Interval here.
+		job.Interval = 0
+		job.NextRun = job.scheduler.Next()
+		return
+	}
+	if job.Interval <= 0 {
+		job.Interval = defJobInterval
 	}
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/shuLhan/share/lib/mlog"
+	libtime "github.com/shuLhan/share/lib/time"
 )
 
 // List of job status.
@@ -28,6 +29,8 @@ const DefaultJobMaxRunning = 1
 
 // JobBase define the base fields and commons methods for all Job types.
 type JobBase struct {
+	scheduler *libtime.Scheduler
+
 	finished chan bool
 	stopped  chan bool
 
@@ -53,8 +56,21 @@ type JobBase struct {
 	// The last status of the job.
 	Status string `ini:"-"`
 
+	// Schedule a timer that run periodically based on calendar or day
+	// time.
+	// A schedule is divided into monthly, weekly, daily, hourly, and
+	// minutely.
+	// See [time.Scheduler] for format of schedule.
+	//
+	// If both Schedule and Interval set, only Schedule will be processed.
+	//
+	// [time.Scheduler]: // https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler
+	Schedule string `ini:"::schedule"`
+
 	// Interval duration when job will be repeatedly executed.
 	// This field is optional, the minimum value is 1 minute.
+	//
+	// If both Schedule and Interval set, only Schedule will be processed.
 	Interval time.Duration `ini:"::interval"`
 
 	// MaxRunning maximum number of job running at the same time.
