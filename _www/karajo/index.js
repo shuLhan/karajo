@@ -274,18 +274,18 @@ function renderJobAttributes(job) {
     `;
   }
 
-  out += `
-    <br/>
-    <div class="job_commands">
-      Commands:
-  `;
+  if (job.Commands != null) {
+    out += `
+      <br/>
+      <div class="job_commands">Commands:
+    `;
+    job.Commands.forEach(function (cmd, idx, list) {
+      out += `<div> ${idx}: <tt>${cmd}</tt> </div>`;
+    });
+    out += `</div>`;
+  }
 
-  job.Commands.forEach(function (cmd, idx, list) {
-    out += `<div> ${idx}: <tt>${cmd}</tt> </div>`;
-  });
-
   out += `
-    </div>
     <br/>
     <div>Log:</div>
     <div>
