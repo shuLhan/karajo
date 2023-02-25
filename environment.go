@@ -20,7 +20,7 @@ const (
 	defDirBase       = `/`
 	defEnvName       = `karajo`
 	defHttpTimeout   = 5 * time.Minute
-	defListenAddress = `:31937`
+	defListenAddress = `127.0.0.1:31937`
 	defMaxJobRunning = 1
 )
 
@@ -146,6 +146,22 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 	}
 
 	return env, nil
+}
+
+// NewEnvironment create and initialize new Environment with default values,
+// where Name is "karajo", listen address is ":31937", base directory is "/",
+// HTTP timeout is 5 minutes, and maximum job running is 1.
+func NewEnvironment() (env *Environment) {
+	env = &Environment{
+		Name:          defEnvName,
+		Jobs:          make(map[string]*Job),
+		HttpJobs:      make(map[string]*JobHttp),
+		ListenAddress: defListenAddress,
+		DirBase:       defDirBase,
+		HttpTimeout:   defHttpTimeout,
+		MaxJobRunning: defMaxJobRunning,
+	}
+	return env
 }
 
 // ParseEnvironment parse the environment from raw bytes.
