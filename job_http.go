@@ -63,6 +63,11 @@ type JobHttp struct {
 	// This field is optional.
 	Secret string `ini:"::secret" json:"-"`
 
+	// HeaderSign define the HTTP header where the signature will be
+	// written in request.
+	// Default to "X-Karajo-Sign" if its empty.
+	HeaderSign string `ini:"::header_sign"`
+
 	// HttpMethod HTTP method to be used in request for job execution.
 	// Its accept only GET, POST, PUT, or DELETE.
 	// This field is optional, default to GET.
@@ -291,6 +296,10 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 
 	job.JobBase.init()
 
+	if len(job.HeaderSign) == 0 {
+		job.HeaderSign = HeaderNameXKarajoSign
+	}
+
 	err = job.initTimer()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
@@ -512,7 +521,7 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 
 	if len(job.Secret) != 0 {
 		var sign = Sign(payload, []byte(job.Secret))
-		headers.Set(HeaderNameXKarajoSign, sign)
+		headers.Set(job.HeaderSign, sign)
 	}
 
 	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestUri, job.requestType, headers, params)

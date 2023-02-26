@@ -256,6 +256,7 @@ Each JobHttp has the following configuration,
 [job.http "name"]
 description = <string>
 secret = <string>
+header_sign = <string>
 schedule = <string>
 interval = <duration>
 max_running = <number>
@@ -278,6 +279,11 @@ It could be plain text or simple HTML.
 `secret`:: Define a string to sign the request payload with HMAC+SHA-256.
 The signature is sent on HTTP header "X-Karajo-Sign" as hex string.
 If its empty, it will be set to global Secret from Environment.
+
+
+`header_sign`:: Define the HTTP header where the signature will be written in
+request.
+Default to "X-Karajo-Sign" if its empty.
 
 
 `schedule`:: A timer that run periodically based on calendar or day time.
