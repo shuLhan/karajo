@@ -138,16 +138,16 @@ func (job *JobHttp) startScheduler() {
 
 			err = job.start()
 			if err != nil {
-				mlog.Errf(`!!! job_http: %s: %s`, job.ID, err)
+				job.mlog.Errf(`!!! job_http: %s: %s`, job.ID, err)
 				job.scheduler.Stop()
 				return
 			}
 
 			_, err = job.execute()
 			if err != nil {
-				mlog.Errf(`!!! job_http: %s: failed: %s.`, job.ID, err)
+				job.mlog.Errf(`!!! job_http: %s: failed: %s.`, job.ID, err)
 			} else {
-				mlog.Outf(`job_http: %s: finished.`, job.ID)
+				job.mlog.Outf(`job_http: %s: finished.`, job.ID)
 			}
 			job.finish(nil, err)
 			// The finish will trigger the finished channel.
@@ -229,7 +229,7 @@ func (job *JobHttp) Stop() {
 	job.mlog.Flush()
 	var err error = job.flog.Close()
 	if err != nil {
-		mlog.Errf(`Stop JobHttp %s: %s`, job.ID, err)
+		job.mlog.Errf(`Stop JobHttp %s: %s`, job.ID, err)
 	}
 }
 
@@ -537,7 +537,7 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 	}
 
 	if httpRes.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(`%s: %w`, logp, err)
+		return nil, fmt.Errorf(`%s: %s`, logp, httpRes.Status)
 	}
 
 	return nil, nil
