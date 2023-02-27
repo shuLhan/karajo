@@ -1,7 +1,7 @@
 ## SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 ## SPDX-License-Identifier: GPL-3.0-or-later
 
-.PHONY: all lint build test dev
+.PHONY: all lint build test run-example
 .FORCE:
 
 all: test build lint
@@ -21,5 +21,5 @@ test:
 	CGO_ENABLED=1 go test -race -coverprofile cover.out ./...
 	go tool cover -html=cover.out -o cover.html
 
-dev:
-	CGO_ENABLED=1 go run -race ./cmd/karajo -dev -config testdata/karajo.conf
+run-example:
+	CGO_ENABLED=1 go run -race ./internal/cmd/karajo-example

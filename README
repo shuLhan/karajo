@@ -27,7 +27,7 @@ Features,
 * Trigger HTTP request to external server on specific interval.
 * Preserve the job states on restart.
 * Able to pause and resume specific job.
-* Trigger job using HTTP request (WebHook). Supported WebHook are `github`,
+* Trigger job using HTTP request (webhook). Supported webhook are `github`,
   `sourcehut`, or custom `hmac-sha256` (default).
 * HTTP APIs to programmatically interact with server
 
@@ -50,7 +50,7 @@ Workflow on karajo,
                         +-----------------+
 ----
 
-[#config]
+
 == Configuration
 
 This section describe the file format when loading karajo environment from
@@ -61,10 +61,10 @@ configure the internal Job, and another one to configure the external Job HTTP
 to be executed.
 
 
-[#config_server]
-=== Server
+[#config_environment]
+===  Environment (the server)
 
-The server section has the following format,
+The global environment section has the following format,
 
 ----
 [karajo]
@@ -362,30 +362,271 @@ The value of this option is using the Go time.Duration format, for example,
 Certificate Authority.
 
 
-[#example]
-== Example
+== Examples
 
-Given the following karajo configuration file named `karajo.conf` inside the
-`testdata` directory:
+This section show some examples of creating Job and JobHttp using
+configuration and code.
+You can run the example from this repository by executing,
+
+	$ go run ./internal/cmd/karajo-example
+
+For Job as configuration, we can put it along main configuration
+`$DirBase/etc/karajo/karajo.conf` or split into file inside
+`$DirBase/etc/karajo/job.d/`.
+
+For JobHttp as configuration, we can put it along main configuration
+`$DirBase/etc/karajo/karajo.conf` or split into file inside
+`$DirBase/etc/karajo/job_http.d/`.
+
+For Job or JobHttp as code, the main program would looks like these,
 
 ----
-include::testdata/karajo.conf[]
+package main
+
+import (
+	"log"
+
+	"git.sr.ht/~shulhan/karajo"
+)
+
+func main() {
+	var (
+		env = karajo.NewEnvironment()
+
+		k   *karajo.Karajo
+		err error
+	)
+
+	env.DirBase = `testdata` // For example only.
+	env.Secret = `s3cret` // For example only.
+
+	// Add one or more job here...
+
+	k, err = karajo.New(env)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = k.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 ----
 
-NOTE: For web viewer, see the actual file in testdata/karajo.conf in this
-repository.
 
-Run the `karajo` program,
+=== Job with interval
+
+The following job will run command `echo "Hello world from interval"` every 1
+minute,
 
 ----
-$ karajo -config testdata/karajo.conf
+[job "interval-1m"]
+description = Job with interval 1 minute.
+interval = 1m
+path = /interval-1m
+command = echo "Hello world from interval"
 ----
 
-And then open http://127.0.0.1:31937/karajo in your web browser to see the job
-status and logs.
+The same job can be create using the following code,
+
+----
+...
+	env.Jobs[`interval-1m-code`] = &karajo.Job{
+		JobBase: karajo.JobBase{
+			Description: `Job with interval 1 minute, initialize by code.`,
+			Interval:    1 * time.Minute,
+		},
+		Path: `/interval-1m-code`,
+		Call: helloWorldFromInterval,
+	}
+...
+func helloWorldFromInterval(log io.Writer, epr *libhttp.EndpointRequest) error {
+	fmt.Fprintln(log, `Hello world from interval with code`)
+	return nil
+}
+----
+
+Since both of these job has the `Path` set, we can be trigger it using HTTP.
+First we need a payload, and from that payload we generate the signature using
+the secret,
+
+----
+$ PAYLOAD='{"_karajo_epoch":1677350854}'
+$ echo -n $PAYLOAD | openssl dgst -sha256 -hmac "s3cret" -hex
+SHA2-256(stdin)=fef16cabebdcbdcc7fdbfb9bd5a01c00803af7568a05054e87b2239f84f38c54
+----
+
+The `fef16cabe...` is the keyed hash signature that we will send to
+authenticate the request.
+
+Then we send the `$PAYLOAD` inside the body with signature inside the header,
+
+----
+$ curl \
+	--header "X-Karajo-Sign:fef16cabebdcbdcc7fdbfb9bd5a01c00803af7568a05054e87b2239f84f38c54" \
+	--json '{"_karajo_epoch":1677350854}' \
+	http://127.0.0.1:31937/karajo/api/job/run/hello-world
+{"code":200,"message":"OK","data":{"Logs":[{"JobID":"hello-world","Name":"hello-world.27.success","Status":"success",...
+----
+
+(Change the path to /karajo/api/job/run/hello-world-code to trigger the
+code one)
 
 
-[#license]
+=== Job with schedule
+
+The following job will run command `echo "Hello world from schedule"` in
+minutes of 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55 every hour.
+
+----
+[job "schedule-hourly-5m"]
+description = Job with schedule every hour at minutes 5.
+path = /schedule-hourly-5m
+secret = s3cret
+schedule = hourly@0,5,10,15,20,25,30,35,40,45,50,55
+command = echo "Hello world from schedule"
+----
+
+The same job can be created using the following code,
+
+----
+...
+	env.Jobs[`schedule-hourly-5m-code`] = &karajo.Job{
+		JobBase: karajo.JobBase{
+			Description: `Job with schedule every hour at minutes 5.`,
+			Schedule:    `hourly@0,5,10,15,20,25,30,35,40,45,50,55`,
+		},
+		Path: `/schedule-hourly-5m-code-code`,
+		Call: helloWorldFromSchedule,
+	}
+...
+func helloWorldFromSchedule(log io.Writer, epr *libhttp.EndpointRequest) error {
+	fmt.Fprintln(log, `Hello world from schedule`)
+	return nil
+}
+...
+----
+
+
+=== Job as webhook
+
+Job as webhook can only triggered by sending HTTP request to Job's path.
+To create a webhook, do not set the interval and schedule fields.
+The following example show how to create webhook for Github,
+
+----
+[job "webhook-github"]
+description = Webhook using github authentication.
+auth_kind = github
+secret = s3cret
+path = /webhook-github
+command = echo "Webhook using github authentication"
+----
+
+The same configuration can be create using code below,
+
+----
+...
+	env.Jobs[`webhook-github-code`] = &karajo.Job{
+		JobBase: karajo.JobBase{
+			Description: `Webhook using github authentication`,
+		},
+		AuthKind: `github`,
+		Secret:   `s3cret`,
+		Path:     `/webhook-github-code`,
+		Call:     webhookWithGithub,
+	}
+...
+func webhookWithGithub(log io.Writer, epr *libhttp.EndpointRequest) error {
+	fmt.Fprintln(log, `Hello world from Webhook github`)
+	return nil
+}
+----
+
+Once the server running, you can register the following webhook path to
+Github,
+
+* \https://<YOUR_KARAJO_IP>/karajo/api/job/run/webhook-github, or
+* \https://<YOUR_KARAJO_IP/karajo/api/job/run/webhook-github-code
+
+using the secret: `s3cret`.
+
+
+=== JobHttp by interval
+
+The concept of interval in JobHttp is similar with Job, but instead of running
+a command it send HTTP request to external HTTP server every N interval.
+
+The following configuration create JobHttp that trigger the POST request to
+webhook-github Job that we create earlier every 90 seconds,
+
+----
+[job.http "interval-90s"]
+description = Trigger our webhook-github every 90 seconds.
+secret = s3cret
+header_sign = X-Hub-Signature-256
+interval = 90s
+http_method = POST
+http_url = /karajo/api/job/run/webhook-github
+http_request_type = json
+----
+
+The same configuration can be created using code as below,
+
+----
+...
+	env.HttpJobs[`interval-90s-code`] = &karajo.JobHttp{
+		JobBase: karajo.JobBase{
+			Description: `Trigger our webhook-github every 90 seconds by code.`,
+			Interval:    90 * time.Second,
+		},
+		Secret:          `s3cret`,
+		HeaderSign:      `X-Hub-Signature-256`,
+		HttpMethod:      `POST`,
+		HttpUrl:         `/karajo/api/job/run/webhook-github`,
+		HttpRequestType: `json`,
+	}
+...
+----
+
+
+=== JobHttp by schedule
+
+The following configuration create JobHttp that trigger the POST request to
+webhook-github-code that we create earlier on minutes 0, 6, 12, 18, 24, 30,
+36, 42, 48, 54 of every hour.
+
+----
+[job.http "schedule-hourly-6m"]
+description = Trigger our webhook-github-code by schedule every 6m.
+secret = s3cret
+header_sign = X-Hub-Signature-256
+schedule = hourly@0,6,12,18,24,30,36,42,48,54
+http_method = POST
+http_url = /karajo/api/job/run/webhook-github-code
+http_request_type = json
+----
+
+The same configuration can be created using code as below,
+
+----
+...
+	env.HttpJobs[`schedule-6m-code`] = &karajo.JobHttp{
+		JobBase: karajo.JobBase{
+			Description: `Trigger our webhook-github-code by schedule every 6m.`,
+			Schedule:    `hourly@0,6,12,18,24,30,36,42,48,54`,
+		},
+		Secret:          `s3cret`,
+		HeaderSign:      `X-Hub-Signature-256`,
+		HttpMethod:      `POST`,
+		HttpUrl:         `/karajo/api/job/run/webhook-github-code`,
+		HttpRequestType: `json`,
+	}
+...
+----
+
+
 == License
 
 Copyright 2021, M. Shulhan (ms@kilabit.info).
@@ -405,7 +646,6 @@ You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-[#links]
 == Links
 
 link:http_api.html[HTTP APIs]
