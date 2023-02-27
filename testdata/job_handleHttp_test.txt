@@ -5,49 +5,39 @@ Test running Job with handleHttp.
   "code": 200,
   "message": "OK",
   "data": {
-    "Logs": null,
-    "Path": "/test-job-handle-http",
-    "AuthKind": "hmac-sha256",
-    "HeaderSign": "X-Karajo-Sign",
-    "Commands": null,
-    "LastRun": "0001-01-01T00:00:00Z",
-    "NextRun": "0001-01-01T00:00:00Z",
-    "ID": "test_job_handle_http",
-    "Name": "Test job handle HTTP",
-    "Description": "",
-    "Status": "started",
-    "Schedule": "",
-    "Interval": 0,
-    "MaxRunning": 1,
-    "NumRunning": 1,
-    "LogRetention": 5
+    "path": "/test-job-handle-http",
+    "auth_kind": "hmac-sha256",
+    "header_sign": "X-Karajo-Sign",
+    "last_run": "0001-01-01T00:00:00Z",
+    "next_run": "0001-01-01T00:00:00Z",
+    "id": "test_job_handle_http",
+    "name": "Test job handle HTTP",
+    "status": "started",
+    "max_running": 1,
+    "num_running": 1,
+    "log_retention": 5
   }
 }
 
 <<< job_after.json
 {
-  "Logs": [
+  "logs": [
     {
-      "JobID": "test_job_handle_http",
-      "Name": "test_job_handle_http.1.success",
-      "Status": "success",
-      "Counter": 1,
-      "Content": "T3V0cHV0IGZyb20gQ2FsbA=="
+      "job_id": "test_job_handle_http",
+      "name": "test_job_handle_http.1.success",
+      "status": "success",
+      "counter": 1,
+      "content": "T3V0cHV0IGZyb20gQ2FsbA=="
     }
   ],
-  "Path": "/test-job-handle-http",
-  "AuthKind": "hmac-sha256",
-  "HeaderSign": "X-Karajo-Sign",
-  "Commands": null,
-  "LastRun": "2023-01-09T00:00:00Z",
-  "NextRun": "0001-01-01T00:00:00Z",
-  "ID": "test_job_handle_http",
-  "Name": "Test job handle HTTP",
-  "Description": "",
-  "Status": "success",
-  "Schedule": "",
-  "Interval": 0,
-  "MaxRunning": 1,
-  "NumRunning": 0,
-  "LogRetention": 5
+  "path": "/test-job-handle-http",
+  "auth_kind": "hmac-sha256",
+  "header_sign": "X-Karajo-Sign",
+  "last_run": "2023-01-09T00:00:00Z",
+  "next_run": "0001-01-01T00:00:00Z",
+  "id": "test_job_handle_http",
+  "name": "Test job handle HTTP",
+  "status": "success",
+  "max_running": 1,
+  "log_retention": 5
 }

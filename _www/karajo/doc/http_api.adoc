@@ -35,31 +35,31 @@ JSON format,
 
 ----
 {
-	"Jobs": {<Job.Name>: <Job>, ...},
-	"HttpJobs": {<JobHttp.Name>: <JobHttp>, ...},
+	"jobs": {<Job.Name>: <Job>, ...},
+	"http_jobs": {<JobHttp.Name>: <JobHttp>, ...},
 
-	"Name": <string>,
-	"ListenAddress": <string>,
-	"DirBase": <string>,
-	"DirPublic": <string>,
+	"name": <string>,
+	"listen_address": <string>,
+	"dir_base": <string>,
+	"dir_public": <string>,
 
-	"HttpTimeout": <number>,
-	"MaxJobRunning": <number>,
-	"IsDevelopment": <boolean>
+	"http_timeout": <number>,
+	"max_job_running": <number>,
+	"is_development": <boolean>
 }
 ----
 
-* `Jobs`: list of Job.
-* `HttpJobs`: list of JobHttp.
+* `jobs`: list of Job.
+* `http_jobs`: list of JobHttp.
 
-* `Name`: the karajo server name.
-* `ListenAddress`: the address where karajo HTTP server listening for request.
-* `DirBase`: The path to directory used as working directory.
-* `DirPublic`: The path to directory served to public.
+* `name`: the karajo server name.
+* `listen_address`: the address where karajo HTTP server listening for request.
+* `dir_base`: The path to directory used as working directory.
+* `dir_public`: The path to directory served to public.
 
-* `HttpTimeout`: default HTTP timeout for job in nano-second.
-* `MaxJobRunning`: default maximum job running at the same time.
-* `IsDevelopment`: true if current karajo server run for testing.
+* `http_timeout`: default HTTP timeout for job in nano-second.
+* `max_job_running`: default maximum job running at the same time.
+* `is_development`: true if current karajo server run for testing.
 
 
 [#schema_job]
@@ -69,44 +69,44 @@ JSON format,
 
 ----
 {
-	"LastRun": <RFC3339_time>,
-	"NextRun": <RFC3339_time>,
-	"ID": <string>,
-	"Name": <string>,
-	"Description": <string>,
-	"Status": <"success"|"fail">,
-	"Interval": <number>,
-	"MaxRunning": <number,
-	"NumRunning": <number,
+	"last_run": <RFC3339_time>,
+	"next_run": <RFC3339_time>,
+	"id": <string>,
+	"name": <string>,
+	"description": <string>,
+	"status": <"success"|"fail">,
+	"interval": <number>,
+	"max_running": <number,
+	"num_running": <number,
 
-	"Logs": [<JobLog>, ...],
-	"Path": <string>,
-	"AuthKind": <string>,
-	"HeaderSign": <string>,
-	"Commands": [<string>, ...],
-	"LogRetention": <number>
+	"logs": [<JobLog>, ...],
+	"path": <string>,
+	"auth_kind": <string>,
+	"header_sign": <string>,
+	"commands": [<string>, ...],
+	"log_retention": <number>
 }
 ----
 
-* `LastRun`: Date and time when the job last run, in the format RFC3339,
-* `NextRun`: Date and time when the next job will be executed, in the format
+* `last_run`: Date and time when the job last run, in the format RFC3339,
+* `next_run`: Date and time when the next job will be executed, in the format
   RFC3339.
 
-* `ID`: Unique job ID
-* `Name`: Human representation of job name.
-* `Description`: Job description, can be HTML.
-* `Status`: Status of the last job running, its either "started, "success",
+* `id`: Unique job ID
+* `name`: Human representation of job name.
+* `description`: Job description, can be HTML.
+* `status`: Status of the last job running, its either "started, "success",
   "failed", or "paused".
-* `Interval`: A period of nano-seconds when the job will be executed.
-* `MaxRunning`: Maximum number of job can be requested at a time.
-* `NumRunning`: Current number of job running.
+* `interval`: A period of nano-seconds when the job will be executed.
+* `max_running`: Maximum number of job can be requested at a time.
+* `num_running`: Current number of job running.
 
-* `Logs`: List of job log per execution.
-* `Path`: HTTP path where Job can be triggered using HTTP.
-* `AuthKind`: The kind of authorization to trigger Job.
-* `HeaderSign`: Custom HTTP header where the signature is read.
-* `Commands`: List of command to be executed.
-* `LogRetention`: The maximum number of logs to keep in storage.
+* `logs`: List of job log per execution.
+* `path`: HTTP path where Job can be triggered using HTTP.
+* `auth_kind`: The kind of authorization to trigger Job.
+* `header_sign`: Custom HTTP header where the signature is read.
+* `commands`: List of command to be executed.
+* `log_retention`: The maximum number of logs to keep in storage.
 
 
 [#schema_joblog]
@@ -116,19 +116,19 @@ JSON format,
 
 ----
 {
-	"JobID": <string>,
-	"Name": <string>,
-	"Status": <string>,
-	"Content": <base64>,
-	"Counter": <number>
+	"job_id": <string>,
+	"name": <string>,
+	"status": <string>,
+	"content": <base64>,
+	"counter": <number>
 }
 ----
 
-* `JobID`: The ID of Job that own the log.
-* `Name`: The Name of log in the format `JobID.Counter.Status`.
-* `Status`: The status of job, its either "success" or "fail".
-* `Content`: The content of log.
-* `Counter`: The log number.
+* `job_id`: The ID of Job that own the log.
+* `name`: The Name of log in the format `JobID.Counter.Status`.
+* `status`: The status of job, its either "success" or "fail".
+* `content`: The content of log.
+* `counter`: The log number.
 
 
 [#schema_job_http]
@@ -138,45 +138,45 @@ JSON format,
 
 ----
 {
-	"LastRun": <RFC3339_time>,
-	"NextRun": <RFC3339_time>,
-	"ID": <string>,
-	"Name": <string>,
-	"Description": <string>,
-	"Status": <string>,
-	"Interval": <number>,
-	"MaxRunning": <number>,
-	"NumRunning": <number>,
+	"last_run": <RFC3339_time>,
+	"next_run": <RFC3339_time>,
+	"id": <string>,
+	"name": <string>,
+	"description": <string>,
+	"status": <string>,
+	"interval": <number>,
+	"max_running": <number>,
+	"num_running": <number>,
 
-	"HttpMethod": <string>,
-	"HttpUrl": <string>,
-	"HttpRequestType": <string>,
-	"HttpHeaders": [<string>],
-	"HttpTimeout": <number>,
-	"HttpInsecure": <boolean>
+	"http_method": <string>,
+	"http_url": <string>,
+	"http_request_type": <string>,
+	"http_headers": [<string>],
+	"http_timeout": <number>,
+	"http_insecure": <boolean>
 }
 ----
 
-* `LastRun`: Date and time when the job last run, in the format RFC3339,
-* `NextRun`: Date and time when the next job will be executed, in the format
+* `last_run`: Date and time when the job last run, in the format RFC3339,
+* `next_run`: Date and time when the next job will be executed, in the format
   RFC3339.
 
-* `ID`: Unique job ID
-* `Name`: Human representation of job name.
-* `Description`: Job description, can be HTML.
-* `Status`: Status of the last job running, its either "started, "success",
+* `id`: Unique job ID
+* `name`: Human representation of job name.
+* `description`: Job description, can be HTML.
+* `status`: Status of the last job running, its either "started, "success",
   "failed", or "paused".
-* `Interval`: A period of nano-seconds when the job will be executed.
-* `MaxRunning`: Maximum number of job can be requested at a time.
-* `NumRunning`: Current number of job running.
+* `interval`: A period of nano-seconds when the job will be executed.
+* `max_running`: Maximum number of job can be requested at a time.
+* `num_running`: Current number of job running.
 
-* `HttpMethod`: The HTTP method used to invoke the HttpUrl.
-* `HttpUrl`: The URL where job will be executed.
-* `HttpRequestType`: The request type for HTTP.
-* `HttpHeaders`: List of string, in the format of "Key: Value",
+* `http_method`: The HTTP method used to invoke the http_url.
+* `http_url`: The URL where job will be executed.
+* `http_request_type`: The request type for HTTP.
+* `http_headers`: List of string, in the format of "Key: Value",
   which will be send when invoking the job.
-* `HttpTimeout`: A timeout for HTTP request, in nano-second.
-* `HttpInsecure`: If true, the request to server with unknown certificate
+* `http_timeout`: A timeout for HTTP request, in nano-second.
+* `http_insecure`: If true, the request to server with unknown certificate
   will be ignored.
 
 
@@ -316,7 +316,7 @@ Parameters,
 **Response**
 
 On success it will return list of string, contains log execution and the
-response from executing the `HttpUrl`.
+response from executing the `http_url`.
 
 On fail, it will return
 

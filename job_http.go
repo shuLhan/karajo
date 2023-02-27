@@ -66,16 +66,16 @@ type JobHttp struct {
 	// HeaderSign define the HTTP header where the signature will be
 	// written in request.
 	// Default to "X-Karajo-Sign" if its empty.
-	HeaderSign string `ini:"::header_sign"`
+	HeaderSign string `ini:"::header_sign" json:"header_sign,omitempty"`
 
 	// HttpMethod HTTP method to be used in request for job execution.
 	// Its accept only GET, POST, PUT, or DELETE.
 	// This field is optional, default to GET.
-	HttpMethod string `ini:"::http_method"`
+	HttpMethod string `ini:"::http_method" json:"http_method"`
 
 	// The HTTP URL where the job will be executed.
 	// This field is required.
-	HttpUrl    string `ini:"::http_url"`
+	HttpUrl    string `ini:"::http_url" json:"http_url"`
 	baseUri    string
 	requestUri string
 
@@ -91,7 +91,7 @@ type JobHttp struct {
 	// The type "form" and "json" only applicable if the HttpMethod is
 	// POST or PUT.
 	// This field is optional, default to query.
-	HttpRequestType string `ini:"::http_request_type"`
+	HttpRequestType string `ini:"::http_request_type" json:"http_request_type"`
 
 	// Path to the job log.
 	pathLog string
@@ -100,7 +100,7 @@ type JobHttp struct {
 	pathState string
 
 	// Optional HTTP headers for HttpUrl, in the format of "K: V".
-	HttpHeaders []string `ini:"::http_header"`
+	HttpHeaders []string `ini:"::http_header" json:"http_headers,omitempty"`
 
 	JobBase
 
@@ -108,14 +108,14 @@ type JobHttp struct {
 	// This field is optional, if not set default to global timeout in
 	// Environment.HttpTimeout.
 	// To make job run without timeout, set the value to negative.
-	HttpTimeout time.Duration `ini:"::http_timeout"`
+	HttpTimeout time.Duration `ini:"::http_timeout" json:"http_timeout"`
 
 	requestMethod libhttp.RequestMethod
 	requestType   libhttp.RequestType
 
 	// HttpInsecure can be set to true if the http_url is HTTPS with
 	// unknown Certificate Authority.
-	HttpInsecure bool `ini:"::http_insecure"`
+	HttpInsecure bool `ini:"::http_insecure" json:"http_insecure,omitempty"`
 }
 
 func (job *JobHttp) Start() {

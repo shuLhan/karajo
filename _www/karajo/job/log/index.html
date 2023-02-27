@@ -46,7 +46,7 @@
 
         let log = res.data;
 
-        document.title = `${log.JobID} #${log.Counter}`;
+        document.title = `${log.job_id} #${log.counter}`;
 
         let elTitle = document.createElement("h2");
         elTitle.innerText = document.title;
@@ -55,11 +55,11 @@
 
         let elLog = document.createElement("div");
         elLog.className = "log";
-        elLog.innerText = atob(log.Content);
+        elLog.innerText = atob(log.content);
 
         elContent.appendChild(elLog);
 
-        if (log.Status != "started") {
+        if (log.status != "started") {
           return;
         }
 
@@ -70,9 +70,9 @@
           }
 
           log = res.data;
-          elLog.innerText = atob(log.Content);
+          elLog.innerText = atob(log.content);
 
-          if (log.Status == "success" || log.Status == "failed") {
+          if (log.status == "success" || log.status == "failed") {
             clearInterval(refreshInterval);
           }
         }, 5000);

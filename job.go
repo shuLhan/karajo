@@ -72,13 +72,13 @@ type Job struct {
 	env *Environment `json:"-"`
 
 	// Cache of log sorted by its counter.
-	Logs []*JobLog
+	Logs []*JobLog `json:"logs,omitempty"`
 
 	// Call define a function or method to be called, as an
 	// alternative to Commands.
 	// This field is optional, it is only used if Job created through
 	// code.
-	Call JobHttpHandler `json:"-" ini:"-"`
+	Call JobHttpHandler `ini:"-" json:"-"`
 
 	// HTTP path where Job can be triggered using HTTP.
 	// The Path is automatically prefixed with "/karajo/api/job/run", it
@@ -86,7 +86,7 @@ type Job struct {
 	// For example, if it set to "/my", then the actual path would be
 	// "/karajo/api/job/run/my".
 	// This field is optional and unique between Job.
-	Path string `ini:"::path"`
+	Path string `ini:"::path" json:"path,omitempty"`
 
 	// Supported AuthKind are,
 	//
@@ -103,11 +103,11 @@ type Job struct {
 	//   - sourcehut: See https://man.sr.ht/api-conventions.md#webhooks
 	//
 	// If this field is empty or invalid it will be set to hmac-sha256.
-	AuthKind string `ini:"::auth_kind"`
+	AuthKind string `ini:"::auth_kind" json:"auth_kind,omitempty"`
 
 	// HeaderSign define the HTTP header where the signature is read.
 	// Default to "X-Karajo-Sign" if its empty.
-	HeaderSign string `ini:"::header_sign"`
+	HeaderSign string `ini:"::header_sign" json:"header_sign,omitempty"`
 
 	// Secret define a string to validate the signature of request.
 	// If its empty, it will be set to global Secret from Environment.
@@ -124,13 +124,13 @@ type Job struct {
 	// command:
 	//
 	//   - KARAJO_JOB_COUNTER: contains the current job counter.
-	Commands []string `ini:"::command"`
+	Commands []string `ini:"::command" json:"commands,omitempty"`
 
 	JobBase
 
 	// LogRetention define the maximum number of logs to keep in storage.
 	// This field is optional, default to 5.
-	LogRetention int `ini:"::log_retention"`
+	LogRetention int `ini:"::log_retention" json:"log_retention,omitempty"`
 
 	lastCounter int64
 }

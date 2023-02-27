@@ -33,13 +33,13 @@ async function doRefresh() {
   _env = res.data;
   setTitle();
 
-  renderJobs(_env.Jobs);
-  renderHttpJobs(_env.HttpJobs);
+  renderJobs(_env.jobs);
+  renderHttpJobs(_env.http_jobs);
 }
 
 function setTitle() {
-  document.title = _env.Name;
-  document.getElementById("title").innerHTML = _env.Name;
+  document.title = _env.name;
+  document.getElementById("title").innerHTML = _env.name;
 }
 
 function runTimer() {
@@ -77,12 +77,12 @@ async function jobRunNow(jobID, jobPath) {
   let sign = hash.toString(CryptoJS.enc.Hex);
   let headers = {};
 
-  switch (job.AuthKind) {
+  switch (job.auth_kind) {
     case "github":
       headers["X-Hub-Signature-256"] = sign;
       break;
     case "hmac-sha256":
-      headers["X-Karajo-Sign"] = sign;
+      headers[job.header_sign] = sign;
       break;
     // TODO: CryptoJS does not support ed25519 so we cannot support sourcehut auth right now.
   }
@@ -183,7 +183,7 @@ async function jobHttpInfo(jobID) {
 }
 
 async function jobHttpLogs(job) {
-  let fres = await fetch("/karajo/api/job_http/logs?id=" + job.ID);
+  let fres = await fetch("/karajo/api/job_http/logs?id=" + job.id);
   let res = await fres.json();
   if (res.code !== 200) {
     console.error(res.message);
@@ -253,33 +253,37 @@ function renderJob(job) {
 
 function renderJobAttributes(job) {
   let el = document.getElementById(job._idAttrs);
-  let out = `
-    <div>${job.Description}</div>
-    <br/>
-    <div>ID: ${job.ID}</div>
-    <div>Path: ${job.Path}</div>
-    <div>Status: ${job.Status}</div>
-    <div>Last run: ${job.LastRun}</div>
+  let out = ``;
+
+  if (job.description) {
+    out += `<div>${job.description}</div><br/>`;
+  }
+
+  out += `
+    <div>ID: ${job.id}</div>
+    <div>Path: ${job.path}</div>
+    <div>Status: ${job.status}</div>
+    <div>Last run: ${job.last_run}</div>
   `;
 
-  if (job.Schedule != "") {
+  if (job.schedule) {
     out += `
-      <div>Schedule: ${job.Schedule}</div>
-      <div>Next run: ${job.NextRun}</div>
+      <div>Schedule: ${job.schedule}</div>
+      <div>Next run: ${job.next_run}</div>
     `;
-  } else if (job.Interval > 0) {
+  } else if (job.interval > 0) {
     out += `
-      <div>Interval: ${job.Interval / 1e9} seconds</div>
-      <div>Next run: ${job.NextRun}</div>
+      <div>Interval: ${job.interval / 1e9} seconds</div>
+      <div>Next run: ${job.next_run}</div>
     `;
   }
 
-  if (job.Commands != null) {
+  if (job.commands) {
     out += `
       <br/>
-      <div class="job_commands">Commands:
+      <div class="job_commands">commands:
     `;
-    job.Commands.forEach(function (cmd, idx, list) {
+    job.commands.forEach(function (cmd, idx, list) {
       out += `<div> ${idx}: <tt>${cmd}</tt> </div>`;
     });
     out += `</div>`;
@@ -291,23 +295,23 @@ function renderJobAttributes(job) {
     <div>
   `;
 
-  if (job.Logs == null) {
-    job.Logs = [];
+  if (job.logs == null) {
+    job.logs = [];
   }
 
-  job.Logs.forEach(function (log, idx, list) {
+  job.logs.forEach(function (log, idx, list) {
     out += `<a
-      href="/karajo/job/log?id=${job.ID}&counter=${log.Counter}"
+      href="/karajo/job/log?id=${job.id}&counter=${log.counter}"
       target="_blank"
-      class="job-log ${log.Status}"
+      class="job-log ${log.status}"
     >
-        #${log.Counter}
+        #${log.counter}
     </a>`;
   });
 
-  out += `&nbsp;<button onclick="jobRunNow('${job.ID}', '${job.Path}')">Run now</button>`;
-  out += `&nbsp;<button onclick="jobPause('${job.ID}')">Pause</button>`;
-  out += `&nbsp;<button onclick="jobResume('${job.ID}')">Resume</button>`;
+  out += `&nbsp;<button onclick="jobRunNow('${job.id}', '${job.path}')">Run now</button>`;
+  out += `&nbsp;<button onclick="jobPause('${job.id}')">Pause</button>`;
+  out += `&nbsp;<button onclick="jobResume('${job.id}')">Resume</button>`;
 
   out += "</div>";
 
@@ -318,10 +322,10 @@ function renderJobLastRun(job) {
   let elLastRun = document.getElementById(job._idLastRun);
 
   let now = new Date();
-  let lastRun = new Date(job.LastRun);
+  let lastRun = new Date(job.last_run);
 
   if (lastRun <= 0) {
-    if (job.Status != "") {
+    if (job.status != "") {
       elLastRun.innerText = "Running ...";
     }
     return;
@@ -336,7 +340,7 @@ function renderJobLastRun(job) {
 
 function renderJobStatus(job) {
   let el = document.getElementById(job._idStatus);
-  el.className = `name ${job.Status}`;
+  el.className = `name ${job.status}`;
 }
 
 // renderJobs render list of jobs.
@@ -346,21 +350,21 @@ function renderJobs(jobs) {
   for (let name in jobs) {
     let job = jobs[name];
 
-    job._id = `job_${job.ID}`;
-    job._idAttrs = `job_${job.ID}_attrs`;
-    job._idInfo = `job_${job.ID}_info`;
-    job._idLastRun = `job_${job.ID}_last_run`;
-    job._idStatus = `job_${job.ID}_status`;
+    job._id = `job_${job.id}`;
+    job._idAttrs = `job_${job.id}_attrs`;
+    job._idInfo = `job_${job.id}_info`;
+    job._idLastRun = `job_${job.id}_last_run`;
+    job._idStatus = `job_${job.id}_status`;
     job._display = "none";
 
     if (_jobs != null) {
-      let prevJob = _jobs[job.ID];
+      let prevJob = _jobs[job.id];
       if (prevJob != null) {
         job._display = prevJob._display;
       }
     }
 
-    _jobs[job.ID] = job;
+    _jobs[job.id] = job;
 
     let elJobInfo = document.getElementById(job._idInfo);
     if (elJobInfo != null) {
@@ -370,9 +374,9 @@ function renderJobs(jobs) {
 
     let out = `
       <div id="${job._id}" class="job">
-        <div id="${job._idStatus}" class="name ${job.Status}">
-          <a href="#${job._id}" onclick='jobInfo("${job.ID}")'>
-            ${job.Name}
+        <div id="${job._idStatus}" class="name ${job.status}">
+          <a href="#${job._id}" onclick='jobInfo("${job.id}")'>
+            ${job.name}
           </a>
           <span id="${job._idLastRun}" class="last_run"></span>
         </div>
@@ -399,27 +403,41 @@ function renderJobHttp(job) {
 
 function renderJobHttpAttrs(job) {
   let el = document.getElementById(job._idAttrs);
-  let out = `
-    <div>${job.Description}</div>
-    <br/>
-    <div>ID: ${job.ID}</div>
-    <div>HTTP URL: ${job.HttpUrl}</div>
-    <div>HTTP headers: ${job.HttpHeaders}</div>
-    <div>HTTP timeout: ${job.HttpTimeout / 1e9}</div>
-    <div>Interval: ${job.Interval / 1e9}s</div>
-    <div>Maximum job running: ${job.MaxRunning}</div>
-    <div>Currently job running: ${job.NumRunning}</div>
-    <div>Last run: ${job.LastRun}</div>
-    <div>Next run: ${job.NextRun}</div>
-    <div>Status: ${job.Status}</div>
+  let out = ``;
+
+  if (job.description) {
+    out += `<div>${job.description}</div><br/>`;
+  }
+
+  out += `
+    <div>ID: ${job.id}</div>
+    <div>HTTP URL: ${job.http_url}</div>
+  `;
+
+  if (job.http_headers) {
+    out += `<div>HTTP headers: ${job.http_headers}</div>`;
+  }
+
+  out += `<div>HTTP timeout: ${job.http_timeout / 1e9}</div>`;
+
+  if (job.interval) {
+    out += `<div>Interval: ${job.interval / 1e9}s</div>`;
+  }
+
+  out += `
+    <div>Maximum job running: ${job.max_running}</div>
+    <div>Currently job running: ${job.num_running || 0}</div>
+    <div>Last run: ${job.last_run}</div>
+    <div>Next run: ${job.next_run}</div>
+    <div>Status: ${job.status || ""}</div>
     <br/>
     <div class="actions">
   `;
 
-  if (job.Status == "paused") {
-    out += `<button onclick="jobHttpResume('${job.ID}')">Resume</button>`;
+  if (job.status == "paused") {
+    out += `<button onclick="jobHttpResume('${job.id}')">Resume</button>`;
   } else {
-    out += `<button onclick="jobHttpPause('${job.ID}')">Pause</button>`;
+    out += `<button onclick="jobHttpPause('${job.id}')">Pause</button>`;
   }
 
   out += `</div>`;
@@ -442,7 +460,7 @@ function renderJobHttpNextRun(job) {
   let elNextRun = document.getElementById(job._idNextRun);
 
   let now = new Date();
-  let nextRun = new Date(job.NextRun);
+  let nextRun = new Date(job.next_run);
 
   let seconds = Math.floor((nextRun - now) / 1000);
   if (seconds <= 0) {
@@ -458,7 +476,7 @@ function renderJobHttpNextRun(job) {
 
 function renderJobHttpStatus(job) {
   let el = document.getElementById(job._idStatus);
-  el.className = `name ${job.Status}`;
+  el.className = `name ${job.status}`;
 }
 
 function renderHttpJobs(httpJobs) {
@@ -468,24 +486,24 @@ function renderHttpJobs(httpJobs) {
   for (let name in httpJobs) {
     let httpJob = httpJobs[name];
 
-    httpJob._id = `jobhttp_${httpJob.ID}`;
-    httpJob._idAttrs = `jobhttp_${httpJob.ID}_attrs`;
-    httpJob._idInfo = `jobhttp_${httpJob.ID}_info`;
-    httpJob._idLog = `jobhttp_${httpJob.ID}_log`;
-    httpJob._idStatus = `jobhttp_${httpJob.ID}_status`;
-    httpJob._idNextRun = `jobhttp_${httpJob.ID}_next_run`;
+    httpJob._id = `jobhttp_${httpJob.id}`;
+    httpJob._idAttrs = `jobhttp_${httpJob.id}_attrs`;
+    httpJob._idInfo = `jobhttp_${httpJob.id}_info`;
+    httpJob._idLog = `jobhttp_${httpJob.id}_log`;
+    httpJob._idStatus = `jobhttp_${httpJob.id}_status`;
+    httpJob._idNextRun = `jobhttp_${httpJob.id}_next_run`;
     httpJob._display = "none";
     httpJob._logTimer = null;
 
     if (_httpJobs != null) {
-      let prevJob = _httpJobs[httpJob.ID];
+      let prevJob = _httpJobs[httpJob.id];
       if (prevJob != null) {
         httpJob._display = prevJob._display;
         httpJob._logTimer = prevJob._logTimer;
       }
     }
 
-    _httpJobs[httpJob.ID] = httpJob;
+    _httpJobs[httpJob.id] = httpJob;
 
     let elJob = document.getElementById(httpJob._id);
     if (elJob != null) {
@@ -495,9 +513,9 @@ function renderHttpJobs(httpJobs) {
 
     out = `
       <div id="${httpJob._id}" class="jobhttp">
-        <div id="${httpJob._idStatus}" class="name ${httpJob.Status}">
-          <a href="#${httpJob._id}" onclick='jobHttpInfo("${httpJob.ID}")'>
-            ${httpJob.Name}
+        <div id="${httpJob._idStatus}" class="name ${httpJob.status}">
+          <a href="#${httpJob._id}" onclick='jobHttpInfo("${httpJob.id}")'>
+            ${httpJob.name}
           </a>
           <span id="${httpJob._idNextRun}" class="next_run"></span>
         </div>

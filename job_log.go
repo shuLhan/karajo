@@ -25,12 +25,12 @@ import (
 // Status can be success or fail.
 // If status is missing its considered fail.
 type JobLog struct {
-	JobID   string
-	Name    string
+	JobID   string `json:"job_id"`
+	Name    string `json:"name"`
 	path    string
-	Status  string
-	Content []byte
-	Counter int64
+	Status  string `json:"status,omitempty"`
+	Content []byte `json:"content,omitempty"`
+	Counter int64  `json:"counter,omitempty"`
 
 	sync.Mutex
 }
@@ -125,7 +125,7 @@ func (jlog *JobLog) MarshalJSON() ([]byte, error) {
 		content = base64.StdEncoding.EncodeToString(jlog.Content)
 	)
 
-	fmt.Fprintf(&buf, `{"JobID":%q,"Name":%q,"Status":%q,"Counter":%d,"Content":%q}`,
+	fmt.Fprintf(&buf, `{"job_id":%q,"name":%q,"status":%q,"counter":%d,"content":%q}`,
 		jlog.JobID, jlog.Name, jlog.Status, jlog.Counter, content)
 
 	return buf.Bytes(), nil

@@ -2,28 +2,24 @@ Test running Job with Call using timer.
 
 <<< job_after.json
 {
-  "Logs": [
+  "logs": [
     {
-      "JobID": "test_job_timer",
-      "Name": "test_job_timer.1.success",
-      "Status": "success",
-      "Counter": 1,
-      "Content": "T3V0cHV0IGZyb20gQ2FsbA=="
+      "job_id": "test_job_timer",
+      "name": "test_job_timer.1.success",
+      "status": "success",
+      "counter": 1,
+      "content": "T3V0cHV0IGZyb20gQ2FsbA=="
     }
   ],
-  "Path": "/test-job-timer",
-  "AuthKind": "hmac-sha256",
-  "HeaderSign": "X-Karajo-Sign",
-  "Commands": null,
-  "LastRun": "2023-01-09T00:00:00Z",
-  "NextRun": "2023-01-09T00:01:00Z",
-  "ID": "test_job_timer",
-  "Name": "Test job timer",
-  "Description": "",
-  "Status": "success",
-  "Schedule": "",
-  "Interval": 60000000000,
-  "MaxRunning": 1,
-  "NumRunning": 0,
-  "LogRetention": 5
+  "path": "/test-job-timer",
+  "auth_kind": "hmac-sha256",
+  "header_sign": "X-Karajo-Sign",
+  "last_run": "2023-01-09T00:00:00Z",
+  "next_run": "2023-01-09T00:01:00Z",
+  "id": "test_job_timer",
+  "name": "Test job timer",
+  "status": "success",
+  "interval": 60000000000,
+  "max_running": 1,
+  "log_retention": 5
 }

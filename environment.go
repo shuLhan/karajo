@@ -26,7 +26,7 @@ const (
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
 type Environment struct {
-	Jobs map[string]*Job `ini:"job"`
+	Jobs map[string]*Job `ini:"job" json:"jobs"`
 
 	// jobq is the channel that limit the number of job running at the
 	// same time.
@@ -34,18 +34,18 @@ type Environment struct {
 	jobq chan struct{}
 
 	// List of Job by name.
-	HttpJobs map[string]*JobHttp `ini:"job.http"`
+	HttpJobs map[string]*JobHttp `ini:"job.http" json:"http_jobs"`
 
 	// Name of the service.
 	// The Name will be used for title on the web user interface, as log
 	// prefix, as file prefix on the jobs state, and as file prefix on
 	// log files.
 	// If this value is empty, it will be set to "karajo".
-	Name string `ini:"karajo::name"`
+	Name string `ini:"karajo::name" json:"name"`
 	name string
 
 	// Define the address for WUI, default to ":31937".
-	ListenAddress string `ini:"karajo::listen_address"`
+	ListenAddress string `ini:"karajo::listen_address" json:"listen_address"`
 
 	// DirBase define the base directory where configuration, job state,
 	// and job log stored.
@@ -67,7 +67,7 @@ type Environment struct {
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
-	DirBase   string `ini:"karajo::dir_base"`
+	DirBase   string `ini:"karajo::dir_base" json:"dir_base"`
 	dirConfig string
 
 	// dirConfigJobd is the directory where job configuration loaded.
@@ -96,7 +96,7 @@ type Environment struct {
 	// will be served under "/".
 	// A DirPublic can contains sub directory as long as its name is not
 	// "karajo".
-	DirPublic string `ini:"karajo::dir_public"`
+	DirPublic string `ini:"karajo::dir_public" json:"dir_public"`
 
 	// Secret define the default secret to authorize the incoming HTTP
 	// request.
@@ -113,15 +113,15 @@ type Environment struct {
 	// This field is optional, default to 5 minutes.
 	// The value of this option is using the Go [time.Duration]
 	// format, for example, "30s" for 30 seconds, "1m" for 1 minute.
-	HttpTimeout time.Duration `ini:"karajo::http_timeout"`
+	HttpTimeout time.Duration `ini:"karajo::http_timeout" json:"http_timeout"`
 
 	// MaxJobRunning define the maximum job running at the same time.
 	// This field is optional default to 1.
-	MaxJobRunning int `ini:"karajo::max_job_running"`
+	MaxJobRunning int `ini:"karajo::max_job_running" json:"max_job_running"`
 
 	// IsDevelopment if its true, the files in DirPublic will be loaded
 	// directly from disk instead from embedded memfs.
-	IsDevelopment bool
+	IsDevelopment bool `json:"is_development"`
 }
 
 // LoadEnvironment load the configuration from the ini file format.

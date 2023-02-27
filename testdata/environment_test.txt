@@ -2,305 +2,192 @@ Test LoadEnvironment.
 
 <<< environment.json
 {
-  "Jobs": {
+  "jobs": {
     "Scheduler hourly 5m": {
-      "Logs": null,
-      "Path": "/scheduler-hourly-5m",
-      "AuthKind": "",
-      "HeaderSign": "",
-      "Commands": [
+      "path": "/scheduler-hourly-5m",
+      "commands": [
         "echo Test job scheduler hourly per 5m"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "",
-      "Status": "",
-      "Schedule": "hourly@0,5,10,15,20,25,30,35,40,45,50,55",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "schedule": "hourly@0,5,10,15,20,25,30,35,40,45,50,55"
     },
     "Scheduler minutely": {
-      "Logs": null,
-      "Path": "/scheduler-minutely",
-      "AuthKind": "",
-      "HeaderSign": "",
-      "Commands": [
+      "path": "/scheduler-minutely",
+      "commands": [
         "echo Test job scheduler per minute"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "",
-      "Status": "",
-      "Schedule": "minutely",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "schedule": "minutely"
     },
     "Test auth_kind github": {
-      "Logs": null,
-      "Path": "/github",
-      "AuthKind": "github",
-      "HeaderSign": "",
-      "Commands": [
+      "path": "/github",
+      "auth_kind": "github",
+      "commands": [
         "echo auth_kind is github"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": ""
     },
     "Test interval 1m": {
-      "Logs": null,
-      "Path": "",
-      "AuthKind": "",
-      "HeaderSign": "",
-      "Commands": [
+      "commands": [
         "echo Test job interval 1m",
         "echo Counter is $KARAJO_JOB_COUNTER"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 60000000000,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "interval": 60000000000
     },
     "Test long running": {
-      "Logs": null,
-      "Path": "/test-long-running",
-      "AuthKind": "",
-      "HeaderSign": "",
-      "Commands": [
+      "path": "/test-long-running",
+      "commands": [
         "for ((x=0; x\u003c90; x++)); do echo \"$x\"; sleep 1; done"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "The job to test log refresh.",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "The job to test log refresh."
     },
     "Test manual run": {
-      "Logs": null,
-      "Path": "/test-manual-run",
-      "AuthKind": "",
-      "HeaderSign": "",
-      "Commands": [
+      "path": "/test-manual-run",
+      "commands": [
         "echo Test job manual run",
         "echo Counter is $KARAJO_JOB_COUNTER"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "The job to test manual run.",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "The job to test manual run."
     },
     "test fail": {
-      "Logs": null,
-      "Path": "/test-fail",
-      "AuthKind": "hmac-sha256",
-      "HeaderSign": "",
-      "Commands": [
+      "path": "/test-fail",
+      "auth_kind": "hmac-sha256",
+      "commands": [
         "echo Test job fail",
         "echo Counter is $KARAJO_JOB_COUNTER",
         "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x",
         "command-not-found"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": ""
     },
     "test random": {
-      "Logs": null,
-      "Path": "/test-random",
-      "AuthKind": "",
-      "HeaderSign": "",
-      "Commands": [
+      "path": "/test-random",
+      "commands": [
         "echo Test job random",
         "echo Counter is $KARAJO_JOB_COUNTER",
         "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x",
         "rand=$(($RANDOM%2)) \u0026\u0026 echo $rand \u0026\u0026 exit $rand"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "Test running command with random exit status",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "Test running command with random exit status"
     },
     "test success": {
-      "Logs": null,
-      "Path": "/test-success",
-      "AuthKind": "",
-      "HeaderSign": "",
-      "Commands": [
+      "path": "/test-success",
+      "commands": [
         "echo Test job success",
         "echo Counter is $KARAJO_JOB_COUNTER",
         "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "LogRetention": 0
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": ""
     }
   },
-  "HttpJobs": {
+  "http_jobs": {
     "Scheduler hourly 10m": {
-      "HeaderSign": "",
-      "HttpMethod": "POST",
-      "HttpUrl": "/karajo/api/job/run/test-manual-run",
-      "HttpRequestType": "json",
-      "HttpHeaders": null,
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "Test triggering job using scheduler hourly per 10 minutes",
-      "Status": "",
-      "Schedule": "hourly@0,10,20,30,40,50",
-      "Interval": 0,
-      "MaxRunning": 0,
-      "NumRunning": 0,
-      "HttpTimeout": 0,
-      "HttpInsecure": false
+      "http_method": "POST",
+      "http_url": "/karajo/api/job/run/test-manual-run",
+      "http_request_type": "json",
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "Test triggering job using scheduler hourly per 10 minutes",
+      "schedule": "hourly@0,10,20,30,40,50",
+      "http_timeout": 0
     },
     "Test fail": {
-      "HeaderSign": "",
-      "HttpMethod": "POST",
-      "HttpUrl": "http://127.0.0.1:31937/karajo/api/job/run/test-fail",
-      "HttpRequestType": "json",
-      "HttpHeaders": [
+      "http_method": "POST",
+      "http_url": "http://127.0.0.1:31937/karajo/api/job/run/test-fail",
+      "http_request_type": "json",
+      "http_headers": [
         "A: B",
         "C: D"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "The job to test what the user interface and logs look likes if its \u003cb\u003efail\u003c/b\u003e.",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 20000000000,
-      "MaxRunning": 2,
-      "NumRunning": 0,
-      "HttpTimeout": 0,
-      "HttpInsecure": false
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "The job to test what the user interface and logs look likes if its \u003cb\u003efail\u003c/b\u003e.",
+      "interval": 20000000000,
+      "max_running": 2,
+      "http_timeout": 0
     },
     "Test long running": {
-      "HeaderSign": "",
-      "HttpMethod": "POST",
-      "HttpUrl": "/karajo/api/job/run/test-long-running",
-      "HttpRequestType": "json",
-      "HttpHeaders": null,
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "The job to test job log refresh.",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 120000000000,
-      "MaxRunning": 1,
-      "NumRunning": 0,
-      "HttpTimeout": 0,
-      "HttpInsecure": false
+      "http_method": "POST",
+      "http_url": "/karajo/api/job/run/test-long-running",
+      "http_request_type": "json",
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "The job to test job log refresh.",
+      "interval": 120000000000,
+      "max_running": 1,
+      "http_timeout": 0
     },
     "Test random": {
-      "HeaderSign": "",
-      "HttpMethod": "POST",
-      "HttpUrl": "/karajo/api/job/run/test-random",
-      "HttpRequestType": "json",
-      "HttpHeaders": null,
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "Test triggering job /test-random",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 0,
-      "MaxRunning": 1,
-      "NumRunning": 0,
-      "HttpTimeout": 0,
-      "HttpInsecure": false
+      "http_method": "POST",
+      "http_url": "/karajo/api/job/run/test-random",
+      "http_request_type": "json",
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "Test triggering job /test-random",
+      "max_running": 1,
+      "http_timeout": 0
     },
     "Test success": {
-      "HeaderSign": "",
-      "HttpMethod": "POST",
-      "HttpUrl": "/karajo/api/job/run/test-success",
-      "HttpRequestType": "json",
-      "HttpHeaders": [
+      "http_method": "POST",
+      "http_url": "/karajo/api/job/run/test-success",
+      "http_request_type": "json",
+      "http_headers": [
         "X: Y"
       ],
-      "LastRun": "0001-01-01T00:00:00Z",
-      "NextRun": "0001-01-01T00:00:00Z",
-      "ID": "",
-      "Name": "",
-      "Description": "The job to test what the user interface and logs look likes if its \u003ci\u003esuccess\u003c/i\u003e.",
-      "Status": "",
-      "Schedule": "",
-      "Interval": 20000000000,
-      "MaxRunning": 1,
-      "NumRunning": 0,
-      "HttpTimeout": 0,
-      "HttpInsecure": false
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "The job to test what the user interface and logs look likes if its \u003ci\u003esuccess\u003c/i\u003e.",
+      "interval": 20000000000,
+      "max_running": 1,
+      "http_timeout": 0
     }
   },
-  "Name": "My karajo",
-  "ListenAddress": "127.0.0.1:31937",
-  "DirBase": "testdata",
-  "DirPublic": "testdata",
-  "HttpTimeout": 300000000000,
-  "MaxJobRunning": 2,
-  "IsDevelopment": false
+  "name": "My karajo",
+  "listen_address": "127.0.0.1:31937",
+  "dir_base": "testdata",
+  "dir_public": "testdata",
+  "http_timeout": 300000000000,
+  "max_job_running": 2,
+  "is_development": false
 }

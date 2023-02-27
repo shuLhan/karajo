@@ -35,26 +35,26 @@ type JobBase struct {
 	stopped  chan bool
 
 	// The last time the job is finished running, in UTC.
-	LastRun time.Time `ini:"-"`
+	LastRun time.Time `ini:"-" json:"last_run,omitempty"`
 
 	// The next time the job will running, in UTC.
-	NextRun time.Time `ini:"-"`
+	NextRun time.Time `ini:"-" json:"next_run,omitempty"`
 
 	// ID of the job. It must be unique or the last job will replace the
 	// previous job with the same ID.
 	// If ID is empty, it will generated from Name by replacing
 	// non-alphanumeric character with '-'.
-	ID string `ini:"-"`
+	ID string `ini:"-" json:"id"`
 
 	// Name of job for readibility.
-	Name string `ini:"-"`
+	Name string `ini:"-" json:"name"`
 
 	// The description of the Job.
 	// It could be plain text or simple HTML.
-	Description string `ini:"::description"`
+	Description string `ini:"::description" json:"description,omitempty"`
 
 	// The last status of the job.
-	Status string `ini:"-"`
+	Status string `ini:"-" json:"status,omitempty"`
 
 	// Schedule a timer that run periodically based on calendar or day
 	// time.
@@ -65,20 +65,20 @@ type JobBase struct {
 	// If both Schedule and Interval set, only Schedule will be processed.
 	//
 	// [time.Scheduler]: // https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler
-	Schedule string `ini:"::schedule"`
+	Schedule string `ini:"::schedule" json:"schedule,omitempty"`
 
 	// Interval duration when job will be repeatedly executed.
 	// This field is optional, the minimum value is 1 minute.
 	//
 	// If both Schedule and Interval set, only Schedule will be processed.
-	Interval time.Duration `ini:"::interval"`
+	Interval time.Duration `ini:"::interval" json:"interval,omitempty"`
 
 	// MaxRunning maximum number of job running at the same time.
 	// This field is optional default to DefaultJobMaxRunning.
-	MaxRunning int `ini:"::max_running"`
+	MaxRunning int `ini:"::max_running" json:"max_running,omitempty"`
 
 	// NumRunning record the number of job currently running.
-	NumRunning int `ini:"-"`
+	NumRunning int `ini:"-" json:"num_running,omitempty"`
 
 	sync.Mutex
 }
