@@ -262,7 +262,7 @@ function renderJobAttributes(job) {
   out += `
     <div>ID: ${job.id}</div>
     <div>Path: ${job.path}</div>
-    <div>Status: ${job.status}</div>
+    <div>Status: ${job.status || "-"}</div>
     <div>Last run: ${job.last_run}</div>
   `;
 
