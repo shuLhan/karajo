@@ -5,9 +5,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,7 +21,8 @@ import (
 )
 
 const (
-	cmdEmbed = `embed`
+	cmdEmbed   = `embed`
+	cmdVersion = `version`
 )
 
 func main() {
@@ -43,6 +46,8 @@ func main() {
 
 	cmd = flag.Arg(0)
 
+	cmd = strings.ToLower(cmd)
+
 	switch cmd {
 	case cmdEmbed:
 		mfs, err = karajo.GenerateMemfs()
@@ -54,6 +59,10 @@ func main() {
 		if err != nil {
 			mlog.Fatalf(err.Error())
 		}
+		return
+
+	case cmdVersion:
+		fmt.Println(`karajo version ` + karajo.Version)
 		return
 	}
 
