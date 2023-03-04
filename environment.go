@@ -7,12 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
+	"github.com/shuLhan/share/lib/mlog"
 	libhtml "github.com/shuLhan/share/lib/net/html"
 )
 
@@ -104,7 +107,8 @@ type Environment struct {
 	// HMAC+SHA-256.
 	// The signature is read from HTTP header "X-Karajo-Sign" as hex
 	// string.
-	// This field is optional.
+	// This field is optional, if its empty the new secret will be
+	// generated and printed to standard output on each run.
 	Secret  string `ini:"karajo::secret" json:"-"`
 	secretb []byte
 
@@ -240,7 +244,11 @@ func (env *Environment) init() (err error) {
 	env.jobq = make(chan struct{}, env.MaxJobRunning)
 
 	if len(env.Secret) == 0 {
-		return fmt.Errorf(`%s: empty secret`, logp)
+		rand.Seed(time.Now().Unix())
+		var secret = ascii.Random([]byte(ascii.LettersNumber), 32)
+		env.Secret = string(secret)
+
+		mlog.Outf(`!!! WARNING: Your secret is empty and has been generated: %s`, secret)
 	}
 	env.secretb = []byte(env.Secret)
 

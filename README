@@ -121,7 +121,8 @@ The signature is generated from HTTP payload (query or body) with
 HMAC+SHA-256.
 The signature is read from HTTP header "X-Karajo-Sign" as hex
 string.
-This field is optional.
+This field is optional, if its empty the new secret will be
+generated and printed to standard output on each run.
 
 `http_timeout`:: Define the global HTTP client timeout when executing
 each jobs.
