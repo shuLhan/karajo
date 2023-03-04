@@ -1,6 +1,5 @@
 = karajo
 Shulhan <ms@kilabit.info>
-25 Feb 2023
 :toc:
 :sectanchors:
 :sectlinks:
@@ -34,7 +33,8 @@ Features,
 Workflow on karajo,
 
 ----
-                +-----------------------------+
+                  karajo
+                /-----------------------------\
                 |                             |
                 |   +---+         +---+       |
                 |   |   | timer   |   | timer |
@@ -42,7 +42,7 @@ Workflow on karajo,
                 | +---------+   +-------+     |
   INTERNET <----- | JobHttp |   | Job   | <----- INTERNET
                 | +---------+   +-------+     |
-                +------------------|----------+
+                \------------------|----------/
                                    |
                                    v
                         +-----------------+
@@ -627,6 +627,22 @@ The same configuration can be created using code as below,
 ----
 
 
+== Development
+
+link:CHANGELOG.html[CHANGELOG]:: History of each releases.
+
+link:http_api.html[HTTP APIs]:: The exposed HTTP API documentation for karajo
+server.
+
+https://git.sr.ht/~shulhan/karajo[Repository^]:: The source code repository.
+
+https://lists.sr.ht/~shulhan/karajo[Mailing list^]:: Place for discussion and
+sending patches.
+
+https://todo.sr.ht/~shulhan/karajo[Issues^]:: Link to open an issue or request
+for new feature.
+
+
 == License
 
 Copyright 2021, M. Shulhan (ms@kilabit.info).
@@ -644,12 +660,3 @@ See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-== Links
-
-link:http_api.html[HTTP APIs]
-
-link:CHANGELOG.html[CHANGELOG]
-
-https://git.sr.ht/~shulhan/karajo[Source code repository^].
