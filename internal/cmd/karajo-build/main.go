@@ -33,6 +33,11 @@ func main() {
 
 	switch cmd {
 	case cmdEmbed:
+		err = internal.ConvertAdocToHtml()
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
 		var mfs *memfs.MemFS
 
 		mfs, err = internal.GenerateMemfs()

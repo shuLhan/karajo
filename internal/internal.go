@@ -4,12 +4,29 @@
 package internal
 
 import (
+	"fmt"
 	"time"
 
 	"git.sr.ht/~shulhan/ciigo"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
 )
+
+// ConvertAdocToHtml convert adoc files to HTML files.
+func ConvertAdocToHtml() (err error) {
+	var (
+		logp        = `ConvertAdocToHtml`
+		convertOpts = ciigo.ConvertOptions{
+			Root: `_www/karajo/doc`,
+		}
+	)
+
+	err = ciigo.Convert(&convertOpts)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+	return nil
+}
 
 // GenerateMemfs generate the memfs instance to start watching or embedding
 // the _www directory.
