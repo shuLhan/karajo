@@ -7,7 +7,7 @@
 all: test build lint
 
 memfs_www.go: .FORCE
-	go run ./cmd/karajo embed
+	go run ./internal/cmd/karajo-build embed
 
 lint:
 	-golangci-lint run ./...

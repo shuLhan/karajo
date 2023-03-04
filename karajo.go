@@ -77,34 +77,6 @@ type Karajo struct {
 	env *Environment
 }
 
-// GenerateMemfs generate the memfs instance to start watching or embedding
-// the _www directory.
-func GenerateMemfs() (mfs *memfs.MemFS, err error) {
-	var (
-		opts = memfs.Options{
-			Root: `_www`,
-			Excludes: []string{
-				`.*\.adoc$`,
-			},
-			Embed: memfs.EmbedOptions{
-				CommentHeader: `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
-// SPDX-License-Identifier: GPL-3.0-or-later
-`,
-				PackageName: `karajo`,
-				VarName:     `memfsWww`,
-				GoFileName:  `memfs_www.go`,
-			},
-		}
-	)
-
-	mfs, err = memfs.New(&opts)
-	if err != nil {
-		return nil, err
-	}
-
-	return mfs, nil
-}
-
 // Sign generate hex string of HMAC + SHA256 of payload using the secret.
 func Sign(payload, secret []byte) (sign string) {
 	var (
@@ -146,10 +118,7 @@ func New(env *Environment) (k *Karajo, err error) {
 	serverOpts.Address = k.env.ListenAddress
 
 	if memfsWww == nil {
-		memfsWww, err = GenerateMemfs()
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf(`%s: empty embedded www`, logp)
 	}
 
 	memfsWww.Opts.TryDirect = env.IsDevelopment

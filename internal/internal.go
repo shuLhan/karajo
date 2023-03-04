@@ -9,9 +9,35 @@ import (
 	"git.sr.ht/~shulhan/ciigo"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
-
-	"git.sr.ht/~shulhan/karajo"
 )
+
+// GenerateMemfs generate the memfs instance to start watching or embedding
+// the _www directory.
+func GenerateMemfs() (mfs *memfs.MemFS, err error) {
+	var (
+		opts = memfs.Options{
+			Root: `_www`,
+			Excludes: []string{
+				`.*\.adoc$`,
+			},
+			Embed: memfs.EmbedOptions{
+				CommentHeader: `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+`,
+				PackageName: `karajo`,
+				VarName:     `memfsWww`,
+				GoFileName:  `memfs_www.go`,
+			},
+		}
+	)
+
+	mfs, err = memfs.New(&opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return mfs, nil
+}
 
 // WatchWww watch file changes inside _www directory and then embed them into
 // Go code.
@@ -24,7 +50,7 @@ func WatchWww(running chan bool) {
 		err    error
 	)
 
-	mfsWww, err = karajo.GenerateMemfs()
+	mfsWww, err = GenerateMemfs()
 	if err != nil {
 		mlog.Fatalf(err.Error())
 	}

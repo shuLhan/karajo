@@ -12,14 +12,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
 
 	"git.sr.ht/~shulhan/karajo"
 )
 
 const (
-	cmdEmbed   = `embed`
 	cmdVersion = `version`
 )
 
@@ -30,7 +28,6 @@ func main() {
 	var (
 		env    *karajo.Environment
 		k      *karajo.Karajo
-		mfs    *memfs.MemFS
 		config string
 		cmd    string
 		err    error
@@ -43,18 +40,6 @@ func main() {
 	cmd = strings.ToLower(cmd)
 
 	switch cmd {
-	case cmdEmbed:
-		mfs, err = karajo.GenerateMemfs()
-		if err != nil {
-			mlog.Fatalf(err.Error())
-		}
-
-		err = mfs.GoEmbed()
-		if err != nil {
-			mlog.Fatalf(err.Error())
-		}
-		return
-
 	case cmdVersion:
 		fmt.Println(`karajo version ` + karajo.Version)
 		return
