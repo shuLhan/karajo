@@ -10,7 +10,6 @@ Shulhan <ms@kilabit.info>
 This release add Job scheduler, Job as WebHook, loading Job and JobHttp
 configuration from directory, and HTTP APIs for pausing and resuming Job.
 
-
 [#v0_6_0__breaking_changes]
 ===  Breaking changes
 
@@ -25,7 +24,6 @@ path.
 This changes the API to execute job to "/karajo/api/job/run/$job_path".
 --
 
-
 [#v0_6_0__new_features]
 ===  New features
 
@@ -37,7 +35,6 @@ humanly.  For example, one can run job every day at 10:00 AM using
 
 	schedule = daily@10:00
 --
-
 
 all: implement Job auth_kind::
 +
@@ -61,7 +58,6 @@ Supported AuthKind are,
 * sourcehut: See https://man.sr.ht/api-conventions.md#webhooks
 --
 
-
 all: implement loading JobHTTP configuration from separate directory::
 +
 --
@@ -73,7 +69,6 @@ configuration from all files under directory
 `$DirBase/etc/karajo/job_http.d` as long as the file suffix is ".conf".
 --
 
-
 all: implement loading Job configuration from separate directory::
 +
 --
@@ -84,7 +79,6 @@ This changes make karajo configuration more manageable by loading jobs
 configuration from all files under directory $DirBase/etc/karajo/job.d
 as long as the file suffix is ".conf".
 --
-
 
 all: implement HTTP API to resume the job execution::
 +
@@ -101,7 +95,6 @@ _karajo_epoch=&id=
 Where id is the job ID to be resumed.
 --
 
-
 all: implement HTTP API to pause a job::
 +
 --
@@ -117,7 +110,6 @@ _karajo_epoch=&id=
 Where id is the job ID to be paused.
 --
 
-
 all: implement interval based Hook::
 +
 --
@@ -129,9 +121,39 @@ To simplify it, we add an Interval to Hook that works similar to JobHttp
 so now we only need to create single Hook.
 --
 
-
 [#v0_6_0__enhancements]
 ===  Enhancements
+
+all: add required files for installing in GNU/Linux system::
++
+--
+Running `make install` will run commands to install required files
+to run karajo in GNU/Linux with systemd.
+The karajo service is installed but not enabled nor running
+automatically.
+
+To uninstall run `make uninstall`.
+
+This changes the package function in _AUR package to use `make install`
+instead of define each commands to minimize duplication.
+--
+
+all: generate new secret if its empty on Environment init::
++
+If user did not set the Secret in the main configuration karajo.conf,
+the new secret will be generated and printed to standard output on each
+run.
+
+all: compress the response of the HTTP API Environment and Job log::
++
+--
+Examining build.kilabit.info/karajo, both of those APIs return a large
+amount of data (> 400KB) which cause some delay when received on slow
+network.
+
+This changes compress the returned body as gzip which decrease the size
+of output to 90% (40-60KB).
+--
 
 all: set default DirBase to "/"::
 +
@@ -141,7 +163,6 @@ DirBase to "/".
 
 This is also to allow packaging karajo into OS package.
 --
-
 
 all: implement UI to trigger hook manually::
 +
@@ -165,13 +186,18 @@ To fix this we move the check to Start method and set the Status as
 started before it.
 --
 
-
 _www/karajo: fix UI rendering empty hook and with status "Running ..."::
 +
 When the hook is first registered, there is no logs and the status is empty.
 
 [#v0_6_0__chores]
 ===  Chores
+
+internal: add function to convert adoc files to HTML files::
++
+The function, ConvertAdocToHtml, will be run when running embed command
+in karajo-build. This is to make sure that the HTML files are updated
+before we embed it.
 
 _AUR: add package builder script for Arch Linux::
 

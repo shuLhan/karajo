@@ -35,7 +35,7 @@ import (
 )
 
 // Version of this library and program.
-const Version = `0.5.0`
+const Version = `0.6.0`
 
 // HeaderNameXKarajoSign the header key for the signature of body.
 const HeaderNameXKarajoSign = `X-Karajo-Sign`
