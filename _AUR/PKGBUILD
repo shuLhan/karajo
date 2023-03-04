@@ -1,7 +1,7 @@
 # Maintainer: shulhan <ms@kilabit.info>
 
 pkgname=karajo-git
-pkgver=0.5.0.r32.g3476488
+pkgver=0.5.0.r46.g44e6355
 pkgrel=1
 
 pkgdesc="Worker, scheduler, and WebHook with HTTP supports."
@@ -41,6 +41,6 @@ package() {
 	install -dm0750 "${pkgdir}"/etc/karajo
 	install -dm0750 "${pkgdir}"/var/lib/karajo
 	install -dm0750 "${pkgdir}"/var/log/karajo
-	install -Dm0644 "${srcdir}/karajo.tmpfiles" "${pkgdir}"/usr/lib/tmpfiles.d/karajo.conf
-	install -Dm0644 "${srcdir}/karajo.sysusers" "${pkgdir}"/usr/lib/sysusers.d/karajo.conf
+	install -Dm0644 _AUR/karajo.tmpfiles "${pkgdir}"/usr/lib/tmpfiles.d/karajo.conf
+	install -Dm0644 _AUR/karajo.sysusers "${pkgdir}"/usr/lib/sysusers.d/karajo.conf
 }
