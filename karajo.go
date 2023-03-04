@@ -14,6 +14,8 @@
 package karajo
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -319,7 +321,11 @@ func (k *Karajo) Stop() (err error) {
 }
 
 func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
-	var res = &libhttp.EndpointResponse{}
+	var (
+		logp = `apiEnvironment`
+		res  = &libhttp.EndpointResponse{}
+	)
+
 	res.Code = http.StatusOK
 	res.Data = k.env
 
@@ -329,7 +335,18 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 	k.env.httpJobsUnlock()
 	k.env.jobsUnlock()
 
-	return resbody, err
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	resbody, err = compressGzip(resbody)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+
+	return resbody, nil
 }
 
 // apiJobLog get the job log by its ID and counter.
@@ -345,6 +362,7 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 // If the jobID and counter exist it will return the JobLog object as JSON.
 func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
+		logp              = `apiJobLog`
 		res               = &libhttp.EndpointResponse{}
 		id         string = epr.HttpRequest.Form.Get(paramNameID)
 		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
@@ -398,7 +416,19 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 		}
 	}
 
-	return json.Marshal(res)
+	resbody, err = json.Marshal(res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	resbody, err = compressGzip(resbody)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+
+	return resbody, nil
 }
 
 // apiJobPause pause the Job.
@@ -609,4 +639,26 @@ func (k *Karajo) httpAuthorize(epr *libhttp.EndpointRequest, payload []byte) (er
 	}
 
 	return nil
+}
+
+func compressGzip(in []byte) (out []byte, err error) {
+	var (
+		logp  = `compressGzip`
+		bufgz = bytes.Buffer{}
+		gzw   = gzip.NewWriter(&bufgz)
+	)
+
+	_, err = gzw.Write(in)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	err = gzw.Close()
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	out = bufgz.Bytes()
+
+	return out, nil
 }
