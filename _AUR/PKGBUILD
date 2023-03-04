@@ -1,12 +1,12 @@
 # Maintainer: shulhan <ms@kilabit.info>
 
 pkgname=karajo-git
-pkgver=0.5.0.r46.g44e6355
+pkgver=0.5.0.r62.gc58ab1c
 pkgrel=1
 
-pkgdesc="Worker, scheduler, and WebHook with HTTP supports."
+pkgdesc="Worker, scheduler, and WebHook with HTTP."
 arch=(x86_64)
-url='https://git.sr.ht/~shulhan/karajo'
+url='https://sr.ht/~shulhan/karajo'
 license=('GPL3')
 
 makedepends=(
@@ -18,8 +18,9 @@ provides=('karajo')
 
 source=(
 	"$pkgname::git+https://git.sr.ht/~shulhan/karajo"
+	#"$pkgname::git+file:///home/ms/go/src/git.sr.ht/~shulhan/karajo"
 )
-md5sums=(
+sha256sums=(
 	'SKIP'
 )
 
@@ -35,12 +36,5 @@ build() {
 
 package() {
 	cd "$pkgname"
-	install -Dm0755 karajo $pkgdir/usr/bin/karajo
-	install -Dm0644 COPYING $pkgdir/usr/share/licenses/karajo/COPYING
-
-	install -dm0750 "${pkgdir}"/etc/karajo
-	install -dm0750 "${pkgdir}"/var/lib/karajo
-	install -dm0750 "${pkgdir}"/var/log/karajo
-	install -Dm0644 _AUR/karajo.tmpfiles "${pkgdir}"/usr/lib/tmpfiles.d/karajo.conf
-	install -Dm0644 _AUR/karajo.sysusers "${pkgdir}"/usr/lib/sysusers.d/karajo.conf
+	make PREFIX=${pkgdir} install
 }

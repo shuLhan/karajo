@@ -1,4 +1,5 @@
 *.zst
 /karajo-git
+/karajo-git-remote
 /pkg
 /src
