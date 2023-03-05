@@ -24,6 +24,11 @@ sha256sums=(
 	'SKIP'
 )
 
+backup=(
+	'etc/karajo/karajo.conf'
+	'srv/karajo/index.html'
+)
+
 pkgver() {
 	cd "$pkgname"
 	git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
