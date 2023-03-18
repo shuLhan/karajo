@@ -63,3 +63,10 @@ uninstall:
 	rm -f $(PREFIX)/usr/lib/systemd/system/karajo.path
 	rm -f $(PREFIX)/usr/share/licenses/karajo/COPYING
 	rm -f $(PREFIX)/usr/bin/karajo
+
+## Deploy karajo to internal server.
+.PHONY: deploy-kilabit
+deploy-kilabit: build
+	rsync karajo build.kilabit.info:/tmp/karajo
+	ssh build.kilabit.info "sudo mv /tmp/karajo /usr/bin/karajo"
+	ssh build.kilabit.info "systemctl status karajo"
