@@ -1,6 +1,6 @@
 module git.sr.ht/~shulhan/karajo
 
-go 1.17
+go 1.19
 
 require (
 	git.sr.ht/~shulhan/ciigo v0.9.3
