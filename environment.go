@@ -204,20 +204,6 @@ func (env *Environment) jobHttp(id string) (job *JobHttp) {
 	return nil
 }
 
-func (env *Environment) jobsLock() {
-	var job *Job
-	for _, job = range env.Jobs {
-		job.Lock()
-	}
-}
-
-func (env *Environment) jobsUnlock() {
-	var job *Job
-	for _, job = range env.Jobs {
-		job.Unlock()
-	}
-}
-
 func (env *Environment) init() (err error) {
 	var (
 		logp = `init`
@@ -325,14 +311,6 @@ func (env *Environment) initDirs() (err error) {
 	return nil
 }
 
-// httpJobsLock lock all the jobs.
-func (env *Environment) httpJobsLock() {
-	var jobHttp *JobHttp
-	for _, jobHttp = range env.HttpJobs {
-		jobHttp.Lock()
-	}
-}
-
 func (env *Environment) httpJobsSave() (err error) {
 	var jobHttp *JobHttp
 	for _, jobHttp = range env.HttpJobs {
@@ -342,14 +320,6 @@ func (env *Environment) httpJobsSave() (err error) {
 		}
 	}
 	return nil
-}
-
-// httpJobsUnlock unlock all the jobs.
-func (env *Environment) httpJobsUnlock() {
-	var jobHttp *JobHttp
-	for _, jobHttp = range env.HttpJobs {
-		jobHttp.Unlock()
-	}
 }
 
 // loadConfigJob load jobs configuration from file.
