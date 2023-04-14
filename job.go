@@ -582,8 +582,7 @@ func (job *Job) startInterval() {
 // execute the job Call or commands.
 func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
 	var (
-		now = TimeNow().UTC().Round(time.Second)
-
+		now     time.Time
 		execCmd exec.Cmd
 		logTime string
 		cmd     string
