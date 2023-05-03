@@ -510,3 +510,26 @@ func (env *Environment) loadJobHttpd() (err error) {
 	}
 	return nil
 }
+
+func (env *Environment) lockAllJob() {
+	var job *Job
+	for _, job = range env.Jobs {
+		job.Lock()
+	}
+
+	var jobHttp *JobHttp
+	for _, jobHttp = range env.HttpJobs {
+		jobHttp.Lock()
+	}
+}
+func (env *Environment) unlockAllJob() {
+	var job *Job
+	for _, job = range env.Jobs {
+		job.Unlock()
+	}
+
+	var jobHttp *JobHttp
+	for _, jobHttp = range env.HttpJobs {
+		jobHttp.Unlock()
+	}
+}

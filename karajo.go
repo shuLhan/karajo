@@ -329,7 +329,10 @@ func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, e
 	res.Code = http.StatusOK
 	res.Data = k.env
 
+	k.env.lockAllJob()
 	resbody, err = json.Marshal(res)
+	k.env.unlockAllJob()
+
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
