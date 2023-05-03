@@ -13,7 +13,6 @@ Test running Job with handleHttp.
     "id": "test_job_handle_http",
     "name": "Test job handle HTTP",
     "interval": 3600000000000,
-    "max_running": 1,
     "log_retention": 5
   }
 }
@@ -38,6 +37,5 @@ Test running Job with handleHttp.
   "name": "Test job handle HTTP",
   "status": "success",
   "interval": 3600000000000,
-  "max_running": 1,
   "log_retention": 5
 }

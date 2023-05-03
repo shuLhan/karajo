@@ -59,11 +59,11 @@ const (
 type JobHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 
 // Job a job can be triggered manually by sending HTTP POST request or
-// automatically by timer (per interval).
+// automatically by timer (per interval or schedule).
 //
 // For job triggered by HTTP request, the Path and Secret must be set.
-// For job triggered by timer, the Interval must be positive duration, equal
-// or greater than 1 minute.
+// For job triggered by timer, the Interval or Schedule must not be empty.
+// See the [JobBase]'s Interval and Schedule fields for more information.
 //
 // Each Job contains a working directory, and a callback or list of commands
 // to be executed.

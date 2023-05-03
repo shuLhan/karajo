@@ -21,12 +21,6 @@ const (
 	JobStatusPaused  = `paused`
 )
 
-// DefaultJobMaxRunning define maximum number of job that can be
-// executed simultaneously.
-// This is to prevent the karajo server consume resources on the local
-// server and on the remote server.
-const DefaultJobMaxRunning = 1
-
 // JobBase define the base fields and commons methods for all Job types.
 type JobBase struct {
 	scheduler *libtime.Scheduler
@@ -74,13 +68,6 @@ type JobBase struct {
 	// If both Schedule and Interval set, only Schedule will be processed.
 	Interval time.Duration `ini:"::interval" json:"interval,omitempty"`
 
-	// MaxRunning maximum number of job running at the same time.
-	// This field is optional default to DefaultJobMaxRunning.
-	MaxRunning int `ini:"::max_running" json:"max_running,omitempty"`
-
-	// NumRunning record the number of job currently running.
-	NumRunning int `ini:"-" json:"num_running,omitempty"`
-
 	sync.Mutex
 }
 
@@ -88,10 +75,6 @@ func (job *JobBase) init() {
 	job.finishq = make(chan struct{}, 1)
 	job.startq = make(chan struct{}, 1)
 	job.stopq = make(chan struct{}, 1)
-
-	if job.MaxRunning == 0 {
-		job.MaxRunning = DefaultJobMaxRunning
-	}
 }
 
 // canStart check if the job can be started or return an error if its paused
@@ -103,20 +86,15 @@ func (job *JobBase) canStart() (err error) {
 	if job.Status == JobStatusPaused {
 		return ErrJobPaused
 	}
-	if job.NumRunning+1 > job.MaxRunning {
-		return ErrJobMaxReached
-	}
 	return nil
 }
 
 // start check if the job can run, the job is not paused and has not reach
 // maximum run.
-// If its can run, the status changes to `started` and its NumRunning
-// increased by one.
+// If its can run, the status changes to `started`.
 //
 // If the job is paused, the LastRun will be set to current time and return
 // ErrJobPaused.
-// if the max running has reached it will return ErrJobMaxReached.
 func (job *JobBase) start() (err error) {
 	err = job.canStart()
 	if err != nil {
@@ -124,7 +102,6 @@ func (job *JobBase) start() (err error) {
 	}
 
 	job.Lock()
-	job.NumRunning++
 	job.Status = JobStatusStarted
 	job.Unlock()
 
@@ -155,7 +132,6 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 		}
 	}
 
-	job.NumRunning--
 	job.LastRun = TimeNow().UTC().Round(time.Second)
 	if job.scheduler != nil {
 		job.NextRun = job.scheduler.Next()

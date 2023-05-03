@@ -29,6 +29,7 @@ const (
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
 type Environment struct {
+	// List of Job by name.
 	Jobs map[string]*Job `ini:"job" json:"jobs"`
 
 	// jobq is the channel that limit the number of job running at the
@@ -36,7 +37,7 @@ type Environment struct {
 	// This limit can be overwritten by MaxJobRunning.
 	jobq chan struct{}
 
-	// List of Job by name.
+	// List of JobHttp by name.
 	HttpJobs map[string]*JobHttp `ini:"job.http" json:"http_jobs"`
 
 	// Name of the service.

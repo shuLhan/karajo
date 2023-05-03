@@ -15,7 +15,6 @@ max_job_running = 1
 description = HTTP job to for a <i>success</i> call.
 secret = s3cret
 interval = 1m
-max_running = 1
 http_method = POST
 http_url = /karajo/job/test-job-success
 http_request_type = json
@@ -44,7 +43,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
       "next_run": "0001-01-01T00:00:00Z",
       "id": "test_job_success",
       "name": "Test job success",
-      "max_running": 1,
       "log_retention": 5
     }
   },
@@ -63,7 +61,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
       "name": "Test success",
       "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
       "interval": 60000000000,
-      "max_running": 1,
       "http_timeout": 300000000000
     }
   },
@@ -91,7 +88,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "id": "test_job_success",
   "name": "Test job success",
   "status": "paused",
-  "max_running": 1,
   "log_retention": 5
 }
 
@@ -117,7 +113,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "next_run": "0001-01-01T00:00:00Z",
   "id": "test_job_success",
   "name": "Test job success",
-  "max_running": 1,
   "log_retention": 5
 }
 
@@ -135,7 +130,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "next_run": "0001-01-01T00:00:00Z",
   "id": "test_job_success",
   "name": "Test job success",
-  "max_running": 1,
   "log_retention": 5
 }
 
@@ -170,7 +164,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "name": "Test success",
   "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "interval": 60000000000,
-  "max_running": 1,
   "http_timeout": 300000000000
 }
 
@@ -202,7 +195,6 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "status": "paused",
   "interval": 60000000000,
-  "max_running": 1,
   "http_timeout": 300000000000
 }
 
@@ -222,6 +214,5 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "status": "started",
   "interval": 60000000000,
-  "max_running": 1,
   "http_timeout": 300000000000
 }

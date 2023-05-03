@@ -20,6 +20,5 @@ Test running Job with Call using timer.
   "name": "Test job timer",
   "status": "success",
   "interval": 60000000000,
-  "max_running": 1,
   "log_retention": 5
 }

@@ -138,7 +138,6 @@ Test LoadEnvironment.
       "name": "",
       "description": "The job to test what the user interface and logs look likes if its \u003cb\u003efail\u003c/b\u003e.",
       "interval": 20000000000,
-      "max_running": 2,
       "http_timeout": 0
     },
     "Test long running": {
@@ -151,7 +150,6 @@ Test LoadEnvironment.
       "name": "",
       "description": "The job to test job log refresh.",
       "interval": 120000000000,
-      "max_running": 1,
       "http_timeout": 0
     },
     "Test random": {
@@ -163,7 +161,6 @@ Test LoadEnvironment.
       "id": "",
       "name": "",
       "description": "Test triggering job /test-random",
-      "max_running": 1,
       "http_timeout": 0
     },
     "Test success": {
@@ -179,7 +176,6 @@ Test LoadEnvironment.
       "name": "",
       "description": "The job to test what the user interface and logs look likes if its \u003ci\u003esuccess\u003c/i\u003e.",
       "interval": 20000000000,
-      "max_running": 1,
       "http_timeout": 0
     }
   },

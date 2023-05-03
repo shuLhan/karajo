@@ -17,7 +17,7 @@ Karajo has the web user interface (WUI) for monitoring the jobs that can be
 accessed at http://127.0.0.1:31937/karajo by default and can be configurable.
 
 A single instance of karajo can be configured through code or from file using
-ini file format.
+INI file format.
 
 Features,
 
@@ -151,7 +151,6 @@ The Job configuration have the following format,
 description = <string>
 schedule = <string>
 interval = <duration>
-max_running = <number>
 path = <string>
 auth_kind = <string>
 header_sign = <string>
@@ -194,9 +193,6 @@ If both Schedule and Interval set, only Schedule will be processed.
 This field is optional, if not set the Job can only run when receiving HTTP
 request.
 If both Schedule and Interval set, only Schedule will be processed.
-
-`max_running`:: Mmaximum number of job running at the same time.
-This field is optional default to the global `max_job_running`.
 
 `path`:: HTTP path where Job can be triggered using HTTP.
 The `path` is automatically prefixed with "/karajo/api/job/run", it is not
@@ -260,7 +256,6 @@ secret = <string>
 header_sign = <string>
 schedule = <string>
 interval = <duration>
-max_running = <number>
 
 http_method = [GET|POST|PUT|DELETE]
 http_url = <URL>
@@ -312,9 +307,6 @@ This field is required, if not set or invalid it will set to 30 seconds.
 If one have job that need to run less than 30 seconds, it should be run on
 single program.
 If both Schedule and Interval set, only Schedule will be processed.
-
-`max_running`:: Define the Maximum number of requests executed by karajo.
-This field is optional default to server `max_job_running`.
 
 `http_method`:: Define the HTTP method to be used in request for job
 execution.

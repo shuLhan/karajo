@@ -76,8 +76,6 @@ JSON format,
 	"description": <string>,
 	"status": <"success"|"fail">,
 	"interval": <number>,
-	"max_running": <number,
-	"num_running": <number,
 
 	"logs": [<JobLog>, ...],
 	"path": <string>,
@@ -98,8 +96,6 @@ JSON format,
 * `status`: Status of the last job running, its either "started, "success",
   "failed", or "paused".
 * `interval`: A period of nano-seconds when the job will be executed.
-* `max_running`: Maximum number of job can be requested at a time.
-* `num_running`: Current number of job running.
 
 * `logs`: List of job log per execution.
 * `path`: HTTP path where Job can be triggered using HTTP.
@@ -145,8 +141,6 @@ JSON format,
 	"description": <string>,
 	"status": <string>,
 	"interval": <number>,
-	"max_running": <number>,
-	"num_running": <number>,
 
 	"http_method": <string>,
 	"http_url": <string>,
@@ -167,8 +161,6 @@ JSON format,
 * `status`: Status of the last job running, its either "started, "success",
   "failed", or "paused".
 * `interval`: A period of nano-seconds when the job will be executed.
-* `max_running`: Maximum number of job can be requested at a time.
-* `num_running`: Current number of job running.
 
 * `http_method`: The HTTP method used to invoke the http_url.
 * `http_url`: The URL where job will be executed.

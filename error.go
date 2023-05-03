@@ -21,11 +21,6 @@ var (
 		Name:    `ERR_JOB_FORBIDDEN`,
 		Message: `forbidden`,
 	}
-	ErrJobMaxReached error = &liberrors.E{
-		Code:    http.StatusTooManyRequests,
-		Name:    `ERR_JOB_MAX_REACHED`,
-		Message: `job has reached maximum running`,
-	}
 	ErrJobPaused error = &liberrors.E{
 		Code:    http.StatusPreconditionFailed,
 		Name:    `ERR_JOB_PAUSED`,

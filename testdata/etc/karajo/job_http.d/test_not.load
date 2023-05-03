@@ -2,7 +2,6 @@
 description = The job to test only .conf file are loaded.
 secret = s3cret
 interval = 20s
-max_running = 1
 http_method = POST
 http_url = /karajo/api/job/run/test-not-load
 http_request_type = json

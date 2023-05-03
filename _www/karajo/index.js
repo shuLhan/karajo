@@ -425,8 +425,6 @@ function renderJobHttpAttrs(job) {
   }
 
   out += `
-    <div>Maximum job running: ${job.max_running}</div>
-    <div>Currently job running: ${job.num_running || 0}</div>
     <div>Last run: ${job.last_run}</div>
     <div>Next run: ${job.next_run}</div>
     <div>Status: ${job.status || ""}</div>

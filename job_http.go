@@ -36,6 +36,9 @@ const (
 // JobHttp A JobHttp is a periodic job that send HTTP request to external HTTP
 // server (or to karajo Job itself).
 //
+// See the [JobBase]'s Interval and Schedule fields for more information on
+// how to setup periodic time.
+//
 // Each JobHttp execution send the parameter named `_karajo_epoch` with value
 // is current server Unix time.
 // If the request type is `query` then the parameter is inside the query URL.
