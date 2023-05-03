@@ -188,11 +188,10 @@ func (cl *Client) JobRun(jobPath string) (job *Job, err error) {
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
-	if res.Code == 200 {
-		return job, nil
+	if res.Code >= 400 {
+		return nil, res
 	}
-	res.Data = nil
-	return nil, res
+	return job, nil
 }
 
 // JobLog get the Job log by its ID and counter.

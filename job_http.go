@@ -129,18 +129,18 @@ func (job *JobHttp) Start() {
 }
 
 func (job *JobHttp) startScheduler() {
+	var err error
+
 	for {
 		select {
 		case <-job.scheduler.C:
-			var (
-				err error
-			)
+			job.startq <- struct{}{}
 
+		case <-job.startq:
 			err = job.start()
 			if err != nil {
 				job.mlog.Errf(`!!! job_http: %s: %s`, job.ID, err)
-				job.scheduler.Stop()
-				return
+				continue
 			}
 
 			_, err = job.execute()
@@ -150,19 +150,13 @@ func (job *JobHttp) startScheduler() {
 				job.mlog.Outf(`job_http: %s: finished.`, job.ID)
 			}
 			job.finish(nil, err)
-			// The finish will trigger the finished channel.
 
-		case <-job.finished:
-			go func() {
-				// Make sure the Next has been updated on
-				// scheduler.
-				time.Sleep(time.Second)
-				job.Lock()
-				job.NextRun = job.scheduler.Next()
-				job.Unlock()
-			}()
+			select {
+			case job.finishq <- struct{}{}:
+			default:
+			}
 
-		case <-job.stopped:
+		case <-job.stopq:
 			job.scheduler.Stop()
 			return
 		}
@@ -192,6 +186,9 @@ func (job *JobHttp) startInterval() {
 		for ever {
 			select {
 			case <-timer.C:
+				job.startq <- struct{}{}
+
+			case <-job.startq:
 				err = job.start()
 				if err != nil {
 					job.mlog.Errf(`!!! %s`, err)
@@ -207,13 +204,16 @@ func (job *JobHttp) startInterval() {
 					job.mlog.Outf(`finished`)
 				}
 				job.finish(nil, err)
-				// The finish will trigger the finished channel.
 
-			case <-job.finished:
 				timer.Stop()
 				ever = false
 
-			case <-job.stopped:
+				select {
+				case job.finishq <- struct{}{}:
+				default:
+				}
+
+			case <-job.stopq:
 				timer.Stop()
 				return
 			}
@@ -224,7 +224,7 @@ func (job *JobHttp) startInterval() {
 // Stop the job.
 func (job *JobHttp) Stop() {
 	job.mlog.Outf(`stopping HTTP job ...`)
-	job.stopped <- true
+	job.stopq <- struct{}{}
 
 	job.mlog.Flush()
 	var err error = job.flog.Close()

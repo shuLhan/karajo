@@ -203,7 +203,9 @@ func TestJob_handleHttp(t *testing.T) {
 		}
 		job = Job{
 			JobBase: JobBase{
-				Name: `Test job handle HTTP`,
+				Name:     `Test job handle HTTP`,
+				Interval: 60 * time.Minute,
+				LastRun:  TimeNow().Add(-30 * time.Minute),
 			},
 			Path:   `/test-job-handle-http`,
 			Secret: `s3cret`,
@@ -232,9 +234,12 @@ func TestJob_handleHttp(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	go job.Start()
+	defer job.Stop()
+
 	var (
 		jobReq = JobHttpRequest{
-			Epoch: testTimeNow.Unix(),
+			Epoch: TimeNow().Unix(),
 		}
 		epr = libhttp.EndpointRequest{
 			HttpRequest: &http.Request{
@@ -272,7 +277,7 @@ func TestJob_handleHttp(t *testing.T) {
 	exp = tdata.Output[`handleHttp_response.json`]
 	test.Assert(t, `handleHttp_response`, string(exp), string(got))
 
-	<-job.finished
+	<-job.finishq
 
 	job.Lock()
 	got, err = json.MarshalIndent(&job, ``, `  `)
@@ -283,7 +288,7 @@ func TestJob_handleHttp(t *testing.T) {
 	job.Unlock()
 
 	exp = tdata.Output[`job_after.json`]
-	test.Assert(t, `TestJob_Call`, string(exp), string(got))
+	test.Assert(t, `TestJob_handleHttp`, string(exp), string(got))
 }
 
 // TestJob_Start test Job's Call with timer.
@@ -331,7 +336,7 @@ func TestJob_Start(t *testing.T) {
 	go job.Start()
 	defer job.Stop()
 
-	<-job.finished
+	<-job.finishq
 
 	job.Lock()
 	got, err = json.MarshalIndent(&job, ``, `  `)

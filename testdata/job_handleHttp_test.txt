@@ -2,19 +2,18 @@ Test running Job with handleHttp.
 
 <<< handleHttp_response.json
 {
-  "code": 200,
+  "code": 202,
   "message": "OK",
   "data": {
     "path": "/test-job-handle-http",
     "auth_kind": "hmac-sha256",
     "header_sign": "X-Karajo-Sign",
-    "last_run": "0001-01-01T00:00:00Z",
-    "next_run": "0001-01-01T00:00:00Z",
+    "last_run": "2023-01-08T23:30:00Z",
+    "next_run": "2023-01-09T00:30:00Z",
     "id": "test_job_handle_http",
     "name": "Test job handle HTTP",
-    "status": "started",
+    "interval": 3600000000000,
     "max_running": 1,
-    "num_running": 1,
     "log_retention": 5
   }
 }
@@ -34,10 +33,11 @@ Test running Job with handleHttp.
   "auth_kind": "hmac-sha256",
   "header_sign": "X-Karajo-Sign",
   "last_run": "2023-01-09T00:00:00Z",
-  "next_run": "0001-01-01T00:00:00Z",
+  "next_run": "2023-01-09T01:00:00Z",
   "id": "test_job_handle_http",
   "name": "Test job handle HTTP",
   "status": "success",
+  "interval": 3600000000000,
   "max_running": 1,
   "log_retention": 5
 }

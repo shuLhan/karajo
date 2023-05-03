@@ -462,14 +462,15 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err err
 
 	job.pause()
 
-	job.Lock()
-	defer job.Unlock()
-
 	res = &libhttp.EndpointResponse{}
 	res.Code = http.StatusOK
 	res.Data = job
 
-	return json.Marshal(res)
+	job.Lock()
+	resb, err = json.Marshal(res)
+	job.Unlock()
+
+	return resb, err
 }
 
 // apiJobResume resume the paused Job.

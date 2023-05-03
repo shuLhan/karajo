@@ -99,7 +99,8 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "code": 412,
   "message": "job is paused",
-  "name": "ERR_JOB_PAUSED"
+  "name": "ERR_JOB_PAUSED",
+  "data": null
 }
 
 <<< apiJobResume.json
@@ -112,7 +113,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
     "echo Counter is $KARAJO_JOB_COUNTER",
     "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
-  "last_run": "2023-01-09T00:00:00Z",
+  "last_run": "0001-01-01T00:00:00Z",
   "next_run": "0001-01-01T00:00:00Z",
   "id": "test_job_success",
   "name": "Test job success",
@@ -130,13 +131,11 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
     "echo Counter is $KARAJO_JOB_COUNTER",
     "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
-  "last_run": "2023-01-09T00:00:00Z",
+  "last_run": "0001-01-01T00:00:00Z",
   "next_run": "0001-01-01T00:00:00Z",
   "id": "test_job_success",
   "name": "Test job success",
-  "status": "started",
   "max_running": 1,
-  "num_running": 1,
   "log_retention": 5
 }
 

@@ -404,6 +404,12 @@ func (job *Job) initTimer() (err error) {
 		if job.Interval < time.Minute {
 			job.Interval = time.Minute
 		}
+
+		var (
+			now          = TimeNow().UTC().Round(time.Second)
+			nextInterval = job.computeNextInterval(now)
+		)
+		job.NextRun = now.Add(nextInterval)
 	}
 	return nil
 }
@@ -431,9 +437,7 @@ func (job *Job) logsPrune() {
 // Once the signature is verified it will response immediately and run the
 // actual process in the new goroutine.
 func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
-	var (
-		logp = `handleHttp`
-	)
+	var logp = `handleHttp`
 
 	// Authenticated request by checking the request body.
 	err = job.authorize(epr.HttpRequest.Header, epr.RequestBody)
@@ -441,34 +445,24 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, err)
 	}
 
-	err = job.start()
+	err = job.canStart()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, err)
 	}
 
-	go func() {
-		var (
-			jlog *JobLog
-			err  error
-		)
-		jlog, err = job.execute(epr)
-		if err != nil {
-			mlog.Errf(`!!! job: %s: failed: %s.`, job.ID, err)
-		} else {
-			mlog.Outf(`job: %s: finished.`, job.ID)
-		}
-		job.finish(jlog, err)
-	}()
-
 	var res libhttp.EndpointResponse
 
-	res.Code = http.StatusOK
+	res.Code = http.StatusAccepted
 	res.Message = `OK`
 	res.Data = job
 
 	job.Lock()
 	resbody, err = json.Marshal(&res)
 	job.Unlock()
+
+	go func() {
+		job.startq <- struct{}{}
+	}()
 
 	return resbody, err
 }
@@ -481,23 +475,25 @@ func (job *Job) Start() {
 	}
 	if job.Interval > 0 {
 		job.startInterval()
+		return
 	}
+	job.startQueue()
 }
 
-func (job *Job) startScheduler() {
+// startQueue start Job queue that triggered only by HTTP request.
+func (job *Job) startQueue() {
+	var (
+		jlog *JobLog
+		err  error
+	)
+
 	for {
 		select {
-		case <-job.scheduler.C:
-			var (
-				jlog *JobLog
-				err  error
-			)
-
+		case <-job.startq:
 			err = job.start()
 			if err != nil {
 				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-				job.scheduler.Stop()
-				return
+				continue
 			}
 
 			jlog, err = job.execute(nil)
@@ -507,19 +503,50 @@ func (job *Job) startScheduler() {
 				mlog.Outf(`job: %s: finished.`, job.ID)
 			}
 			job.finish(jlog, err)
-			// The finish will trigger the finished channel.
 
-		case <-job.finished:
-			go func() {
-				// Make sure the Next has been updated on
-				// scheduler.
-				time.Sleep(time.Second)
-				job.Lock()
-				job.NextRun = job.scheduler.Next()
-				job.Unlock()
-			}()
+			select {
+			case job.finishq <- struct{}{}:
+			default:
+			}
 
-		case <-job.stopped:
+		case <-job.stopq:
+			return
+		}
+	}
+}
+
+func (job *Job) startScheduler() {
+	var (
+		jlog *JobLog
+		err  error
+	)
+
+	for {
+		select {
+		case <-job.scheduler.C:
+			job.startq <- struct{}{}
+
+		case <-job.startq:
+			err = job.start()
+			if err != nil {
+				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
+				continue
+			}
+
+			jlog, err = job.execute(nil)
+			if err != nil {
+				mlog.Errf(`!!! job: %s: failed: %s.`, job.ID, err)
+			} else {
+				mlog.Outf(`job: %s: finished.`, job.ID)
+			}
+			job.finish(jlog, err)
+
+			select {
+			case job.finishq <- struct{}{}:
+			default:
+			}
+
+		case <-job.stopq:
 			job.scheduler.Stop()
 			return
 		}
@@ -543,13 +570,16 @@ func (job *Job) startInterval() {
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
 
-		mlog.Outf(`job: %s: next running in %s ...`, job.ID, nextInterval)
+		mlog.Outf(`job: %s: next running in %s.`, job.ID, nextInterval)
 
 		timer = time.NewTimer(nextInterval)
 		ever = true
 		for ever {
 			select {
 			case <-timer.C:
+				job.startq <- struct{}{}
+
+			case <-job.startq:
 				err = job.start()
 				if err != nil {
 					mlog.Errf(`!!! job: %s: %s`, job.ID, err)
@@ -565,13 +595,16 @@ func (job *Job) startInterval() {
 					mlog.Outf(`job: %s: finished.`, job.ID)
 				}
 				job.finish(jlog, err)
-				// The finish will trigger the finished channel.
 
-			case <-job.finished:
 				timer.Stop()
 				ever = false
 
-			case <-job.stopped:
+				select {
+				case job.finishq <- struct{}{}:
+				default:
+				}
+
+			case <-job.stopq:
 				timer.Stop()
 				return
 			}
@@ -581,14 +614,6 @@ func (job *Job) startInterval() {
 
 // execute the job Call or commands.
 func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
-	var (
-		now     time.Time
-		execCmd exec.Cmd
-		logTime string
-		cmd     string
-		x       int
-	)
-
 	job.env.jobq <- struct{}{}
 	mlog.Outf(`job: %s: started ...`, job.ID)
 	defer func() {
@@ -610,6 +635,14 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 		err = job.Call(jlog, epr)
 		return jlog, err
 	}
+
+	var (
+		now     time.Time
+		execCmd exec.Cmd
+		logTime string
+		cmd     string
+		x       int
+	)
 
 	// Run commands.
 	for x, cmd = range job.Commands {
@@ -640,7 +673,7 @@ func (job *Job) Stop() {
 	mlog.Outf(`job: %s: stopping ...`, job.ID)
 
 	select {
-	case job.stopped <- true:
+	case job.stopq <- struct{}{}:
 	default:
 	}
 }

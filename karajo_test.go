@@ -103,6 +103,7 @@ func TestKarajo_apis(t *testing.T) {
 	t.Run(`apiJobRun_success`, func(tt *testing.T) {
 		testKarajo_apiJobRun_success(tt, tdata, testClient)
 	})
+
 	t.Run(`apiJobRun_notfound`, func(tt *testing.T) {
 		testKarajo_apiJobRun_notfound(tt, tdata, testClient)
 	})
@@ -233,6 +234,7 @@ func testKarajo_apiJobRun_success(t *testing.T, tdata *test.Data, cl *Client) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	test.Assert(t, `apiJobRun_success`, string(exp), string(got))
 }
 
@@ -283,7 +285,7 @@ func testKarajo_apiJobLog(t *testing.T, tdata *test.Data, cl *Client) {
 		t.Fatal(err)
 	}
 
-	test.Assert(t, `apiJobLog`, string(exp), string(got))
+	test.Assert(t, `apiJobLog.json`, string(exp), string(got))
 }
 
 func testKarajo_apiJobResume(t *testing.T, tdata *test.Data, cl *Client) {

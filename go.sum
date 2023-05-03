@@ -2,8 +2,8 @@ git.sr.ht/~shulhan/asciidoctor-go v0.4.1 h1:Zev0L5HyMjH43sPaoJal8E/Hmbel/akoGOxN
 git.sr.ht/~shulhan/asciidoctor-go v0.4.1/go.mod h1:vRHDUl3o3UzDkvVR9dEFYQ0JDqOh0TKpOZWvOh/CGZU=
 git.sr.ht/~shulhan/ciigo v0.9.3 h1:q6EqGVvIU8ymkPqBS4HEyHIhbfVhJn6urwvGDg83TAY=
 git.sr.ht/~shulhan/ciigo v0.9.3/go.mod h1:SsRnbqnBo+9jWDDZD/uc9IkdgGpBfp39vV0JPXNro9c=
-github.com/shuLhan/share v0.44.0 h1:Afom8pQrzNYtUZM53y+eqlZw5lkFm7bgl3QjZ3ARsgg=
-github.com/shuLhan/share v0.44.0/go.mod h1:BnjohSsgDFMeYQ0/ws7kzb1oABZdVbEwDNGbUhOLee4=
+github.com/shuLhan/share v0.46.0 h1:cF0Ngj7wVA6TIcdSmfrqxOwMB3hZ+4df5cJf4GGCun4=
+github.com/shuLhan/share v0.46.0/go.mod h1:BhnIWJxq84BTOs3Z2gLFAN8ih9mBfhZbRIjqGupGJag=
 golang.org/x/net v0.7.0 h1:rJrUqqhjsgNp7KqAIc25s9pZnjU7TUcSY7HcVZjdn1g=
 golang.org/x/net v0.7.0/go.mod h1:2Tu9+aMcznHK/AK1HMvgo6xiTLG5rD5rZLDS+rp2Bjs=
 golang.org/x/sys v0.5.0 h1:MUK/U/4lj1t1oPg0HfuXDN/Z1wv31ZJ/YcPiGccS4DU=

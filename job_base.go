@@ -31,8 +31,9 @@ const DefaultJobMaxRunning = 1
 type JobBase struct {
 	scheduler *libtime.Scheduler
 
-	finished chan bool
-	stopped  chan bool
+	finishq chan struct{}
+	startq  chan struct{}
+	stopq   chan struct{}
 
 	// The last time the job is finished running, in UTC.
 	LastRun time.Time `ini:"-" json:"last_run,omitempty"`
@@ -84,12 +85,28 @@ type JobBase struct {
 }
 
 func (job *JobBase) init() {
-	job.finished = make(chan bool, 1)
-	job.stopped = make(chan bool, 1)
+	job.finishq = make(chan struct{}, 1)
+	job.startq = make(chan struct{}, 1)
+	job.stopq = make(chan struct{}, 1)
 
 	if job.MaxRunning == 0 {
 		job.MaxRunning = DefaultJobMaxRunning
 	}
+}
+
+// canStart check if the job can be started or return an error if its paused
+// or reached maximum running.
+func (job *JobBase) canStart() (err error) {
+	job.Lock()
+	defer job.Unlock()
+
+	if job.Status == JobStatusPaused {
+		return ErrJobPaused
+	}
+	if job.NumRunning+1 > job.MaxRunning {
+		return ErrJobMaxReached
+	}
+	return nil
 }
 
 // start check if the job can run, the job is not paused and has not reach
@@ -101,21 +118,15 @@ func (job *JobBase) init() {
 // ErrJobPaused.
 // if the max running has reached it will return ErrJobMaxReached.
 func (job *JobBase) start() (err error) {
+	err = job.canStart()
+	if err != nil {
+		return err
+	}
+
 	job.Lock()
-	defer job.Unlock()
-
-	if job.Status == JobStatusPaused {
-		// Always set the LastRun to the current time, otherwise it
-		// will run with 0s duration for interval based job.
-		job.LastRun = TimeNow().UTC().Round(time.Second)
-		return ErrJobPaused
-	}
-	if job.NumRunning+1 > job.MaxRunning {
-		return ErrJobMaxReached
-	}
-
 	job.NumRunning++
 	job.Status = JobStatusStarted
+	job.Unlock()
 
 	return nil
 }
@@ -146,13 +157,10 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 
 	job.NumRunning--
 	job.LastRun = TimeNow().UTC().Round(time.Second)
-	if job.Interval > 0 {
+	if job.scheduler != nil {
+		job.NextRun = job.scheduler.Next()
+	} else if job.Interval > 0 {
 		job.NextRun = job.LastRun.Add(job.Interval)
-	}
-
-	select {
-	case job.finished <- true:
-	default:
 	}
 }
 

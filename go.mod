@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	git.sr.ht/~shulhan/ciigo v0.9.3
-	github.com/shuLhan/share v0.44.0
+	github.com/shuLhan/share v0.46.0
 )
 
 require (
