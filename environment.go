@@ -40,6 +40,11 @@ type Environment struct {
 	// List of JobHttp by name.
 	HttpJobs map[string]*JobHttp `ini:"job.http" json:"http_jobs"`
 
+	// Users list of user that can access web user interface.
+	// The list of user optionally loaded from
+	// $DirBase/etc/karajo/user.conf if the file exist.
+	Users map[string]*User `json:"-"`
+
 	// Name of the service.
 	// The Name will be used for title on the web user interface, as log
 	// prefix, as file prefix on the jobs state, and as file prefix on
@@ -71,7 +76,9 @@ type Environment struct {
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
-	DirBase   string `ini:"karajo::dir_base" json:"dir_base"`
+	DirBase string `ini:"karajo::dir_base" json:"dir_base"`
+
+	// Equal to $DirBase/etc/karajo/
 	dirConfig string
 
 	// dirConfigJobd is the directory where job configuration loaded.
@@ -161,6 +168,7 @@ func NewEnvironment() (env *Environment) {
 		Name:          defEnvName,
 		Jobs:          make(map[string]*Job),
 		HttpJobs:      make(map[string]*JobHttp),
+		Users:         make(map[string]*User),
 		ListenAddress: defListenAddress,
 		DirBase:       defDirBase,
 		HttpTimeout:   defHttpTimeout,
@@ -244,6 +252,11 @@ func (env *Environment) init() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
+	err = env.initUsers()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
 	err = env.loadJobd()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
@@ -307,6 +320,34 @@ func (env *Environment) initDirs() (err error) {
 	err = os.MkdirAll(env.dirRunJobHttp, 0700)
 	if err != nil {
 		return fmt.Errorf(`%s: %s: %w`, logp, env.dirRunJobHttp, err)
+	}
+
+	return nil
+}
+
+// initUsers load users for authentication from $DirBase/etc/karajo/user.conf.
+func (env *Environment) initUsers() (err error) {
+	var (
+		logp         = `initUsers`
+		fileUserConf = filepath.Join(env.dirConfig, `user.conf`)
+
+		listUser map[string]*User
+		name     string
+		u        *User
+	)
+
+	listUser, err = loadUsers(fileUserConf)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	mlog.Outf(`Loaded %d users from %s.`, len(listUser), fileUserConf)
+
+	if env.Users == nil {
+		env.Users = make(map[string]*User)
+	}
+	for name, u = range listUser {
+		env.Users[name] = u
 	}
 
 	return nil
