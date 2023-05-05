@@ -73,10 +73,10 @@ var (
 	}
 )
 
+// Karajo HTTP server and jobs manager.
 type Karajo struct {
-	*libhttp.Server
-
-	env *Environment
+	httpd *libhttp.Server
+	env   *Environment
 }
 
 // Sign generate hex string of HMAC + SHA256 of payload using the secret.
@@ -145,7 +145,7 @@ func New(env *Environment) (k *Karajo, err error) {
 		serverOpts.Memfs = mfs
 	}
 
-	k.Server, err = libhttp.NewServer(&serverOpts)
+	k.httpd, err = libhttp.NewServer(&serverOpts)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -164,11 +164,9 @@ func New(env *Environment) (k *Karajo, err error) {
 }
 
 func (k *Karajo) registerApis() (err error) {
-	var (
-		logp = `registerApis`
-	)
+	var logp = `registerApis`
 
-	err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiEnvironment,
 		RequestType:  libhttp.RequestTypeNone,
@@ -179,7 +177,7 @@ func (k *Karajo) registerApis() (err error) {
 		return err
 	}
 
-	err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobLog,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -189,7 +187,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobPause,
 		RequestType:  libhttp.RequestTypeForm,
@@ -199,7 +197,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobPause, err)
 	}
-	err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobResume,
 		RequestType:  libhttp.RequestTypeForm,
@@ -210,7 +208,7 @@ func (k *Karajo) registerApis() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobResume, err)
 	}
 
-	err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobHttp,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -220,7 +218,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobHttpLogs,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -230,7 +228,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobHttpPause,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -240,7 +238,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobHttpResume,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -264,7 +262,7 @@ func (k *Karajo) registerJobsHook() (err error) {
 			continue
 		}
 
-		err = k.Server.RegisterEndpoint(&libhttp.Endpoint{
+		err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 			Method:       libhttp.RequestMethodPost,
 			Path:         path.Join(apiJobRun, job.Path),
 			RequestType:  libhttp.RequestTypeJSON,
@@ -286,7 +284,7 @@ func (k *Karajo) Start() (err error) {
 		job     *Job
 	)
 
-	mlog.Outf(`started the karajo server at http://%s/karajo`, k.Server.Addr)
+	mlog.Outf(`started the karajo server at http://%s/karajo`, k.httpd.Addr)
 
 	for _, job = range k.env.Jobs {
 		go job.Start()
@@ -295,7 +293,7 @@ func (k *Karajo) Start() (err error) {
 		go jobHttp.Start()
 	}
 
-	return k.Server.Start()
+	return k.httpd.Start()
 }
 
 // Stop all the jobs and the HTTP server.
@@ -317,7 +315,7 @@ func (k *Karajo) Stop() (err error) {
 		job.Stop()
 	}
 
-	return k.Server.Stop(5 * time.Second)
+	return k.httpd.Stop(5 * time.Second)
 }
 
 func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
