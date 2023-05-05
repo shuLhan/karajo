@@ -5,6 +5,7 @@ go 1.19
 require (
 	git.sr.ht/~shulhan/ciigo v0.9.3
 	github.com/shuLhan/share v0.46.0
+	golang.org/x/crypto v0.6.0
 )
 
 require (
