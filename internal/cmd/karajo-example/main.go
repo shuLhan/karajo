@@ -29,7 +29,7 @@ func main() {
 	)
 
 	env.DirBase = `testdata/example`
-	env.DirPublic = `testdata`
+	env.DirPublic = `testdata/public`
 	env.Secret = `s3cret`
 	env.IsDevelopment = true
 

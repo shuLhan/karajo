@@ -68,40 +68,20 @@ func Sign(payload, secret []byte) (sign string) {
 func New(env *Environment) (k *Karajo, err error) {
 	var logp = `New`
 
-	k = &Karajo{
-		env: env,
-	}
-
 	err = env.init()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	mlog.SetPrefix(env.Name + `:`)
-
-	if memfsWww == nil {
-		return nil, fmt.Errorf(`%s: empty embedded www`, logp)
+	k = &Karajo{
+		env: env,
 	}
 
-	memfsWww.Opts.TryDirect = env.IsDevelopment
+	mlog.SetPrefix(env.Name + `:`)
 
-	if len(env.DirPublic) != 0 {
-		var (
-			opts = memfs.Options{
-				Root:      env.DirPublic,
-				TryDirect: true,
-			}
-			memfsPublic *memfs.MemFS
-		)
-
-		memfsPublic, err = memfs.New(&opts)
-		if err != nil {
-			return nil, fmt.Errorf(`%s: %w`, logp, err)
-		}
-
-		memfsWww = memfs.Merge(memfsWww, memfsPublic)
-		memfsWww.Root.SysPath = env.DirPublic
-		memfsWww.Opts.TryDirect = true
+	err = k.initMemfs()
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	err = k.initHttpd()
@@ -110,6 +90,41 @@ func New(env *Environment) (k *Karajo, err error) {
 	}
 
 	return k, nil
+}
+
+// initMemfs initialize the memory file system for serving the WUI and public
+// directory.
+func (k *Karajo) initMemfs() (err error) {
+	var logp = `initMemfs`
+
+	if memfsWww == nil {
+		return fmt.Errorf(`%s: empty embedded www`, logp)
+	}
+
+	memfsWww.Opts.TryDirect = k.env.IsDevelopment
+
+	if len(k.env.DirPublic) == 0 {
+		return nil
+	}
+
+	var (
+		opts = memfs.Options{
+			Root:      k.env.DirPublic,
+			TryDirect: true,
+		}
+		memfsPublic *memfs.MemFS
+	)
+
+	memfsPublic, err = memfs.New(&opts)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	memfsWww = memfs.Merge(memfsWww, memfsPublic)
+	memfsWww.Root.SysPath = k.env.DirPublic
+	memfsWww.Opts.TryDirect = true
+
+	return nil
 }
 
 // Start all the jobs and the HTTP server.
