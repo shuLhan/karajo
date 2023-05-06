@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	liberrors "github.com/shuLhan/share/lib/errors"
 	libhttp "github.com/shuLhan/share/lib/http"
 )
 
@@ -22,6 +23,8 @@ const HeaderNameXKarajoSign = `X-Karajo-Sign`
 
 // List of HTTP API.
 const (
+	apiAuthLogin = `/karajo/api/auth/login`
+
 	apiEnvironment = `/karajo/api/environment`
 
 	apiJobHttp       = `/karajo/api/job_http`
@@ -40,6 +43,17 @@ const (
 	paramNameCounter     = `counter`
 	paramNameID          = `id`
 	paramNameKarajoEpoch = `_karajo_epoch`
+	paramNameName        = `name`
+	paramNamePassword    = `password`
+)
+
+// List of errors related to HTTP APIs.
+var (
+	errAuthLogin = liberrors.E{
+		Code:    http.StatusBadRequest,
+		Name:    `ERR_AUTH_LOGIN`,
+		Message: `invalid user name and/or password`,
+	}
 )
 
 // initHttpd initialize the HTTP server, including registering its endpoints
@@ -80,6 +94,17 @@ func (k *Karajo) initHttpd() (err error) {
 // registerApis register the public HTTP APIs.
 func (k *Karajo) registerApis() (err error) {
 	var logp = `registerApis`
+
+	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         apiAuthLogin,
+		RequestType:  libhttp.RequestTypeForm,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         k.apiAuthLogin,
+	})
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
 
 	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
@@ -190,6 +215,65 @@ func (k *Karajo) registerJobsHook() (err error) {
 	}
 
 	return nil
+}
+
+// apiAuthLogin authenticate user using name and password.
+//
+// A valid user's account will receive authorization cookie named `karajo`
+// that can be used as authorization for subsequent request.
+//
+// Request format,
+//
+//	POST /karajo/api/auth/login
+//	Content-Type: application/x-www-form-urlencoded
+//
+//	name=&password=
+//
+// List of response,
+//
+//   - 200 OK: success.
+//   - 400 ERR_AUTH_LOGIN: invalid name and/or password.
+//   - 500 ERR_INTERNAL: internal server error.
+func (k *Karajo) apiAuthLogin(epr *libhttp.EndpointRequest) (respBody []byte, err error) {
+	var (
+		logp = `apiAuthLogin`
+		name = epr.HttpRequest.Form.Get(paramNameName)
+		pass = epr.HttpRequest.Form.Get(paramNamePassword)
+	)
+
+	name = strings.TrimSpace(name)
+	if len(name) == 0 {
+		return nil, &errAuthLogin
+	}
+
+	pass = strings.TrimSpace(pass)
+	if len(pass) == 0 {
+		return nil, &errAuthLogin
+	}
+
+	var user = k.env.Users[name]
+	if user == nil {
+		return nil, &errAuthLogin
+	}
+
+	if !user.authenticate(pass) {
+		return nil, &errAuthLogin
+	}
+
+	err = k.sessionNew(epr.HttpWriter, user)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	var res = &libhttp.EndpointResponse{}
+
+	res.Code = http.StatusOK
+	respBody, err = json.Marshal(res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	return respBody, nil
 }
 
 func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, err error) {

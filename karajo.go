@@ -50,6 +50,7 @@ var (
 type Karajo struct {
 	httpd *libhttp.Server
 	env   *Environment
+	sm    *sessionManager
 }
 
 // Sign generate hex string of HMAC + SHA256 of payload using the secret.
@@ -75,6 +76,7 @@ func New(env *Environment) (k *Karajo, err error) {
 
 	k = &Karajo{
 		env: env,
+		sm:  newSessionManager(),
 	}
 
 	mlog.SetPrefix(env.Name + `:`)
