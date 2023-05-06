@@ -29,6 +29,7 @@ Features,
 * Trigger job using HTTP request (webhook). Supported webhook are `github`,
   `sourcehut`, or custom `hmac-sha256` (default).
 * HTTP APIs to programmatically interact with server
+* User authentication
 
 Workflow on karajo,
 
@@ -93,11 +94,12 @@ This field is optional, default to current directory.
 The structure of directory follow the common UNIX system,
 
 ----
-$DirBase
+$dir_base
 |
 +-- /etc/karajo/ +-- karajo.conf
 |                +-- job.d/
 |                +-- job_http.d/
+|                +-- user.conf
 |
 +-- /var/lib/karajo/job/$Job.ID
 |
@@ -135,6 +137,42 @@ format, for example, "30s" for 30 seconds, "1m" for 1 minute.
 This field is optional default to 1.
 
 
+[#config_user]
+===  User
+
+The Karajo WUI can be secured with login, where user must authenticated using
+name and password before they can view the dashboard.
+By default the user list is empty, which allow public to view the dashboard.
+
+The user account can be set using configuration or by code.
+
+The configuration file for user is in `$dir_base/etc/karajo/user.conf`, using
+the following format,
+
+----
+[user "$name"]
+password = <$bcrypt_hash>
+----
+
+Each user $name is unique.
+The `$bcrypt_hash` is the password of user, stored as hash using bcrypt
+version 2a (`$2a$`).
+
+In the code, one can register the same things using field `Users` in the
+`Environment`,
+
+----
+env := karajo.Environment{
+	Users: map[string]*karajo.User{
+		`yourname`: &User{
+			// Hash of password `s3cret` using bcrypt v2a.
+			Password: `$2a$10$9XMRfqpnzY2421fwYm5dd.CidJf7dHHWIESeeNGXuajHRf.Lqzy7a`
+		},
+	}
+}
+----
+
+
 [#config_job]
 ===  Job
 
@@ -143,7 +181,7 @@ external HTTP request or by timer.
 
 A job configuration can be defined along with main configuration,
 `karajo.conf` or split into separate files inside the
-`$DirBase/etc/karajo/job.d/`, with suffix `.conf`.
+`$dir_base/etc/karajo/job.d/`, with suffix `.conf`.
 The Job configuration have the following format,
 
 ----
@@ -245,7 +283,7 @@ A JobHttp is a periodic job that send HTTP request to external HTTP server
 
 A JobHttp configuration can be defined along with the main configuration,
 `karajo.conf` or split into separate files inside the
-`$DirBase/etc/karajo/job_http.d/`, with suffix `.conf`.
+`$dir_base/etc/karajo/job_http.d/`, with suffix `.conf`.
 
 Each JobHttp has the following configuration,
 
@@ -364,12 +402,12 @@ You can run the example from this repository by executing,
 	$ go run ./internal/cmd/karajo-example
 
 For Job as configuration, we can put it along main configuration
-`$DirBase/etc/karajo/karajo.conf` or split into file inside
-`$DirBase/etc/karajo/job.d/`.
+`$dir_base/etc/karajo/karajo.conf` or split into file inside
+`$dir_base/etc/karajo/job.d/`.
 
 For JobHttp as configuration, we can put it along main configuration
-`$DirBase/etc/karajo/karajo.conf` or split into file inside
-`$DirBase/etc/karajo/job_http.d/`.
+`$dir_base/etc/karajo/karajo.conf` or split into file inside
+`$dir_base/etc/karajo/job_http.d/`.
 
 For Job or JobHttp as code, the main program would looks like these,
 

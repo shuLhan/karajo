@@ -7,158 +7,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="/karajo/favicon.png" />
     <title>karajo</title>
-    <script type="text/javascript" src="/karajo/crypto-js.min.js"></script>
-    <script type="text/javascript" src="/karajo/index.js"></script>
     <style>
-      body {
-        margin: 0;
-        padding: 20px 0 0 0;
+      #error {
+        background: darksalmon;
+        display: none;
+        padding: 0.4em;
       }
-
-      a {
-        text-decoration: none;
-      }
-
-      #timer {
-        font-size: 12px;
-      }
-
-      .auth {
-        margin: 1em 0;
-      }
-      .auth label {
-        width: 10em;
-      }
-      .auth input {
-        width: calc(100% - 10em);
-      }
-      .auth .hint {
-        background-color: antiquewhite;
-        padding: 4px;
-        margin: 4px 0;
-      }
-
-      .header-fixed {
-        background-color: whitesmoke;
-        border-bottom: 1px solid silver;
-        padding: 4px;
-        position: fixed;
-        text-align: center;
-        top: 0;
+      .content {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
         width: 100%;
       }
-
-      .content {
-        padding: 8px;
+      .form-login {
+        flex-direction: column;
       }
-
-      .name {
-        padding: 5px;
+      .input {
+        flex-direction: row;
+        margin: 1em;
       }
-      .name.started {
-        background: lightyellow;
-      }
-      .name.running {
-        background: lightcyan;
-      }
-      .name.failed {
-        background: lightpink;
-      }
-      .name.success {
-        background: lightgreen;
-      }
-      .name.paused {
-        background: lightgrey;
-      }
-
-      .job,
-      .jobhttp {
-        margin-bottom: 1em;
-      }
-
-      .job-log {
-        padding: 5px;
+      .input label {
+        width: 6em;
         display: inline-block;
       }
-      .job-log.failed {
-        background: lightpink;
+      .input input {
+        width: calc(100%-10em);
       }
-      .job-log.success {
-        background: lightgreen;
-      }
-
-      .attrs {
-        padding: 1em;
-        border-left: 1px solid lightgray;
-        border-right: 1px solid lightgray;
-        border-bottom: 1px solid lightgray;
-      }
-
-      .log {
-        font-size: 12px;
-        height: 18em;
-        overflow: auto;
-        font-family: monospace;
-        background-color: lightgray;
-        padding: 1em;
-        white-space: pre-wrap;
-        word-break: break-word;
-      }
-
-      .last_run,
-      .next_run {
-        float: right;
-      }
-
-      .footer {
-        margin: 1em auto;
+      .row.center {
+        flex-direction: row;
         text-align: center;
       }
-
-      @media only screen and (max-width: 400px) {
-        .actions > button {
-          display: block;
-          width: calc(100%);
-          margin-bottom: 6px;
-        }
-      }
     </style>
+    <script>
+      async function doLogin() {
+        let name = document.getElementById("name").value;
+        let password = document.getElementById("password").value;
+
+        let httpResp = await fetch("/karajo/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          },
+          body: `name=${name}&password=${password}`,
+        });
+
+        let jsonResp = await httpResp.json();
+        if (jsonResp.code !== 200) {
+          logError(jsonResp.message);
+          return;
+        }
+
+        window.location = "/karajo/app/";
+      }
+
+      function logError(msg) {
+        let elError = document.getElementById("error");
+        elError.style.display = "block";
+        elError.innerText = msg;
+      }
+    </script>
   </head>
-
-  <body onload="main()">
-    <div class="header-fixed">
-      <span id="timer"> </span>
-    </div>
-
+  <body>
     <div class="content">
-      <h2>
-        <span id="title">Karajo</span>
-      </h2>
-
-      <div class="auth">
-        <label for="_secret">Secret: </label>
-        <input id="_secret" />
-        <div class="hint">
-          Secret is required to pause, resume, or running a job.
+      <div class="form-login">
+        <div class="row center">Welcome to karajo</div>
+        <div class="input">
+          <label for="name">Name: </label>
+          <input type="text" name="name" id="name" required />
+        </div>
+        <div class="input">
+          <label for="password">Password: </label>
+          <input type="password" name="password" id="password" required />
+        </div>
+        <div class="input">
+          <label></label>
+          <input type="submit" value="Login" onclick="doLogin()" />
         </div>
       </div>
+      <div id="error"></div>
 
-      <h3>Jobs</h3>
-      <div id="jobs"></div>
-
-      <h3>HTTP Jobs</h3>
-      <div id="http_jobs"></div>
-
-      <div id="out"></div>
-      <div id="err"></div>
-    </div>
-
-    <div class="footer">
-      <div>
-        Powered by
-        <a href="https://sr.ht/~shulhan/karajo" target="_blank">Karajo</a>
+      <div class="row center">
+        <a href="/">Front page</a>
+        &#x266A;
+        <a href="/karajo/doc/">Documentation</a>
       </div>
-      <div><a href="/karajo/doc/" target="_blank">Documentation</a></div>
     </div>
   </body>
 </html>

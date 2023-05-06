@@ -16,6 +16,7 @@ import (
 
 	liberrors "github.com/shuLhan/share/lib/errors"
 	libhttp "github.com/shuLhan/share/lib/http"
+	"github.com/shuLhan/share/lib/memfs"
 )
 
 // HeaderNameXKarajoSign the header key for the signature of body.
@@ -36,6 +37,12 @@ const (
 	apiJobPause  = `/karajo/api/job/pause`
 	apiJobResume = `/karajo/api/job/resume`
 	apiJobRun    = `/karajo/api/job/run`
+)
+
+// List of known pathes.
+const (
+	pathKarajoApi = `/karajo/api/`
+	pathKarajoApp = `/karajo/app/`
 )
 
 // List of known HTTP request parameters.
@@ -68,6 +75,7 @@ func (k *Karajo) initHttpd() (err error) {
 				WriteTimeout:   10 * time.Minute,
 				MaxHeaderBytes: 1 << 20,
 			},
+			HandleFS:        k.handleFSAuth,
 			Memfs:           memfsWww,
 			EnableIndexHtml: true,
 		}
@@ -215,6 +223,69 @@ func (k *Karajo) registerJobsHook() (err error) {
 	}
 
 	return nil
+}
+
+// handleFSAuth authorize access to resource based on the request path and
+// cookie.
+// If env.Users is empty, all request are accepted.
+func (k *Karajo) handleFSAuth(_ *memfs.Node, w http.ResponseWriter, req *http.Request) bool {
+	var path = req.URL.Path
+
+	if k.isAuthorized(req) {
+		if isLoginPage(path) {
+			// Redirect user to app page if cookie is valid and
+			// user in login page.
+			http.Redirect(w, req, pathKarajoApp, http.StatusFound)
+			return false
+		}
+		return true
+	}
+	if isRequireAuth(path) {
+		return k.unauthorized(w, req)
+	}
+
+	return true
+}
+
+// isAuthorized return true env.Users is empty OR if the cookie exist and
+// valid.
+func (k *Karajo) isAuthorized(req *http.Request) bool {
+	if len(k.env.Users) == 0 {
+		return true
+	}
+
+	var (
+		cookie *http.Cookie
+		err    error
+	)
+	cookie, err = req.Cookie(cookieName)
+	if err != nil {
+		return false
+	}
+
+	var user = k.sm.get(cookie.Value)
+	return user != nil
+}
+
+func isRequireAuth(path string) bool {
+	if strings.HasPrefix(path, pathKarajoApp) {
+		return true
+	}
+	if strings.HasPrefix(path, pathKarajoApi) {
+		return true
+	}
+	return false
+}
+
+func isLoginPage(path string) bool {
+	return path == `/karajo` || path == `/karajo/` || path == `/karajo/index.html`
+}
+
+// unauthorized write HTTP status 401 Unauthorized and return false.
+func (k *Karajo) unauthorized(w http.ResponseWriter, req *http.Request) bool {
+	w.WriteHeader(http.StatusUnauthorized)
+	fmt.Fprintf(w, `Unauthorized`)
+	return false
 }
 
 // apiAuthLogin authenticate user using name and password.

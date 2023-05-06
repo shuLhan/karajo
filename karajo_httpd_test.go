@@ -116,3 +116,174 @@ func TestKarajo_apiAuthLogin(t *testing.T) {
 		test.Assert(t, c.desc+`: session manager`, c.expSM, k.sm)
 	}
 }
+
+func TestKarajo_handleFSAuth(t *testing.T) {
+	var (
+		env = &Environment{
+			Users: map[string]*User{},
+		}
+		k = &Karajo{
+			env: env,
+			sm:  newSessionManager(),
+		}
+	)
+
+	t.Run(`WithUser`, func(tt *testing.T) {
+		testHandleFSAuthWithUser(tt, k)
+	})
+	t.Run(`WithoutUser`, func(tt *testing.T) {
+		testHandleFSAuthWithoutUser(tt, k)
+	})
+
+}
+
+func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
+	var (
+		user = &User{
+			Name:     `tester`,
+			Password: `$2a$10$9XMRfqpnzY2421fwYm5dd.CidJf7dHHWIESeeNGXuajHRf.Lqzy7a`, // s3cret
+		}
+		cookie = &http.Cookie{
+			Name:  cookieName,
+			Value: `abcd`,
+		}
+	)
+
+	k.env.Users[user.Name] = user
+	k.sm.value[cookie.Value] = user
+
+	type testCase struct {
+		cookie *http.Cookie
+		desc   string
+		path   string
+		exp    bool
+	}
+
+	var cases = []testCase{{
+		desc: `to root without cookie`,
+		path: `/`,
+		exp:  true,
+	}, {
+		desc: `to login without cookie`,
+		path: `/karajo/`,
+		exp:  true,
+	}, {
+		desc:   `to login with cookie`,
+		path:   `/karajo/`,
+		exp:    false, // Request redirect to app.
+		cookie: cookie,
+	}, {
+		desc: `to app without cookie`,
+		path: `/karajo/app/index.html`,
+		exp:  false,
+	}, {
+		desc: `to app with cookie not exist`,
+		path: `/karajo/app/index.html`,
+		exp:  false,
+		cookie: &http.Cookie{
+			Name:  cookieName,
+			Value: `notexist`,
+		},
+	}, {
+		desc:   `to app with cookie exist`,
+		path:   `/karajo/app/index.html`,
+		exp:    true,
+		cookie: cookie,
+	}, {
+		desc: `to api without cookie`,
+		path: `/karajo/api/environment`,
+		exp:  false,
+	}, {
+		desc:   `to api with cookie`,
+		path:   `/karajo/api/environment`,
+		exp:    true,
+		cookie: cookie,
+	}}
+
+	var (
+		recordWriter = httptest.NewRecorder()
+		httpReq      = &http.Request{
+			URL:    &url.URL{},
+			Header: http.Header{},
+		}
+
+		c   testCase
+		got bool
+	)
+	for _, c = range cases {
+		httpReq.URL.Path = c.path
+		httpReq.Header.Del(`Cookie`)
+		if c.cookie != nil {
+			httpReq.AddCookie(c.cookie)
+		}
+
+		got = k.handleFSAuth(nil, recordWriter, httpReq)
+		test.Assert(t, c.desc, c.exp, got)
+	}
+}
+
+func testHandleFSAuthWithoutUser(t *testing.T, k *Karajo) {
+	var cookie = &http.Cookie{
+		Name:  cookieName,
+		Value: `abcd`,
+	}
+
+	k.env.Users = map[string]*User{}
+
+	type testCase struct {
+		cookie *http.Cookie
+		desc   string
+		path   string
+		exp    bool
+	}
+
+	var cases = []testCase{{
+		desc: `to root without cookie`,
+		path: `/`,
+		exp:  true,
+	}, {
+		desc: `to login without cookie`,
+		path: `/karajo/`,
+		exp:  false, // Redirected to app.
+	}, {
+		desc:   `to login with cookie`,
+		path:   `/karajo/`,
+		exp:    false, // Redirected to app.
+		cookie: cookie,
+	}, {
+		desc: `to app without cookie`,
+		path: `/karajo/app/index.html`,
+		exp:  true,
+	}, {
+		desc:   `to app with cookie`,
+		path:   `/karajo/app/index.html`,
+		exp:    true,
+		cookie: cookie,
+	}, {
+		desc: `to api without cookie`,
+		path: `/karajo/api/environment`,
+		exp:  true,
+	}}
+
+	var (
+		recordWriter = httptest.NewRecorder()
+		httpReq      = &http.Request{
+			URL:    &url.URL{},
+			Header: http.Header{},
+		}
+
+		c   testCase
+		got bool
+	)
+	for _, c = range cases {
+		httpReq.URL.Path = c.path
+		httpReq.Header.Del(`Cookie`)
+		if c.cookie != nil {
+			httpReq.AddCookie(c.cookie)
+		}
+
+		got = k.handleFSAuth(nil, recordWriter, httpReq)
+		test.Assert(t, c.desc, c.exp, got)
+	}
+
+}

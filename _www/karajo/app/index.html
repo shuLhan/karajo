@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<!-- SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="/karajo/favicon.png" />
+    <title>karajo</title>
+    <script type="text/javascript" src="/karajo/app/crypto-js.min.js"></script>
+    <script type="text/javascript" src="/karajo/app/index.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px 0 0 0;
+      }
+
+      a {
+        text-decoration: none;
+      }
+
+      #timer {
+        font-size: 12px;
+      }
+
+      .auth {
+        margin: 1em 0;
+      }
+      .auth label {
+        width: 10em;
+      }
+      .auth input {
+        width: calc(100% - 10em);
+      }
+      .auth .hint {
+        background-color: antiquewhite;
+        padding: 4px;
+        margin: 4px 0;
+      }
+
+      .header-fixed {
+        background-color: whitesmoke;
+        border-bottom: 1px solid silver;
+        padding: 4px;
+        position: fixed;
+        text-align: center;
+        top: 0;
+        width: 100%;
+      }
+
+      .content {
+        padding: 8px;
+      }
+
+      .name {
+        padding: 5px;
+      }
+      .name.started {
+        background: lightyellow;
+      }
+      .name.running {
+        background: lightcyan;
+      }
+      .name.failed {
+        background: lightpink;
+      }
+      .name.success {
+        background: lightgreen;
+      }
+      .name.paused {
+        background: lightgrey;
+      }
+
+      .job,
+      .jobhttp {
+        margin-bottom: 1em;
+      }
+
+      .job-log {
+        padding: 5px;
+        display: inline-block;
+      }
+      .job-log.failed {
+        background: lightpink;
+      }
+      .job-log.success {
+        background: lightgreen;
+      }
+
+      .attrs {
+        padding: 1em;
+        border-left: 1px solid lightgray;
+        border-right: 1px solid lightgray;
+        border-bottom: 1px solid lightgray;
+      }
+
+      .log {
+        font-size: 12px;
+        height: 18em;
+        overflow: auto;
+        font-family: monospace;
+        background-color: lightgray;
+        padding: 1em;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .last_run,
+      .next_run {
+        float: right;
+      }
+
+      .footer {
+        margin: 1em auto;
+        text-align: center;
+      }
+
+      @media only screen and (max-width: 400px) {
+        .actions > button {
+          display: block;
+          width: calc(100%);
+          margin-bottom: 6px;
+        }
+      }
+    </style>
+  </head>
+
+  <body onload="main()">
+    <div class="header-fixed">
+      <span id="timer"> </span>
+    </div>
+
+    <div class="content">
+      <h2>
+        <span id="title">Karajo</span>
+      </h2>
+
+      <div class="auth">
+        <label for="_secret">Secret: </label>
+        <input id="_secret" />
+        <div class="hint">
+          Secret is required to pause, resume, or running a job.
+        </div>
+      </div>
+
+      <h3>Jobs</h3>
+      <div id="jobs"></div>
+
+      <h3>HTTP Jobs</h3>
+      <div id="http_jobs"></div>
+
+      <div id="out"></div>
+      <div id="err"></div>
+    </div>
+
+    <div class="footer">
+      <div>
+        Powered by
+        <a href="https://sr.ht/~shulhan/karajo" target="_blank">Karajo</a>
+      </div>
+      <div><a href="/karajo/doc/" target="_blank">Documentation</a></div>
+    </div>
+  </body>
+</html>
