@@ -4,6 +4,67 @@ Shulhan <ms@kilabit.info>
 :sectanchors:
 :sectlinks:
 
+
+[#v0_7_0]
+== karajo v0.7.0 (2023-05-10)
+
+This release add login feature to Karajo using user name and password that are
+pre-defined in the user.conf.
+
+[#v0_7_0__breaking_changes]
+===  Breaking changes
+
+all: remove MaxRunning and NumRunning from JobBase::
++
+A job should be only run once at a time.
+If we allow the same job run more than once at the same time, there
+would be race condition in the command or Call that need to be handled
+by user.
+
+[#v0_7_0__new_features]
+===  New features
+
+all: implement login page::
++
+--
+The karajo status page now moved to /karajo/app/, while the old /karajo/
+page is used for login.
+
+The login page will be display only if Environment.Users is not empty,
+otherwise user will be redirected to app page automatically.
+--
+
+[#v0_7_0__bug_fixes]
+===  Bug fixes
+
+all: fix possible lock on API environment::
++
+--
+Sometimes the request to /karajo/api/environment does not return any
+result.  The only explanation is something lock the resource so we cannot
+lock it and it will wait forever.
+--
+
+[#v0_7_0__enhancements]
+===  Enhancements
+
+all: changes on how the job queued using channel::
++
+--
+Previously, a job run using the following flow:
+
+* interval/scheduler timer kicking in
+* send the job finish to finished channel
+
+If the job triggered from HTTP request, it will run on its own goroutine.
+
+This changes add third channel, startq, to JobBase that queue the Job.
+When the timer kicking in or HTTP request received in it will pushed
+to startq.
+The startq execute the job and signal the completed job using finishq.
+--
+
+
 [#v0_6_0]
 == karajo v0.6.0 (2023-02-26)
 
