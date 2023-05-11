@@ -247,7 +247,7 @@ async function jobHttpResume(id) {
 // renderJob render single job.
 function renderJob(job) {
   renderJobAttributes(job);
-  renderJobLastRun(job);
+  renderJobStatusRight(job);
   renderJobStatus(job);
 }
 
@@ -291,8 +291,7 @@ function renderJobAttributes(job) {
 
   out += `
     <br/>
-    <div>Log:</div>
-    <div>
+    <div>Log:
   `;
 
   if (job.logs == null) {
@@ -318,24 +317,25 @@ function renderJobAttributes(job) {
   el.innerHTML = out;
 }
 
-function renderJobLastRun(job) {
-  let elLastRun = document.getElementById(job._idLastRun);
+function renderJobStatusRight(job) {
+  let elNextRun = document.getElementById(job._idStatusRight);
 
   let now = new Date();
-  let lastRun = new Date(job.last_run);
+  let nextRun = new Date(job.next_run);
 
-  if (lastRun <= 0) {
-    if (job.status != "") {
-      elLastRun.innerText = "Running ...";
+  if (nextRun <= 0) {
+    let lastRun = new Date(job.last_run);
+    if (lastRun > 0) {
+      elNextRun.innerText = `Last run ${lastRun.toUTCString()}`;
     }
     return;
   }
 
-  let seconds = Math.floor((now - lastRun) / 1000);
+  let seconds = Math.floor((nextRun - now) / 1000);
   let hours = Math.floor(seconds / 3600);
   let minutes = Math.floor((seconds % 3600) / 60);
   let remSeconds = Math.floor(seconds % 60);
-  elLastRun.innerText = `Last run ${hours}h  ${minutes}m ${remSeconds}s ago`;
+  elNextRun.innerText = `Next run ${hours}h  ${minutes}m ${remSeconds}s`;
 }
 
 function renderJobStatus(job) {
@@ -353,7 +353,7 @@ function renderJobs(jobs) {
     job._id = `job_${job.id}`;
     job._idAttrs = `job_${job.id}_attrs`;
     job._idInfo = `job_${job.id}_info`;
-    job._idLastRun = `job_${job.id}_last_run`;
+    job._idStatusRight = `job_${job.id}_status_right`;
     job._idStatus = `job_${job.id}_status`;
     job._display = "none";
 
@@ -378,7 +378,7 @@ function renderJobs(jobs) {
           <a href="#${job._id}" onclick='jobInfo("${job.id}")'>
             ${job.name}
           </a>
-          <span id="${job._idLastRun}" class="last_run"></span>
+          <span id="${job._idStatusRight}" class="status_right"></span>
         </div>
 
         <div id="${job._idInfo}" style="display: ${job._display};">
@@ -455,7 +455,7 @@ function renderJobHttpLog(job) {
 }
 
 function renderJobHttpNextRun(job) {
-  let elNextRun = document.getElementById(job._idNextRun);
+  let elNextRun = document.getElementById(job._idStatusRight);
 
   let now = new Date();
   let nextRun = new Date(job.next_run);
@@ -489,7 +489,7 @@ function renderHttpJobs(httpJobs) {
     httpJob._idInfo = `jobhttp_${httpJob.id}_info`;
     httpJob._idLog = `jobhttp_${httpJob.id}_log`;
     httpJob._idStatus = `jobhttp_${httpJob.id}_status`;
-    httpJob._idNextRun = `jobhttp_${httpJob.id}_next_run`;
+    httpJob._idStatusRight = `jobhttp_${httpJob.id}_status_right`;
     httpJob._display = "none";
     httpJob._logTimer = null;
 
@@ -515,7 +515,7 @@ function renderHttpJobs(httpJobs) {
           <a href="#${httpJob._id}" onclick='jobHttpInfo("${httpJob.id}")'>
             ${httpJob.name}
           </a>
-          <span id="${httpJob._idNextRun}" class="next_run"></span>
+          <span id="${httpJob._idStatusRight}" class="status_right"></span>
         </div>
 
         <div id="${httpJob._idInfo}" style="display: ${httpJob._display};">
