@@ -26,8 +26,6 @@ type JobBase struct {
 	scheduler *libtime.Scheduler
 
 	finishq chan struct{}
-	startq  chan struct{}
-	stopq   chan struct{}
 
 	// The last time the job is finished running, in UTC.
 	LastRun time.Time `ini:"-" json:"last_run,omitempty"`
@@ -73,8 +71,6 @@ type JobBase struct {
 
 func (job *JobBase) init() {
 	job.finishq = make(chan struct{}, 1)
-	job.startq = make(chan struct{}, 1)
-	job.stopq = make(chan struct{}, 1)
 }
 
 // canStart check if the job can be started or return an error if its paused

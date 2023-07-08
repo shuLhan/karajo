@@ -11,6 +11,11 @@ import (
 
 // List of errors.
 var (
+	ErrJobAlreadyRun = liberrors.E{
+		Code:    http.StatusTooManyRequests,
+		Name:    `ERR_JOB_ALREADY_RUN`,
+		Message: `job already run`,
+	}
 	ErrJobEmptyCommandsOrCall error = &liberrors.E{
 		Code:    http.StatusBadRequest,
 		Name:    `ERR_JOB_EMPTY_COMMANDS_OR_CALL`,

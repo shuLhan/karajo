@@ -71,6 +71,9 @@ type Job struct {
 	// Shared Environment.
 	env *Environment `json:"-"`
 
+	startq chan struct{}
+	stopq  chan struct{}
+
 	// Cache of log sorted by its counter.
 	Logs []*JobLog `json:"logs,omitempty"`
 
@@ -268,6 +271,9 @@ func (job *Job) init(env *Environment, name string) (err error) {
 
 	job.JobBase.init()
 
+	job.startq = make(chan struct{}, 1)
+	job.stopq = make(chan struct{}, 1)
+
 	job.Path = strings.TrimSpace(job.Path)
 	job.Secret = strings.TrimSpace(job.Secret)
 	if len(job.Secret) == 0 {
@@ -445,24 +451,20 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, err)
 	}
 
-	err = job.canStart()
-	if err != nil {
-		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, err)
-	}
-
 	var res libhttp.EndpointResponse
 
-	res.Code = http.StatusAccepted
-	res.Message = `OK`
-	res.Data = job
+	select {
+	case job.startq <- struct{}{}:
+		res.Code = http.StatusAccepted
+		res.Message = `OK`
+		res.Data = job
+	default:
+		return nil, &ErrJobAlreadyRun
+	}
 
 	job.Lock()
 	resbody, err = json.Marshal(&res)
 	job.Unlock()
-
-	go func() {
-		job.startq <- struct{}{}
-	}()
 
 	return resbody, err
 }
@@ -524,7 +526,10 @@ func (job *Job) startScheduler() {
 	for {
 		select {
 		case <-job.scheduler.C:
-			job.startq <- struct{}{}
+			select {
+			case job.startq <- struct{}{}:
+			default:
+			}
 
 		case <-job.startq:
 			err = job.start()
@@ -577,7 +582,10 @@ func (job *Job) startInterval() {
 		for ever {
 			select {
 			case <-timer.C:
-				job.startq <- struct{}{}
+				select {
+				case job.startq <- struct{}{}:
+				default:
+				}
 
 			case <-job.startq:
 				err = job.start()

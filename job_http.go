@@ -60,6 +60,9 @@ type JobHttp struct {
 
 	params map[string]interface{}
 
+	startq chan struct{}
+	stopq  chan struct{}
+
 	// Secret define a string to sign the request query or body with
 	// HMAC+SHA-256.
 	// The signature is sent on HTTP header "X-Karajo-Sign" as hex string.
@@ -137,7 +140,10 @@ func (job *JobHttp) startScheduler() {
 	for {
 		select {
 		case <-job.scheduler.C:
-			job.startq <- struct{}{}
+			select {
+			case job.startq <- struct{}{}:
+			default:
+			}
 
 		case <-job.startq:
 			err = job.start()
@@ -189,7 +195,10 @@ func (job *JobHttp) startInterval() {
 		for ever {
 			select {
 			case <-timer.C:
-				job.startq <- struct{}{}
+				select {
+				case job.startq <- struct{}{}:
+				default:
+				}
 
 			case <-job.startq:
 				err = job.start()
@@ -227,7 +236,10 @@ func (job *JobHttp) startInterval() {
 // Stop the job.
 func (job *JobHttp) Stop() {
 	job.mlog.Outf(`stopping HTTP job ...`)
-	job.stopq <- struct{}{}
+	select {
+	case job.stopq <- struct{}{}:
+	default:
+	}
 
 	job.mlog.Flush()
 	var err error = job.flog.Close()
@@ -241,6 +253,8 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 	var logp = `init`
 
 	job.Name = name
+	job.startq = make(chan struct{}, 1)
+	job.stopq = make(chan struct{}, 1)
 
 	if len(job.ID) == 0 {
 		job.ID = libhtml.NormalizeForID(job.Name)
