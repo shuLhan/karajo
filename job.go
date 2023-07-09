@@ -324,20 +324,20 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 }
 
 // Start the Job timer only if its Interval is non-zero.
-func (job *Job) Start() {
+func (job *Job) Start(logq chan<- *JobLog) {
 	if job.scheduler != nil {
-		job.startScheduler()
+		job.startScheduler(logq)
 		return
 	}
 	if job.Interval > 0 {
-		job.startInterval()
+		job.startInterval(logq)
 		return
 	}
-	job.startQueue()
+	job.startQueue(logq)
 }
 
 // startQueue start Job queue that triggered only by HTTP request.
-func (job *Job) startQueue() {
+func (job *Job) startQueue(logq chan<- *JobLog) {
 	var (
 		err error
 	)
@@ -345,7 +345,7 @@ func (job *Job) startQueue() {
 	for {
 		select {
 		case <-job.startq:
-			err = job.run()
+			err = job.run(logq)
 			if err != nil {
 				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
 			}
@@ -356,7 +356,7 @@ func (job *Job) startQueue() {
 	}
 }
 
-func (job *Job) startScheduler() {
+func (job *Job) startScheduler(logq chan<- *JobLog) {
 	var (
 		err error
 	)
@@ -370,7 +370,7 @@ func (job *Job) startScheduler() {
 			}
 
 		case <-job.startq:
-			err = job.run()
+			err = job.run(logq)
 			if err != nil {
 				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
 			}
@@ -382,7 +382,7 @@ func (job *Job) startScheduler() {
 	}
 }
 
-func (job *Job) startInterval() {
+func (job *Job) startInterval(logq chan<- *JobLog) {
 	var (
 		now          time.Time
 		nextInterval time.Duration
@@ -413,7 +413,7 @@ func (job *Job) startInterval() {
 				}
 
 			case <-job.startq:
-				err = job.run()
+				err = job.run(logq)
 				if err != nil {
 					mlog.Errf(`!!! job: %s: %s`, job.ID, err)
 				}
@@ -428,7 +428,7 @@ func (job *Job) startInterval() {
 	}
 }
 
-func (job *Job) run() (err error) {
+func (job *Job) run(logq chan<- *JobLog) (err error) {
 	err = job.JobBase.start()
 	if err != nil {
 		return err
@@ -442,7 +442,7 @@ func (job *Job) run() (err error) {
 	job.finish(jlog, err)
 
 	select {
-	case job.finishq <- struct{}{}:
+	case logq <- jlog:
 	default:
 	}
 

@@ -212,6 +212,7 @@ func TestJob_handleHttp(t *testing.T) {
 				return nil
 			},
 		}
+		logq = make(chan *JobLog)
 
 		tdata *test.Data
 		err   error
@@ -232,7 +233,7 @@ func TestJob_handleHttp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	go job.Start()
+	go job.Start(logq)
 	t.Cleanup(job.Stop)
 
 	var (
@@ -275,7 +276,7 @@ func TestJob_handleHttp(t *testing.T) {
 	exp = tdata.Output[`handleHttp_response.json`]
 	test.Assert(t, `handleHttp_response`, string(exp), string(got))
 
-	<-job.finishq
+	<-logq
 
 	job.Lock()
 	got, err = json.MarshalIndent(&job, ``, `  `)
@@ -309,6 +310,7 @@ func TestJob_startInterval_Call(t *testing.T) {
 				return nil
 			},
 		}
+		logq = make(chan *JobLog)
 
 		tdata *test.Data
 		got   []byte
@@ -331,10 +333,10 @@ func TestJob_startInterval_Call(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	go job.Start()
+	go job.Start(logq)
 	t.Cleanup(job.Stop)
 
-	<-job.finishq
+	<-logq
 
 	job.Lock()
 	got, err = json.MarshalIndent(&job, ``, `  `)

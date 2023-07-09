@@ -128,17 +128,69 @@ format, for example, "30s" for 30 seconds, "1m" for 1 minute.
 `max_job_running`:: Define the global maximum job running at the same time.
 This field is optional default to 1.
 
+### Notification
+
+Karajo server support sending notification when the job success or failed
+with inline log.
+
+#### Email
+
+The following email configuration is defined in the same file as Environment,
+
+```
+[notif "$name"]
+kind = email
+smtp_server =
+smtp_user =
+smtp_password =
+smtp_insecure =
+to = your@mailbox.com
+to = ...
+on = success
+on = failed
+on = ...
+```
+
+`$name`:: unique name for notification.
+
+`kind`:: notification type, must be set to "email".
+
+`smtp_server`:: The SMTP server, using the following URL format,
+
+```
+[ scheme "://" ](domain | IP-address)[":" port]
+```
+
+where scheme is "smtps" or "smtp+starttls".
+For smtps, if no port is given, client will connect to server at port 465.
+For smtp+starttls, if no port is given, client will connect to server at
+port 587.
+
+`smtp_user`:: user name for submission.
+
+`smtp_password`:: password for smtp_user submission.
+
+`smtp_insecure`::  if set to true it will disable verifying remote
+certificate when connecting with TLS or STARTTLS.
+
+`from`:: the from address that send the email.
+
+`to`:: email address that will receive notification, can be defined more
+than one.
+
+`on`:: The job status when this notification will be triggered.
+Currently, the valid values are "success" and "failed".
 
 ###  User
 
-The Karajo WUI can be secured with login, where user must authenticated using
-name and password before they can view the dashboard.
+The Karajo WUI can be secured with login, where user must authenticated
+using name and password before they can view the dashboard.
 By default the user list is empty, which allow public to view the dashboard.
 
 The user account can be set using configuration or by code.
 
-The configuration file for user is in `$dir_base/etc/karajo/user.conf`, using
-the following format,
+The configuration file for user is in `$dir_base/etc/karajo/user.conf`,
+using the following format,
 
 ```
 [user "$name"]

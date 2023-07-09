@@ -40,6 +40,12 @@ type Environment struct {
 	// List of JobHttp by name.
 	HttpJobs map[string]*JobHttp `ini:"job.http" json:"http_jobs"`
 
+	// Notif contains list of notification setting.
+	Notif map[string]EnvNotif `ini:"notif" json:"-"`
+
+	// Index of notification client by its name.
+	notif map[string]notifClient
+
 	// Users list of user that can access web user interface.
 	// The list of user optionally loaded from
 	// $DirBase/etc/karajo/user.conf if the file exist.
@@ -254,6 +260,11 @@ func (env *Environment) init() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
+	err = env.initNotifs()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
 	err = env.initUsers()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
@@ -330,6 +341,31 @@ func (env *Environment) initDirs() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, env.dirRunJobHttp, err)
 	}
 
+	return nil
+}
+
+// initNotifs initialize the notification.
+func (env *Environment) initNotifs() (err error) {
+	var (
+		logp = `initNotifs`
+
+		name        string
+		envNotif    EnvNotif
+		clientNotif notifClient
+	)
+	env.notif = make(map[string]notifClient)
+	for name, envNotif = range env.Notif {
+		if len(envNotif.On) == 0 {
+			// No notification trigger set, ignore it.
+			continue
+		}
+
+		clientNotif, err = envNotif.createClient()
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+		env.notif[name] = clientNotif
+	}
 	return nil
 }
 

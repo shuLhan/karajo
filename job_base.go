@@ -34,8 +34,6 @@ type JobBase struct {
 	NextRun time.Time `ini:"-" json:"next_run,omitempty"`
 
 	scheduler *libtime.Scheduler
-	finishq   chan struct{}
-
 	// ID of the job. It must be unique or the last job will replace the
 	// previous job with the same ID.
 	// If ID is empty, it will generated from Name by replacing
@@ -90,8 +88,6 @@ type JobBase struct {
 
 func (job *JobBase) init(env *Environment, name string) (err error) {
 	var logp = `init`
-
-	job.finishq = make(chan struct{}, 1)
 
 	job.Name = name
 	job.ID = libhtml.NormalizeForID(name)

@@ -51,6 +51,9 @@ type Karajo struct {
 	httpd *libhttp.Server
 	env   *Environment
 	sm    *sessionManager
+
+	// logq is used to collect all job log once they finished.
+	logq chan *JobLog
 }
 
 // Sign generate hex string of HMAC + SHA256 of payload using the secret.
@@ -75,8 +78,9 @@ func New(env *Environment) (k *Karajo, err error) {
 	}
 
 	k = &Karajo{
-		env: env,
-		sm:  newSessionManager(),
+		env:  env,
+		sm:   newSessionManager(),
+		logq: make(chan *JobLog),
 	}
 
 	mlog.SetPrefix(env.Name + `:`)
@@ -138,11 +142,15 @@ func (k *Karajo) Start() (err error) {
 
 	mlog.Outf(`started the karajo server at http://%s/karajo`, k.httpd.Addr)
 
+	if len(k.env.notif) > 0 {
+		go k.workerNotification()
+	}
+
 	for _, job = range k.env.Jobs {
-		go job.Start()
+		go job.Start(k.logq)
 	}
 	for _, jobHttp = range k.env.HttpJobs {
-		go jobHttp.Start()
+		go jobHttp.Start(k.logq)
 	}
 
 	return k.httpd.Start()
@@ -163,4 +171,23 @@ func (k *Karajo) Stop() (err error) {
 	}
 
 	return k.httpd.Stop(5 * time.Second)
+}
+
+// workerNotification receive JobLog from Job and JobHttp everytime their
+// started, running, success, failed, or paused.
+func (k *Karajo) workerNotification() {
+	var (
+		jlog        *JobLog
+		clientNotif notifClient
+		ok          bool
+	)
+	for jlog = range k.logq {
+		for _, clientNotif = range k.env.notif {
+			ok = clientNotif.IsStatusHandled(jlog.Status)
+			if !ok {
+				continue
+			}
+			go clientNotif.Send(jlog)
+		}
+	}
 }

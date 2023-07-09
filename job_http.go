@@ -102,17 +102,17 @@ type JobHttp struct {
 	HttpInsecure bool `ini:"::http_insecure" json:"http_insecure,omitempty"`
 }
 
-func (job *JobHttp) Start() {
+func (job *JobHttp) Start(logq chan<- *JobLog) {
 	if job.scheduler != nil {
-		job.startScheduler()
+		job.startScheduler(logq)
 		return
 	}
 	if job.Interval > 0 {
-		job.startInterval()
+		job.startInterval(logq)
 	}
 }
 
-func (job *JobHttp) startScheduler() {
+func (job *JobHttp) startScheduler(logq chan<- *JobLog) {
 	var (
 		err error
 	)
@@ -126,7 +126,7 @@ func (job *JobHttp) startScheduler() {
 			}
 
 		case <-job.startq:
-			err = job.run()
+			err = job.run(logq)
 			if err != nil {
 				mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
 			}
@@ -138,7 +138,7 @@ func (job *JobHttp) startScheduler() {
 	}
 }
 
-func (job *JobHttp) startInterval() {
+func (job *JobHttp) startInterval(logq chan<- *JobLog) {
 	var (
 		now          time.Time
 		nextInterval time.Duration
@@ -169,7 +169,7 @@ func (job *JobHttp) startInterval() {
 				}
 
 			case <-job.startq:
-				err = job.run()
+				err = job.run(logq)
 				if err != nil {
 					mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
 				}
@@ -184,7 +184,7 @@ func (job *JobHttp) startInterval() {
 	}
 }
 
-func (job *JobHttp) run() (err error) {
+func (job *JobHttp) run(logq chan<- *JobLog) (err error) {
 	err = job.JobBase.start()
 	if err != nil {
 		return err
@@ -196,7 +196,7 @@ func (job *JobHttp) run() (err error) {
 	job.finish(jlog, err)
 
 	select {
-	case job.finishq <- struct{}{}:
+	case logq <- jlog:
 	default:
 	}
 	return nil

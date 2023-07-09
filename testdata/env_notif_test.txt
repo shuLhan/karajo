@@ -1,0 +1,35 @@
+>>> karajo.conf
+[notif "test"]
+kind = email
+smtp_server = smtps://127.0.0.1
+smtp_user = ops@kilabit.info
+smtp_password = dummypass
+smtp_insecure = true
+to = ms@kilabit.info
+to = Shulhan <m.shulhan@gmail.com>
+on = success
+on = failed
+on = running
+
+<<< karajo.conf.out
+[notif "test"]
+kind = email
+smtp_server = smtps://127.0.0.1
+smtp_user = ops@kilabit.info
+smtp_password = dummypass
+from =
+to = ms@kilabit.info
+to = Shulhan <m.shulhan@gmail.com>
+on = success
+on = failed
+on = running
+smtp_insecure = true
+
+[karajo]
+name =
+listen_address =
+dir_base =
+dir_public =
+secret =
+http_timeout = 0s
+max_job_running = 0
