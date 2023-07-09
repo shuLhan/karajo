@@ -18,7 +18,7 @@ build: memfs_www.go
 	go build ./cmd/karajo
 
 test:
-	CGO_ENABLED=1 go test -race -coverprofile cover.out ./...
+	CGO_ENABLED=1 go test -race -timeout 10s -coverprofile cover.out ./...
 	go tool cover -html=cover.out -o cover.html
 
 run-example:
