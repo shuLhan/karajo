@@ -117,8 +117,8 @@ func TestKarajo_apis(t *testing.T) {
 	t.Run(`apiJobHttp_notfound`, func(tt *testing.T) {
 		testKarajo_apiJobHttp_notfound(tt, tdata, testClient)
 	})
-	t.Run(`apiJobLogs`, func(tt *testing.T) {
-		testKarajo_apiJobHttpLogs(tt, tdata, testClient)
+	t.Run(`apiJobHttpLog`, func(tt *testing.T) {
+		testKarajo_apiJobHttpLog(tt, tdata, testClient)
 	})
 	t.Run(`apiJobHttpPause`, func(tt *testing.T) {
 		testKarajo_apiJobHttpPause(tt, tdata, testClient)
@@ -172,10 +172,9 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data, cl *Client) {
 
 func testKarajo_apiJobPause(t *testing.T, tdata *test.Data, cl *Client) {
 	var (
-		exp []byte = tdata.Output[`apiJobPause.json`]
-
 		job  *Job
 		data interface{}
+		exp  []byte
 		got  []byte
 		err  error
 	)
@@ -193,6 +192,7 @@ func testKarajo_apiJobPause(t *testing.T, tdata *test.Data, cl *Client) {
 		t.Fatal(err)
 	}
 
+	exp = tdata.Output[`apiJobPause.json`]
 	test.Assert(t, `apiJobPause`, string(exp), string(got))
 
 	// Try triggering the Job to run...
@@ -349,9 +349,6 @@ func testKarajo_apiJobHttp_notfound(t *testing.T, tdata *test.Data, cl *Client) 
 	if err != nil {
 		data = err
 	} else {
-		if gotJob != nil {
-			gotJob.clog.Reset()
-		}
 		data = gotJob
 	}
 
@@ -362,34 +359,40 @@ func testKarajo_apiJobHttp_notfound(t *testing.T, tdata *test.Data, cl *Client) 
 	test.Assert(t, `apiJobHttp_notfound`, string(exp), string(got))
 }
 
-func testKarajo_apiJobHttpLogs(t *testing.T, tdata *test.Data, cl *Client) {
+func testKarajo_apiJobHttpLog(t *testing.T, tdata *test.Data, cl *Client) {
 	var (
-		exp     []byte = tdata.Output[`apiJobHttpLogs.json`]
-		id             = `test_success`
-		jobHttp        = testEnv.jobHttp(id)
+		id      = `test_success`
+		jobHttp = testEnv.jobHttp(id)
 
-		data interface{}
-		logs []string
-		got  []byte
-		err  error
+		data    interface{}
+		jlog    *JobLog
+		gotJlog *JobLog
+		exp     []byte
+		got     []byte
+		err     error
 	)
 
 	// Add dummy logs.
-	jobHttp.clog.Reset()
-	jobHttp.clog.Push(`The first log`)
+	jobHttp.lastCounter++
+	jlog = newJobLog(jobHttp.ID, jobHttp.dirLog, jobHttp.lastCounter)
+	_, _ = jlog.Write([]byte("The first log\n"))
+	jobHttp.Logs = append(jobHttp.Logs, jlog)
+	_ = jlog.flush()
 
-	logs, err = testClient.JobHttpLogs(id)
+	gotJlog, err = testClient.JobHttpLog(id, int(jobHttp.lastCounter))
 	if err != nil {
 		data = err
 	} else {
-		data = logs
+		data = gotJlog
 	}
 
 	got, err = json.MarshalIndent(data, ``, `  `)
 	if err != nil {
 		t.Fatal(err)
 	}
-	test.Assert(t, `apiJobHttpLogs`, string(exp), string(got))
+
+	exp = tdata.Output[`apiJobHttpLog.json`]
+	test.Assert(t, `apiJobHttpLog`, string(exp), string(got))
 }
 
 func testKarajo_apiJobHttpPause(t *testing.T, tdata *test.Data, cl *Client) {

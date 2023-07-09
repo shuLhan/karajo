@@ -67,7 +67,8 @@ type Environment struct {
 	//	|                +-- job.d/
 	//	|                +-- job_http.d/
 	//	|
-	//	+-- /var/lib/karajo/job/$Job.ID
+	//	+-- /var/lib/karajo/ +-- job/$Job.ID
+	//	|                    +-- job_http/$Job.ID
 	//	|
 	//	+-- /var/log/karajo/ +-- job/$Job.ID
 	//	|                    +-- job_http/$Job.ID
@@ -92,7 +93,8 @@ type Environment struct {
 	// Each JobHttp configuration end with `.conf`.
 	dirConfigJobHttpd string
 
-	dirLibJob string
+	dirLibJob     string
+	dirLibJobHttp string
 
 	dirLogJob     string
 	dirLogJobHttp string
@@ -304,6 +306,12 @@ func (env *Environment) initDirs() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLibJob, err)
 	}
 
+	env.dirLibJobHttp = filepath.Join(env.DirBase, `var`, `lib`, defEnvName, `job_http`)
+	err = os.MkdirAll(env.dirLibJobHttp, 0700)
+	if err != nil {
+		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLibJobHttp, err)
+	}
+
 	env.dirLogJob = filepath.Join(env.DirBase, `var`, `log`, defEnvName, `job`)
 	err = os.MkdirAll(env.dirLogJob, 0700)
 	if err != nil {
@@ -350,17 +358,6 @@ func (env *Environment) initUsers() (err error) {
 		env.Users[name] = u
 	}
 
-	return nil
-}
-
-func (env *Environment) httpJobsSave() (err error) {
-	var jobHttp *JobHttp
-	for _, jobHttp = range env.HttpJobs {
-		err = jobHttp.stateSave()
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -563,6 +560,7 @@ func (env *Environment) lockAllJob() {
 		jobHttp.Lock()
 	}
 }
+
 func (env *Environment) unlockAllJob() {
 	var job *Job
 	for _, job = range env.Jobs {

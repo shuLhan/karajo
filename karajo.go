@@ -158,11 +158,6 @@ func (k *Karajo) Stop() (err error) {
 	for _, jobHttp = range k.env.HttpJobs {
 		jobHttp.Stop()
 	}
-	err = k.env.httpJobsSave()
-	if err != nil {
-		mlog.Errf(`Stop: %s`, err)
-	}
-
 	for _, job = range k.env.Jobs {
 		job.Stop()
 	}

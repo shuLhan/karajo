@@ -61,6 +61,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
       "name": "Test success",
       "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
       "interval": 60000000000,
+      "log_retention": 5,
       "http_timeout": 300000000000
     }
   },
@@ -164,6 +165,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "name": "Test success",
   "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "interval": 60000000000,
+  "log_retention": 5,
   "http_timeout": 300000000000
 }
 
@@ -174,10 +176,14 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "name": "ERR_INVALID_JOB_ID"
 }
 
-<<< apiJobHttpLogs.json
-[
-  "The first log"
-]
+<<< apiJobHttpLog.json
+{
+  "job_id": "test_success",
+  "name": "test_success.1.started",
+  "status": "started",
+  "counter": 1,
+  "content": "VGhlIGZpcnN0IGxvZwo="
+}
 
 <<< apiJobHttpPause.json
 {
@@ -194,7 +200,17 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "name": "Test success",
   "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "status": "paused",
+  "logs": [
+    {
+      "job_id": "test_success",
+      "name": "test_success.1.started",
+      "status": "started",
+      "counter": 1,
+      "content": "VGhlIGZpcnN0IGxvZwo="
+    }
+  ],
   "interval": 60000000000,
+  "log_retention": 5,
   "http_timeout": 300000000000
 }
 
@@ -213,6 +229,16 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "name": "Test success",
   "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
   "status": "started",
+  "logs": [
+    {
+      "job_id": "test_success",
+      "name": "test_success.1.started",
+      "status": "started",
+      "counter": 1,
+      "content": "VGhlIGZpcnN0IGxvZwo="
+    }
+  ],
   "interval": 60000000000,
+  "log_retention": 5,
   "http_timeout": 300000000000
 }

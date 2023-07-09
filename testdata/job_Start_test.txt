@@ -2,6 +2,14 @@ Test running Job with Call using timer.
 
 <<< job_after.json
 {
+  "path": "/test-job-timer",
+  "auth_kind": "hmac-sha256",
+  "header_sign": "X-Karajo-Sign",
+  "last_run": "2023-01-09T00:00:00Z",
+  "next_run": "2023-01-09T00:01:00Z",
+  "id": "test_job_timer",
+  "name": "Test job timer",
+  "status": "success",
   "logs": [
     {
       "job_id": "test_job_timer",
@@ -11,14 +19,6 @@ Test running Job with Call using timer.
       "content": "T3V0cHV0IGZyb20gQ2FsbA=="
     }
   ],
-  "path": "/test-job-timer",
-  "auth_kind": "hmac-sha256",
-  "header_sign": "X-Karajo-Sign",
-  "last_run": "2023-01-09T00:00:00Z",
-  "next_run": "2023-01-09T00:01:00Z",
-  "id": "test_job_timer",
-  "name": "Test job timer",
-  "status": "success",
   "interval": 60000000000,
   "log_retention": 5
 }

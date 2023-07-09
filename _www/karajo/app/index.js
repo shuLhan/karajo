@@ -165,33 +165,10 @@ async function jobHttpInfo(jobID) {
   if (el.style.display === "block") {
     el.style.display = "none";
     job._display = "none";
-
-    if (job._logTimer != null) {
-      clearInterval(job._logTimer);
-      job._logTimer = null;
-    }
   } else {
     el.style.display = "block";
     job._display = "block";
-
-    jobHttpLogs(job);
-
-    job._logTimer = setInterval(() => {
-      jobHttpLogs(job);
-    }, delay);
   }
-}
-
-async function jobHttpLogs(job) {
-  let fres = await fetch("/karajo/api/job_http/logs?id=" + job.id);
-  let res = await fres.json();
-  if (res.code !== 200) {
-    console.error(res.message);
-    return;
-  }
-
-  job._log = res.data;
-  renderJobHttpLog(job);
 }
 
 async function jobHttpPause(id) {
@@ -300,7 +277,7 @@ function renderJobAttributes(job) {
 
   job.logs.forEach(function (log, idx, list) {
     out += `<a
-      href="/karajo/job/log?id=${job.id}&counter=${log.counter}"
+      href="/karajo/job/log/?id=${job.id}&counter=${log.counter}"
       target="_blank"
       class="job-log ${log.status}"
     >
@@ -428,9 +405,28 @@ function renderJobHttpAttrs(job) {
     <div>Last run: ${job.last_run}</div>
     <div>Next run: ${job.next_run}</div>
     <div>Status: ${job.status || ""}</div>
-    <br/>
-    <div class="actions">
   `;
+
+  out += `
+    <br/>
+    <div>Log:
+  `;
+
+  if (job.logs == null) {
+    job.logs = [];
+  }
+
+  job.logs.forEach(function (log, idx, list) {
+    out += `<a
+      href="/karajo/job_http/log/?id=${job.id}&counter=${log.counter}"
+      target="_blank"
+      class="job-log ${log.status}"
+    >
+        #${log.counter}
+    </a>`;
+  });
+
+  out += `<div class="actions">`;
 
   if (job.status == "paused") {
     out += `<button onclick="jobHttpResume('${job.id}')">Resume</button>`;
@@ -440,18 +436,6 @@ function renderJobHttpAttrs(job) {
 
   out += `</div>`;
   el.innerHTML = out;
-}
-
-function renderJobHttpLog(job) {
-  let el = document.getElementById(job._idLog);
-  let out = "";
-
-  for (let x = 0; x < job._log.length; x++) {
-    out += `<p>${atob(job._log[x])}</p>`;
-  }
-
-  el.innerHTML = out;
-  el.scrollTop = el.scrollHeight;
 }
 
 function renderJobHttpNextRun(job) {
@@ -487,17 +471,14 @@ function renderHttpJobs(httpJobs) {
     httpJob._id = `jobhttp_${httpJob.id}`;
     httpJob._idAttrs = `jobhttp_${httpJob.id}_attrs`;
     httpJob._idInfo = `jobhttp_${httpJob.id}_info`;
-    httpJob._idLog = `jobhttp_${httpJob.id}_log`;
     httpJob._idStatus = `jobhttp_${httpJob.id}_status`;
     httpJob._idStatusRight = `jobhttp_${httpJob.id}_status_right`;
     httpJob._display = "none";
-    httpJob._logTimer = null;
 
     if (_httpJobs != null) {
       let prevJob = _httpJobs[httpJob.id];
       if (prevJob != null) {
         httpJob._display = prevJob._display;
-        httpJob._logTimer = prevJob._logTimer;
       }
     }
 
@@ -520,7 +501,6 @@ function renderHttpJobs(httpJobs) {
 
         <div id="${httpJob._idInfo}" style="display: ${httpJob._display};">
           <div id="${httpJob._idAttrs}" class="attrs"></div>
-          <div id="${httpJob._idLog}" class="log"></div>
         </div>
       </div>
     `;

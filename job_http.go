@@ -4,31 +4,24 @@
 package karajo
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/shuLhan/share/lib/clise"
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/mlog"
-	libhtml "github.com/shuLhan/share/lib/net/html"
-	libtime "github.com/shuLhan/share/lib/time"
 )
 
 const (
-	defJobHttpMethod  = http.MethodGet
-	defJobInterval    = 30 * time.Second
-	defJobLogSize     = 20
-	defJobLogSizeLoad = 2048
-	defJosParamEpoch  = "_karajo_epoch"
+	defJobHttpMethod = http.MethodGet
+	defJobInterval   = 30 * time.Second
+	defJosParamEpoch = "_karajo_epoch"
 
 	defTimeLayout = "2006-01-02 15:04:05 MST"
 )
@@ -47,13 +40,6 @@ const (
 // object, for example `{"_karajo_epoch":1656750073}`.
 type JobHttp struct {
 	headers http.Header
-
-	// clog contains fixed, circular JobHttp output.
-	// Upon started it will load several kilobytes lines from previous
-	// log file.
-	clog *clise.Clise
-	mlog *mlog.MultiLogger
-	flog *os.File
 
 	// httpc define the HTTP client that will execute the http_url.
 	httpc *libhttp.Client
@@ -99,12 +85,6 @@ type JobHttp struct {
 	// This field is optional, default to query.
 	HttpRequestType string `ini:"::http_request_type" json:"http_request_type"`
 
-	// Path to the job log.
-	pathLog string
-
-	// Path to the last job state.
-	pathState string
-
 	// Optional HTTP headers for HttpUrl, in the format of "K: V".
 	HttpHeaders []string `ini:"::http_header" json:"http_headers,omitempty"`
 
@@ -135,7 +115,10 @@ func (job *JobHttp) Start() {
 }
 
 func (job *JobHttp) startScheduler() {
-	var err error
+	var (
+		jlog *JobLog
+		err  error
+	)
 
 	for {
 		select {
@@ -148,17 +131,17 @@ func (job *JobHttp) startScheduler() {
 		case <-job.startq:
 			err = job.start()
 			if err != nil {
-				job.mlog.Errf(`!!! job_http: %s: %s`, job.ID, err)
+				mlog.Errf(`!!! job_http: %s: %s`, job.ID, err)
 				continue
 			}
 
-			_, err = job.execute()
+			jlog, err = job.execute()
 			if err != nil {
-				job.mlog.Errf(`!!! job_http: %s: failed: %s.`, job.ID, err)
+				mlog.Errf(`!!! job_http: %s: failed: %s.`, job.ID, err)
 			} else {
-				job.mlog.Outf(`job_http: %s: finished.`, job.ID)
+				mlog.Outf(`job_http: %s: finished.`, job.ID)
 			}
-			job.finish(nil, err)
+			job.finish(jlog, err)
 
 			select {
 			case job.finishq <- struct{}{}:
@@ -177,6 +160,7 @@ func (job *JobHttp) startInterval() {
 		now          time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
+		jlog         *JobLog
 		err          error
 		ever         bool
 	)
@@ -188,7 +172,7 @@ func (job *JobHttp) startInterval() {
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
 
-		job.mlog.Outf(`next running in %s ...`, nextInterval)
+		mlog.Outf(`next running in %s ...`, nextInterval)
 
 		timer = time.NewTimer(nextInterval)
 		ever = true
@@ -203,19 +187,19 @@ func (job *JobHttp) startInterval() {
 			case <-job.startq:
 				err = job.start()
 				if err != nil {
-					job.mlog.Errf(`!!! %s`, err)
+					mlog.Errf(`!!! %s`, err)
 					timer.Stop()
 					ever = false
 					continue
 				}
 
-				_, err = job.execute()
+				jlog, err = job.execute()
 				if err != nil {
-					job.mlog.Errf(`!!! %s`, err)
+					mlog.Errf(`!!! %s`, err)
 				} else {
-					job.mlog.Outf(`finished`)
+					mlog.Outf(`finished`)
 				}
-				job.finish(nil, err)
+				job.finish(jlog, err)
 
 				timer.Stop()
 				ever = false
@@ -235,43 +219,32 @@ func (job *JobHttp) startInterval() {
 
 // Stop the job.
 func (job *JobHttp) Stop() {
-	job.mlog.Outf(`stopping HTTP job ...`)
+	mlog.Outf(`stopping HTTP job ...`)
 	select {
 	case job.stopq <- struct{}{}:
 	default:
 	}
 
-	job.mlog.Flush()
-	var err error = job.flog.Close()
-	if err != nil {
-		job.mlog.Errf(`Stop JobHttp %s: %s`, job.ID, err)
-	}
+	mlog.Flush()
 }
 
 // init initialize the job, compute the last run and the next run.
 func (job *JobHttp) init(env *Environment, name string) (err error) {
 	var logp = `init`
 
-	job.Name = name
 	job.startq = make(chan struct{}, 1)
 	job.stopq = make(chan struct{}, 1)
 
-	if len(job.ID) == 0 {
-		job.ID = libhtml.NormalizeForID(job.Name)
-	} else {
-		job.ID = libhtml.NormalizeForID(job.ID)
+	job.JobBase.init(name)
+
+	err = job.initDirsState(env)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	job.pathLog = filepath.Join(env.dirLogJobHttp, job.ID)
-	err = job.initLogger(env)
+	err = job.JobBase.initLogs()
 	if err != nil {
-		return err
-	}
-
-	job.pathState = filepath.Join(env.dirRunJobHttp, job.ID)
-	err = job.stateLoad()
-	if err != nil {
-		return err
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	err = job.initHttpMethod()
@@ -311,13 +284,11 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 	}
 	job.httpc.Client.Timeout = job.HttpTimeout
 
-	job.JobBase.init()
-
 	if len(job.HeaderSign) == 0 {
 		job.HeaderSign = HeaderNameXKarajoSign
 	}
 
-	err = job.initTimer()
+	err = job.JobBase.initTimer()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -325,69 +296,22 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 	return nil
 }
 
-// initLogger initialize the job log and its location.
-// By default log are written to os.Stdout and os.Stderr;
-// and then to file named job.ID in Environment.dirLogJobHttp.
-func (job *JobHttp) initLogger(env *Environment) (err error) {
-	var (
-		logp       = `initLogger`
-		lastLog    = make([]byte, defJobLogSizeLoad)
-		mlogPrefix = fmt.Sprintf(`%s: job_http: %s:`, env.Name, job.ID)
-
-		fi      os.FileInfo
-		nw      mlog.NamedWriter
-		logs    [][]byte
-		logLine []byte
-		readOff int64
-	)
-
-	job.mlog = mlog.NewMultiLogger(defTimeLayout, mlogPrefix, nil, nil)
-	job.mlog.RegisterErrorWriter(mlog.NewNamedWriter(`stderr`, os.Stderr))
-	job.mlog.RegisterOutputWriter(mlog.NewNamedWriter(`stdout`, os.Stdout))
-
-	job.clog = clise.New(defJobLogSize)
-
-	nw = mlog.NewNamedWriter(`clog`, job.clog)
-	job.mlog.RegisterErrorWriter(nw)
-	job.mlog.RegisterOutputWriter(nw)
-
-	// Load the last logs.
-
-	job.flog, err = os.OpenFile(job.pathLog, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0600)
+func (job *JobHttp) initDirsState(env *Environment) (err error) {
+	job.dirWork = filepath.Join(env.dirLibJobHttp, job.ID)
+	err = os.MkdirAll(job.dirWork, 0700)
 	if err != nil {
-		return fmt.Errorf(`%s %s: %w`, logp, job.pathLog, err)
+		return err
 	}
 
-	fi, err = job.flog.Stat()
+	job.dirLog = filepath.Join(env.dirLogJobHttp, job.ID)
+
+	// Remove previous log file.
+	_ = os.Remove(job.dirLog)
+
+	err = os.MkdirAll(job.dirLog, 0700)
 	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
+		return err
 	}
-
-	readOff = fi.Size() - defJobLogSizeLoad
-	if readOff < 0 {
-		readOff = 0
-	}
-
-	_, err = job.flog.ReadAt(lastLog, readOff)
-	if err != nil {
-		if !errors.Is(err, io.EOF) {
-			return fmt.Errorf(`%s: %w`, logp, err)
-		}
-	}
-
-	logs = bytes.Split(lastLog, []byte{'\n'})
-	if len(logs) > 0 {
-		// Skip the first line, since it may not a complete log line.
-		for _, logLine = range logs[1:] {
-			_, _ = job.clog.Write(logLine)
-		}
-	}
-
-	// Forward the log to file.
-
-	nw = mlog.NewNamedWriter(job.ID, job.flog)
-	job.mlog.RegisterErrorWriter(nw)
-	job.mlog.RegisterOutputWriter(nw)
 
 	return nil
 }
@@ -487,77 +411,76 @@ func (job *JobHttp) initHttpHeaders() (err error) {
 	return nil
 }
 
-// initTimer init fields that required to run Job with Interval or Schedule.
-func (job *JobHttp) initTimer() (err error) {
-	var logp = `initTimer`
-
-	if len(job.Schedule) != 0 {
-		job.scheduler, err = libtime.NewScheduler(job.Schedule)
-		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
-		}
-
-		// Since only Schedule or Interval can be run, unset the
-		// Interval here.
-		job.Interval = 0
-		job.NextRun = job.scheduler.Next()
-		return
-	}
-	if job.Interval <= 0 {
-		job.Interval = defJobInterval
-	}
-	return nil
-}
-
 func (job *JobHttp) execute() (jlog *JobLog, err error) {
 	var (
 		logp    = `execute`
 		now     = TimeNow().UTC().Round(time.Second)
+		logTime = now.Format(defTimeLayout)
 		headers = http.Header{}
 
 		params  interface{}
 		httpReq *http.Request
 		httpRes *http.Response
-		payload []byte
+		rawb    []byte
 	)
 
 	job.setStatus(JobStatusRunning)
+	job.lastCounter++
+	jlog = newJobLog(job.ID, job.dirLog, job.lastCounter)
+	job.Logs = append(job.Logs, jlog)
+	job.logsPrune()
+
+	fmt.Fprintf(jlog, "%s === BEGIN\n", logTime)
 
 	job.params[defJosParamEpoch] = now.Unix()
 
 	switch job.requestType {
 	case libhttp.RequestTypeQuery, libhttp.RequestTypeForm:
-		params, payload = job.paramsToUrlValues()
+		params, rawb = job.paramsToUrlValues()
 
 	case libhttp.RequestTypeJSON:
-		params, payload, err = job.paramsToJson()
+		params, rawb, err = job.paramsToJson()
 		if err != nil {
-			return nil, fmt.Errorf(`%s: %w`, logp, err)
+			return jlog, fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 
 	if len(job.Secret) != 0 {
-		var sign = Sign(payload, []byte(job.Secret))
+		var sign = Sign(rawb, []byte(job.Secret))
 		headers.Set(job.HeaderSign, sign)
 	}
 
 	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestUri, job.requestType, headers, params)
 	if err != nil {
-		return nil, fmt.Errorf(`%s: %w`, logp, err)
+		return jlog, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	job.mlog.Outf(`running ...`)
+	rawb, err = httputil.DumpRequestOut(httpReq, true)
+	if err != nil {
+		return jlog, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	fmt.Fprintf(jlog, "--- HTTP request:\n%s\n\n", rawb)
 
 	httpRes, _, err = job.httpc.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf(`%s: %w`, logp, err)
+		return jlog, fmt.Errorf(`%s: %w`, logp, err)
 	}
+
+	rawb, err = httputil.DumpResponse(httpRes, true)
+	if err != nil {
+		return jlog, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	fmt.Fprintf(jlog, "--- HTTP response:\n%s\n\n", rawb)
 
 	if httpRes.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(`%s: %s`, logp, httpRes.Status)
+		return jlog, fmt.Errorf(`%s: %s`, logp, httpRes.Status)
 	}
 
-	return nil, nil
+	fmt.Fprintf(jlog, "=== DONE\n")
+
+	return jlog, nil
 }
 
 func (job *JobHttp) paramsToJson() (obj map[string]interface{}, raw []byte, err error) {
@@ -586,45 +509,4 @@ func (job *JobHttp) setStatus(status string) {
 	job.Lock()
 	job.Status = status
 	job.Unlock()
-}
-
-// stateLoad load the job state from file Job.pathState.
-func (job *JobHttp) stateLoad() (err error) {
-	var rawState []byte
-
-	rawState, err = os.ReadFile(job.pathState)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
-	job.Lock()
-	defer job.Unlock()
-
-	err = job.unpackState(rawState)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// stateSave save the job state into file job.pathState.
-func (job *JobHttp) stateSave() (err error) {
-	var rawState []byte
-
-	job.Lock()
-	defer job.Unlock()
-
-	rawState, err = job.packState()
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(job.pathState, rawState, 0600)
-	if err != nil {
-		return err
-	}
-	return nil
 }

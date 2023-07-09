@@ -258,36 +258,36 @@ func (cl *Client) JobHttp(id string) (httpJob *JobHttp, err error) {
 	return httpJob, nil
 }
 
-// JobHttpLogs get the job logs by its ID.
-func (cl *Client) JobHttpLogs(id string) (logs []string, err error) {
+// JobHttpLog get the job logs by its ID.
+func (cl *Client) JobHttpLog(id string, counter int) (jlog *JobLog, err error) {
 	var (
-		logp   = `JobHttpLogs`
+		logp   = `JobHttpLog`
 		params = url.Values{}
 
 		res     *libhttp.EndpointResponse
 		resBody []byte
 	)
 
-	params.Set(`id`, id)
+	params.Set(paramNameID, id)
+	params.Set(paramNameCounter, strconv.Itoa(counter))
 
-	_, resBody, err = cl.Client.Get(apiJobHttpLogs, nil, params)
+	_, resBody, err = cl.Client.Get(apiJobHttpLog, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	res = &libhttp.EndpointResponse{
-		Data: &logs,
+		Data: &jlog,
 	}
-
 	err = json.Unmarshal(resBody, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
-	if res.Code != 200 {
-		res.Data = nil
-		return nil, res
+	if res.Code == 200 {
+		return jlog, nil
 	}
-	return logs, nil
+	res.Data = nil
+	return nil, res
 }
 
 // JobHttpPause pause the HTTP job by its ID.

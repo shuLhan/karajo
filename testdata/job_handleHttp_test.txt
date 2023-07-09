@@ -8,17 +8,24 @@ Test running Job with handleHttp.
     "path": "/test-job-handle-http",
     "auth_kind": "hmac-sha256",
     "header_sign": "X-Karajo-Sign",
-    "last_run": "2023-01-08T23:30:00Z",
-    "next_run": "2023-01-09T00:30:00Z",
+    "last_run": "0001-01-01T00:00:00Z",
+    "next_run": "0001-01-01T00:00:00Z",
     "id": "test_job_handle_http",
     "name": "Test job handle HTTP",
-    "interval": 3600000000000,
     "log_retention": 5
   }
 }
 
 <<< job_after.json
 {
+  "path": "/test-job-handle-http",
+  "auth_kind": "hmac-sha256",
+  "header_sign": "X-Karajo-Sign",
+  "last_run": "2023-01-09T00:00:00Z",
+  "next_run": "0001-01-01T00:00:00Z",
+  "id": "test_job_handle_http",
+  "name": "Test job handle HTTP",
+  "status": "success",
   "logs": [
     {
       "job_id": "test_job_handle_http",
@@ -28,14 +35,5 @@ Test running Job with handleHttp.
       "content": "T3V0cHV0IGZyb20gQ2FsbA=="
     }
   ],
-  "path": "/test-job-handle-http",
-  "auth_kind": "hmac-sha256",
-  "header_sign": "X-Karajo-Sign",
-  "last_run": "2023-01-09T00:00:00Z",
-  "next_run": "2023-01-09T01:00:00Z",
-  "id": "test_job_handle_http",
-  "name": "Test job handle HTTP",
-  "status": "success",
-  "interval": 3600000000000,
   "log_retention": 5
 }

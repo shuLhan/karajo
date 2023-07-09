@@ -203,9 +203,7 @@ func TestJob_handleHttp(t *testing.T) {
 		}
 		job = Job{
 			JobBase: JobBase{
-				Name:     `Test job handle HTTP`,
-				Interval: 60 * time.Minute,
-				LastRun:  TimeNow().Add(-30 * time.Minute),
+				Name: `Test job handle HTTP`,
 			},
 			Path:   `/test-job-handle-http`,
 			Secret: `s3cret`,
@@ -288,11 +286,11 @@ func TestJob_handleHttp(t *testing.T) {
 	job.Unlock()
 
 	exp = tdata.Output[`job_after.json`]
-	test.Assert(t, `TestJob_handleHttp`, string(exp), string(got))
+	test.Assert(t, `job_after`, string(exp), string(got))
 }
 
-// TestJob_Start test Job's Call with timer.
-func TestJob_Start(t *testing.T) {
+// TestJob_startInterval_Call test Job's Call with Interval.
+func TestJob_startInterval_Call(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
 		env         = Environment{

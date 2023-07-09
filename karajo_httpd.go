@@ -29,7 +29,7 @@ const (
 	apiEnvironment = `/karajo/api/environment`
 
 	apiJobHttp       = `/karajo/api/job_http`
-	apiJobHttpLogs   = `/karajo/api/job_http/logs`
+	apiJobHttpLog    = `/karajo/api/job_http/log`
 	apiJobHttpPause  = `/karajo/api/job_http/pause`
 	apiJobHttpResume = `/karajo/api/job_http/resume`
 
@@ -168,10 +168,10 @@ func (k *Karajo) registerApis() (err error) {
 	}
 	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         apiJobHttpLogs,
+		Path:         apiJobHttpLog,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobHttpLogs,
+		Call:         k.apiJobHttpLog,
 	})
 	if err != nil {
 		return err
@@ -571,22 +571,76 @@ func (k *Karajo) apiJobHttp(epr *libhttp.EndpointRequest) (resbody []byte, err e
 	return resbody, err
 }
 
-// apiJobHttpLogs HTTP API to get the logs for JobHttp by its ID.
-func (k *Karajo) apiJobHttpLogs(epr *libhttp.EndpointRequest) ([]byte, error) {
+// apiJobHttpLog HTTP API to get the logs for JobHttp by its ID.
+//
+// Request format,
+//
+//	GET /karajo/api/job_http/log?id=<jobID>&counter=<counter>
+//
+// If the jobID and counter exist it will return the JobLog object as JSON.
+func (k *Karajo) apiJobHttpLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
-		res              = &libhttp.EndpointResponse{}
-		id      string   = epr.HttpRequest.Form.Get(paramNameID)
-		jobHttp *JobHttp = k.env.jobHttp(id)
+		logp              = `apiJobHttpLog`
+		res               = &libhttp.EndpointResponse{}
+		id         string = epr.HttpRequest.Form.Get(paramNameID)
+		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
+
+		job     *JobHttp
+		hlog    *JobLog
+		counter int64
 	)
 
-	if jobHttp == nil {
+	id = strings.ToLower(id)
+	job = k.env.jobHttp(id)
+	if job == nil {
 		return nil, errInvalidJobID(id)
 	}
 
-	res.Code = http.StatusOK
-	res.Data = jobHttp.clog
+	counter, err = strconv.ParseInt(counterStr, 10, 64)
+	if err != nil {
+		res.Code = http.StatusNotFound
+		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
+		return nil, res
+	}
 
-	return json.Marshal(res)
+	job.Lock()
+	var v *JobLog
+	for _, v = range job.JobBase.Logs {
+		if v.Counter != counter {
+			continue
+		}
+		hlog = v
+		break
+	}
+	job.Unlock()
+
+	if hlog == nil {
+		res.Code = http.StatusNotFound
+		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
+	} else {
+		err = hlog.load()
+		if err != nil {
+			res.Code = http.StatusInternalServerError
+			res.Message = err.Error()
+		} else {
+			res.Code = http.StatusOK
+			res.Data = hlog
+		}
+	}
+
+	resbody, err = json.Marshal(res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	resbody, err = compressGzip(resbody)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+
+	return resbody, nil
 }
 
 // apiJobHttpPause HTTP API to pause running the JobHttp.
@@ -609,7 +663,6 @@ func (k *Karajo) apiJobHttpPause(epr *libhttp.EndpointRequest) (resb []byte, err
 		return nil, errInvalidJobID(id)
 	}
 
-	jobHttp.mlog.Outf(`pausing...`)
 	jobHttp.pause()
 
 	res.Code = http.StatusOK
@@ -638,7 +691,6 @@ func (k *Karajo) apiJobHttpResume(epr *libhttp.EndpointRequest) (resb []byte, er
 		return nil, errInvalidJobID(id)
 	}
 
-	jobHttp.mlog.Outf(`resuming...`)
 	jobHttp.resume(JobStatusStarted)
 
 	res.Code = http.StatusOK

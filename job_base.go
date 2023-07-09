@@ -4,11 +4,14 @@
 package karajo
 
 import (
-	"bytes"
+	"fmt"
+	"os"
+	"sort"
 	"sync"
 	"time"
 
 	"github.com/shuLhan/share/lib/mlog"
+	libhtml "github.com/shuLhan/share/lib/net/html"
 	libtime "github.com/shuLhan/share/lib/time"
 )
 
@@ -60,17 +63,138 @@ type JobBase struct {
 	// [time.Scheduler]: // https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler
 	Schedule string `ini:"::schedule" json:"schedule,omitempty"`
 
+	// dirWork define the directory on the system where all commands
+	// will be executed.
+	dirWork string
+	dirLog  string
+
+	// Cache of log sorted by its counter.
+	Logs []*JobLog `json:"logs,omitempty"`
+
 	// Interval duration when job will be repeatedly executed.
 	// This field is optional, the minimum value is 1 minute.
 	//
 	// If both Schedule and Interval set, only Schedule will be processed.
 	Interval time.Duration `ini:"::interval" json:"interval,omitempty"`
 
+	lastCounter int64
+
+	// LogRetention define the maximum number of logs to keep in storage.
+	// This field is optional, default to 5.
+	LogRetention int `ini:"::log_retention" json:"log_retention,omitempty"`
+
 	sync.Mutex
 }
 
-func (job *JobBase) init() {
+func (job *JobBase) init(name string) {
 	job.finishq = make(chan struct{}, 1)
+
+	job.Name = name
+	job.ID = libhtml.NormalizeForID(name)
+
+	if job.LogRetention <= 0 {
+		job.LogRetention = defJobLogRetention
+	}
+}
+
+// initLogs load the job logs state, counter and status.
+func (job *JobBase) initLogs() (err error) {
+	var (
+		dir       *os.File
+		hlog      *JobLog
+		fi        os.FileInfo
+		fiModTime time.Time
+		fis       []os.FileInfo
+	)
+
+	dir, err = os.Open(job.dirLog)
+	if err != nil {
+		return err
+	}
+	fis, err = dir.Readdir(0)
+	if err != nil {
+		return err
+	}
+
+	for _, fi = range fis {
+		hlog = parseJobLogName(job.dirLog, fi.Name())
+		if hlog == nil {
+			// Skip log with invalid file name.
+			continue
+		}
+
+		job.Logs = append(job.Logs, hlog)
+
+		if hlog.Counter > job.lastCounter {
+			job.lastCounter = hlog.Counter
+			job.Status = hlog.Status
+		}
+
+		fiModTime = fi.ModTime()
+		if job.LastRun.IsZero() {
+			job.LastRun = fiModTime
+		} else if fiModTime.After(job.LastRun) {
+			job.LastRun = fiModTime
+		}
+	}
+
+	job.LastRun = job.LastRun.UTC().Round(time.Second)
+
+	sort.Slice(job.Logs, func(x, y int) bool {
+		return job.Logs[x].Counter < job.Logs[y].Counter
+	})
+
+	job.logsPrune()
+
+	return nil
+}
+
+// initTimer init fields that required to run Job with Interval or Schedule.
+func (job *JobBase) initTimer() (err error) {
+	var logp = `initTimer`
+
+	if len(job.Schedule) != 0 {
+		job.scheduler, err = libtime.NewScheduler(job.Schedule)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
+		// Since only Schedule or Interval can be run, unset the
+		// Interval here.
+		job.Interval = 0
+		job.NextRun = job.scheduler.Next()
+		return
+	}
+	if job.Interval > 0 {
+		if job.Interval < time.Minute {
+			job.Interval = time.Minute
+		}
+
+		var (
+			now          = TimeNow().UTC().Round(time.Second)
+			nextInterval = job.computeNextInterval(now)
+		)
+		job.NextRun = now.Add(nextInterval)
+	}
+	return nil
+}
+
+func (job *JobBase) logsPrune() {
+	var (
+		hlog     *JobLog
+		totalLog int
+		indexMin int
+	)
+
+	totalLog = len(job.Logs)
+	if totalLog > job.LogRetention {
+		// Delete old logs.
+		indexMin = totalLog - job.LogRetention
+		for _, hlog = range job.Logs[:indexMin] {
+			_ = os.Remove(hlog.path)
+		}
+		job.Logs = job.Logs[indexMin:]
+	}
 }
 
 // canStart check if the job can be started or return an error if its paused
@@ -105,7 +229,7 @@ func (job *JobBase) start() (err error) {
 }
 
 // finish mark the job as finished.
-// If the err is not nil, it will set the status to failed; otherwise to
+// If job finish with error, it will set the status to failed; otherwise to
 // success.
 func (job *JobBase) finish(jlog *JobLog, err error) {
 	job.Lock()
@@ -113,19 +237,15 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 
 	if err != nil {
 		job.Status = JobStatusFailed
-		if jlog != nil {
-			_, _ = jlog.Write([]byte(err.Error()))
-		}
+		_, _ = jlog.Write([]byte(err.Error()))
 	} else {
 		job.Status = JobStatusSuccess
 	}
 
-	if jlog != nil {
-		jlog.setStatus(job.Status)
-		err = jlog.flush()
-		if err != nil {
-			mlog.Errf(`job: %s: %s`, job.ID, err)
-		}
+	jlog.setStatus(job.Status)
+	err = jlog.flush()
+	if err != nil {
+		mlog.Errf(`job: %s: %s`, job.ID, err)
 	}
 
 	job.LastRun = TimeNow().UTC().Round(time.Second)
@@ -161,42 +281,4 @@ func (job *JobBase) resume(status string) {
 	job.Lock()
 	job.Status = status
 	job.Unlock()
-}
-
-// packState convert the Job state into text, each field from top to bottom
-// separated by new line.
-func (job *JobBase) packState() (text []byte, err error) {
-	var (
-		buf bytes.Buffer
-		raw []byte
-	)
-
-	raw, err = job.LastRun.MarshalText()
-	if err != nil {
-		return nil, err
-	}
-	buf.Write(raw)
-	buf.WriteByte('\n')
-	buf.WriteString(job.Status)
-	buf.WriteByte('\n')
-	return buf.Bytes(), nil
-}
-
-// unpackState load the Job state from text.
-func (job *JobBase) unpackState(text []byte) (err error) {
-	var (
-		fields [][]byte = bytes.Split(text, []byte("\n"))
-	)
-	if len(fields) == 0 {
-		return nil
-	}
-	err = job.LastRun.UnmarshalText(fields[0])
-	if err != nil {
-		return err
-	}
-	if len(fields) == 1 {
-		return nil
-	}
-	job.Status = string(fields[1])
-	return nil
 }

@@ -18,14 +18,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/mlog"
-	libhtml "github.com/shuLhan/share/lib/net/html"
-	libtime "github.com/shuLhan/share/lib/time"
 )
 
 const (
@@ -74,9 +71,6 @@ type Job struct {
 	startq chan struct{}
 	stopq  chan struct{}
 
-	// Cache of log sorted by its counter.
-	Logs []*JobLog `json:"logs,omitempty"`
-
 	// Call define a function or method to be called, as an
 	// alternative to Commands.
 	// This field is optional, it is only used if Job created through
@@ -116,11 +110,6 @@ type Job struct {
 	// If its empty, it will be set to global Secret from Environment.
 	Secret string `ini:"::secret" json:"-"`
 
-	// dirWork define the directory on the system where all commands
-	// will be executed.
-	dirWork string
-	dirLog  string
-
 	// Commands list of command to be executed.
 	// This option can be defined multiple times.
 	// The following environment variables are available inside the
@@ -130,12 +119,6 @@ type Job struct {
 	Commands []string `ini:"::command" json:"commands,omitempty"`
 
 	JobBase
-
-	// LogRetention define the maximum number of logs to keep in storage.
-	// This field is optional, default to 5.
-	LogRetention int `ini:"::log_retention" json:"log_retention,omitempty"`
-
-	lastCounter int64
 }
 
 // authorize the hook based on the AuthKind.
@@ -269,7 +252,7 @@ func (job *Job) init(env *Environment, name string) (err error) {
 		logp = `init`
 	)
 
-	job.JobBase.init()
+	job.JobBase.init(name)
 
 	job.startq = make(chan struct{}, 1)
 	job.stopq = make(chan struct{}, 1)
@@ -285,11 +268,6 @@ func (job *Job) init(env *Environment, name string) (err error) {
 	}
 
 	job.env = env
-	job.Name = name
-	job.ID = libhtml.NormalizeForID(name)
-	if job.LogRetention <= 0 {
-		job.LogRetention = defJobLogRetention
-	}
 
 	err = job.initDirsState(env)
 	if err != nil {
@@ -301,7 +279,7 @@ func (job *Job) init(env *Environment, name string) (err error) {
 		return err
 	}
 
-	err = job.initTimer()
+	err = job.JobBase.initTimer()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -338,106 +316,6 @@ func (job *Job) initDirsState(env *Environment) (err error) {
 	return nil
 }
 
-// initLogs load the job logs state, counter and status.
-func (job *Job) initLogs() (err error) {
-	var (
-		dir       *os.File
-		hlog      *JobLog
-		fi        os.FileInfo
-		fiModTime time.Time
-		fis       []os.FileInfo
-	)
-
-	dir, err = os.Open(job.dirLog)
-	if err != nil {
-		return err
-	}
-	fis, err = dir.Readdir(0)
-	if err != nil {
-		return err
-	}
-
-	for _, fi = range fis {
-		hlog = parseJobLogName(job.dirLog, fi.Name())
-		if hlog == nil {
-			// Skip log with invalid file name.
-			continue
-		}
-
-		job.Logs = append(job.Logs, hlog)
-
-		if hlog.Counter > job.lastCounter {
-			job.lastCounter = hlog.Counter
-			job.Status = hlog.Status
-		}
-
-		fiModTime = fi.ModTime()
-		if job.LastRun.IsZero() {
-			job.LastRun = fiModTime
-		} else if fiModTime.After(job.LastRun) {
-			job.LastRun = fiModTime
-		}
-	}
-
-	job.LastRun = job.LastRun.UTC().Round(time.Second)
-
-	sort.Slice(job.Logs, func(x, y int) bool {
-		return job.Logs[x].Counter < job.Logs[y].Counter
-	})
-
-	job.logsPrune()
-
-	return nil
-}
-
-// initTimer init fields that required to run Job with Interval or Schedule.
-func (job *Job) initTimer() (err error) {
-	var logp = `initTimer`
-
-	if len(job.Schedule) != 0 {
-		job.scheduler, err = libtime.NewScheduler(job.Schedule)
-		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
-		}
-
-		// Since only Schedule or Interval can be run, unset the
-		// Interval here.
-		job.Interval = 0
-		job.NextRun = job.scheduler.Next()
-		return
-	}
-	if job.Interval > 0 {
-		if job.Interval < time.Minute {
-			job.Interval = time.Minute
-		}
-
-		var (
-			now          = TimeNow().UTC().Round(time.Second)
-			nextInterval = job.computeNextInterval(now)
-		)
-		job.NextRun = now.Add(nextInterval)
-	}
-	return nil
-}
-
-func (job *Job) logsPrune() {
-	var (
-		hlog     *JobLog
-		totalLog int
-		indexMin int
-	)
-
-	totalLog = len(job.Logs)
-	if totalLog > job.LogRetention {
-		// Delete old logs.
-		indexMin = totalLog - job.LogRetention
-		for _, hlog = range job.Logs[:indexMin] {
-			_ = os.Remove(hlog.path)
-		}
-		job.Logs = job.Logs[indexMin:]
-	}
-}
-
 // handleHttp handle trigger to run the Job from HTTP request.
 //
 // Once the signature is verified it will response immediately and run the
@@ -447,6 +325,11 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 
 	// Authenticated request by checking the request body.
 	err = job.authorize(epr.HttpRequest.Header, epr.RequestBody)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, err)
+	}
+
+	err = job.canStart()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, err)
 	}
