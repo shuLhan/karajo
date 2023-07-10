@@ -27,15 +27,14 @@ const (
 
 // JobBase define the base fields and commons methods for all Job types.
 type JobBase struct {
-	scheduler *libtime.Scheduler
-
-	finishq chan struct{}
-
 	// The last time the job is finished running, in UTC.
 	LastRun time.Time `ini:"-" json:"last_run,omitempty"`
 
 	// The next time the job will running, in UTC.
 	NextRun time.Time `ini:"-" json:"next_run,omitempty"`
+
+	scheduler *libtime.Scheduler
+	finishq   chan struct{}
 
 	// ID of the job. It must be unique or the last job will replace the
 	// previous job with the same ID.
@@ -69,6 +68,8 @@ type JobBase struct {
 	dirWork string
 	dirLog  string
 
+	kind jobKind
+
 	// Cache of log sorted by its counter.
 	Logs []*JobLog `json:"logs,omitempty"`
 
@@ -83,8 +84,6 @@ type JobBase struct {
 	// LogRetention define the maximum number of logs to keep in storage.
 	// This field is optional, default to 5.
 	LogRetention int `ini:"::log_retention" json:"log_retention,omitempty"`
-
-	kind jobKind
 
 	sync.Mutex
 }
