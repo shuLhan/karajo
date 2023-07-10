@@ -15,8 +15,7 @@ Test running Job with Call using timer.
       "job_id": "test_job_timer",
       "name": "test_job_timer.1.success",
       "status": "success",
-      "counter": 1,
-      "content": "T3V0cHV0IGZyb20gQ2FsbA=="
+      "counter": 1
     }
   ],
   "interval": 60000000000,

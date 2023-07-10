@@ -31,7 +31,8 @@ type JobLog struct {
 	path    string
 	Status  string `json:"status,omitempty"`
 	Content []byte `json:"content,omitempty"`
-	Counter int64  `json:"counter,omitempty"`
+	content []byte
+	Counter int64 `json:"counter,omitempty"`
 
 	sync.Mutex
 }
@@ -95,7 +96,7 @@ func (jlog *JobLog) flush() (err error) {
 
 	jlog.Name = jlog.Name + `.` + jlog.Status
 	jlog.path = jlog.path + `.` + jlog.Status
-	err = os.WriteFile(jlog.path, jlog.Content, 0600)
+	err = os.WriteFile(jlog.path, jlog.content, 0600)
 	if err != nil {
 		return err
 	}
@@ -107,24 +108,24 @@ func (jlog *JobLog) load() (err error) {
 	jlog.Lock()
 	defer jlog.Unlock()
 
-	if len(jlog.Content) != 0 {
+	if len(jlog.content) != 0 {
 		return nil
 	}
 
-	jlog.Content, err = os.ReadFile(jlog.path)
+	jlog.content, err = os.ReadFile(jlog.path)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (jlog *JobLog) MarshalJSON() ([]byte, error) {
+func (jlog *JobLog) marshalJSON() ([]byte, error) {
 	jlog.Lock()
 	defer jlog.Unlock()
 
 	var (
 		buf     bytes.Buffer
-		content = base64.StdEncoding.EncodeToString(jlog.Content)
+		content = base64.StdEncoding.EncodeToString(jlog.content)
 	)
 
 	fmt.Fprintf(&buf, `{"job_id":%q,"name":%q,"status":%q,"counter":%d,"content":%q}`,
@@ -141,17 +142,17 @@ func (jlog *JobLog) setStatus(status string) {
 
 func (jlog *JobLog) Write(b []byte) (n int, err error) {
 	jlog.Lock()
-	n = len(jlog.Content)
-	if n == 0 || n > 0 && jlog.Content[n-1] == '\n' {
+	n = len(jlog.content)
+	if n == 0 || n > 0 && jlog.content[n-1] == '\n' {
 		var timestamp = TimeNow().UTC().Format(defTimeLayout)
-		jlog.Content = append(jlog.Content, []byte(timestamp)...)
-		jlog.Content = append(jlog.Content, ' ')
-		jlog.Content = append(jlog.Content, []byte(jlog.jobKind)...)
-		jlog.Content = append(jlog.Content, []byte(": ")...)
-		jlog.Content = append(jlog.Content, []byte(jlog.JobID)...)
-		jlog.Content = append(jlog.Content, []byte(": ")...)
+		jlog.content = append(jlog.content, []byte(timestamp)...)
+		jlog.content = append(jlog.content, ' ')
+		jlog.content = append(jlog.content, []byte(jlog.jobKind)...)
+		jlog.content = append(jlog.content, []byte(": ")...)
+		jlog.content = append(jlog.content, []byte(jlog.JobID)...)
+		jlog.content = append(jlog.content, []byte(": ")...)
 	}
-	jlog.Content = append(jlog.Content, b...)
+	jlog.content = append(jlog.content, b...)
 	jlog.Unlock()
 	return len(b), nil
 }

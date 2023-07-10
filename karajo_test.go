@@ -276,7 +276,7 @@ func testKarajo_apiJobLog(t *testing.T, tdata *test.Data, cl *Client) {
 	if err != nil {
 		data = err
 	} else {
-		joblog.Content = []byte(`<REDACTED>`)
+		joblog.content = []byte(`<REDACTED>`)
 		data = joblog
 	}
 
@@ -374,7 +374,7 @@ func testKarajo_apiJobHttpLog(t *testing.T, tdata *test.Data, cl *Client) {
 
 	// Add dummy logs.
 	jobHttp.lastCounter++
-	jlog = newJobLog(jobHttp.ID, jobHttp.dirLog, jobHttp.lastCounter)
+	jlog = newJobLog(jobHttp.kind, jobHttp.ID, jobHttp.dirLog, jobHttp.lastCounter)
 	_, _ = jlog.Write([]byte("The first log\n"))
 	jobHttp.Logs = append(jobHttp.Logs, jlog)
 	_ = jlog.flush()

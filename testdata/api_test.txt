@@ -205,8 +205,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
       "job_id": "test_success",
       "name": "test_success.1.started",
       "status": "started",
-      "counter": 1,
-      "content": "VGhlIGZpcnN0IGxvZwo="
+      "counter": 1
     }
   ],
   "interval": 60000000000,
@@ -234,8 +233,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
       "job_id": "test_success",
       "name": "test_success.1.started",
       "status": "started",
-      "counter": 1,
-      "content": "VGhlIGZpcnN0IGxvZwo="
+      "counter": 1
     }
   ],
   "interval": 60000000000,

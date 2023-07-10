@@ -31,8 +31,7 @@ Test running Job with handleHttp.
       "job_id": "test_job_handle_http",
       "name": "test_job_handle_http.1.success",
       "status": "success",
-      "counter": 1,
-      "content": "T3V0cHV0IGZyb20gQ2FsbA=="
+      "counter": 1
     }
   ],
   "log_retention": 5

@@ -392,6 +392,7 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 		id         string = epr.HttpRequest.Form.Get(paramNameID)
 		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
 
+		buf     bytes.Buffer
 		job     *Job
 		hlog    *JobLog
 		counter int64
@@ -430,29 +431,34 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	if hlog == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
-	} else {
-		err = hlog.load()
-		if err != nil {
-			res.Code = http.StatusInternalServerError
-			res.Message = err.Error()
-		} else {
-			res.Code = http.StatusOK
-			res.Data = hlog
-		}
+		goto out
 	}
 
-	resbody, err = json.Marshal(res)
+	err = hlog.load()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	resbody, err = compressGzip(resbody)
+	resbody, err = hlog.marshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	fmt.Fprintf(&buf, `{"code":200,"data":%s}`, resbody)
+
+	resbody, err = compressGzip(buf.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+	return resbody, nil
 
+out:
+	resbody, err = json.Marshal(res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
 	return resbody, nil
 }
 
@@ -585,6 +591,7 @@ func (k *Karajo) apiJobHttpLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 		id         string = epr.HttpRequest.Form.Get(paramNameID)
 		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
 
+		buf     bytes.Buffer
 		job     *JobHttp
 		hlog    *JobLog
 		counter int64
@@ -617,29 +624,34 @@ func (k *Karajo) apiJobHttpLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 	if hlog == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
-	} else {
-		err = hlog.load()
-		if err != nil {
-			res.Code = http.StatusInternalServerError
-			res.Message = err.Error()
-		} else {
-			res.Code = http.StatusOK
-			res.Data = hlog
-		}
+		goto out
 	}
 
-	resbody, err = json.Marshal(res)
+	err = hlog.load()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	resbody, err = compressGzip(resbody)
+	resbody, err = hlog.marshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	fmt.Fprintf(&buf, `{"code":200,"data":%s}`, resbody)
+
+	resbody, err = compressGzip(buf.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+	return resbody, nil
 
+out:
+	resbody, err = json.Marshal(res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
 	return resbody, nil
 }
 
