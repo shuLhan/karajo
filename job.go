@@ -467,7 +467,7 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 	job.Lock()
 	job.Status = JobStatusRunning
 	job.lastCounter++
-	jlog = newJobLog(job.kind, job.ID, job.dirLog, job.lastCounter)
+	jlog = newJobLog(&job.JobBase)
 	job.Logs = append(job.Logs, jlog)
 	job.logsPrune()
 	job.Unlock()

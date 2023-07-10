@@ -380,7 +380,7 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 
 	job.setStatus(JobStatusRunning)
 	job.lastCounter++
-	jlog = newJobLog(job.kind, job.ID, job.dirLog, job.lastCounter)
+	jlog = newJobLog(&job.JobBase)
 	job.Logs = append(job.Logs, jlog)
 	job.logsPrune()
 

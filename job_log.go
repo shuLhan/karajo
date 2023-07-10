@@ -30,23 +30,23 @@ type JobLog struct {
 	Name    string `json:"name"`
 	path    string
 	Status  string `json:"status,omitempty"`
-	Content []byte `json:"content,omitempty"`
+	Content []byte `json:"content,omitempty"` // Only used to transfrom from/to JSON.
 	content []byte
 	Counter int64 `json:"counter,omitempty"`
 
 	sync.Mutex
 }
 
-func newJobLog(kind jobKind, jobID, dirLog string, logCounter int64) (jlog *JobLog) {
+func newJobLog(job *JobBase) (jlog *JobLog) {
 	jlog = &JobLog{
-		jobKind: kind,
-		JobID:   jobID,
-		Name:    fmt.Sprintf(`%s.%d`, jobID, logCounter),
+		jobKind: job.kind,
+		JobID:   job.ID,
+		Name:    fmt.Sprintf(`%s.%d`, job.ID, job.lastCounter),
 		Status:  JobStatusStarted,
-		Counter: logCounter,
+		Counter: job.lastCounter,
 	}
 
-	jlog.path = filepath.Join(dirLog, jlog.Name)
+	jlog.path = filepath.Join(job.dirLog, jlog.Name)
 
 	return jlog
 }
