@@ -134,11 +134,6 @@ func (job *JobHttp) startScheduler() {
 			}
 
 			jlog, err = job.execute()
-			if err != nil {
-				mlog.Errf(`!!! job_http: %s: failed: %s.`, job.ID, err)
-			} else {
-				mlog.Outf(`job_http: %s: finished.`, job.ID)
-			}
 			job.finish(jlog, err)
 
 			select {
@@ -170,8 +165,6 @@ func (job *JobHttp) startInterval() {
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
 
-		mlog.Outf(`next running in %s ...`, nextInterval)
-
 		timer = time.NewTimer(nextInterval)
 		ever = true
 		for ever {
@@ -185,18 +178,13 @@ func (job *JobHttp) startInterval() {
 			case <-job.startq:
 				err = job.start()
 				if err != nil {
-					mlog.Errf(`!!! %s`, err)
+					mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
 					timer.Stop()
 					ever = false
 					continue
 				}
 
 				jlog, err = job.execute()
-				if err != nil {
-					mlog.Errf(`!!! %s`, err)
-				} else {
-					mlog.Outf(`finished`)
-				}
 				job.finish(jlog, err)
 
 				timer.Stop()
@@ -217,7 +205,7 @@ func (job *JobHttp) startInterval() {
 
 // Stop the job.
 func (job *JobHttp) Stop() {
-	mlog.Outf(`stopping HTTP job ...`)
+	mlog.Outf(`%s: %s: stopping ...`, job.kind, job.ID)
 	select {
 	case job.stopq <- struct{}{}:
 	default:
@@ -382,7 +370,6 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 	var (
 		logp    = `execute`
 		now     = TimeNow().UTC().Round(time.Second)
-		logTime = now.Format(defTimeLayout)
 		headers = http.Header{}
 
 		params  interface{}
@@ -393,11 +380,11 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 
 	job.setStatus(JobStatusRunning)
 	job.lastCounter++
-	jlog = newJobLog(job.ID, job.dirLog, job.lastCounter)
+	jlog = newJobLog(job.kind, job.ID, job.dirLog, job.lastCounter)
 	job.Logs = append(job.Logs, jlog)
 	job.logsPrune()
 
-	fmt.Fprintf(jlog, "%s === BEGIN\n", logTime)
+	_, _ = jlog.Write([]byte("=== BEGIN\n"))
 
 	job.params[defJosParamEpoch] = now.Unix()
 
@@ -445,7 +432,7 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 		return jlog, fmt.Errorf(`%s: %s`, logp, httpRes.Status)
 	}
 
-	fmt.Fprintf(jlog, "=== DONE\n")
+	_, _ = jlog.Write([]byte("=== DONE\n"))
 
 	return jlog, nil
 }

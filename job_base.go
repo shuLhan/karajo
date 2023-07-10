@@ -297,9 +297,10 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 
 	if err != nil {
 		job.Status = JobStatusFailed
-		_, _ = jlog.Write([]byte(err.Error()))
+		fmt.Fprintf(jlog, "!!! %s: %s: failed: %s\n", job.kind, job.ID, err)
 	} else {
 		job.Status = JobStatusSuccess
+		fmt.Fprintf(jlog, "=== %s: %s: finished.\n", job.kind, job.ID)
 	}
 
 	jlog.setStatus(job.Status)

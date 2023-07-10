@@ -25,6 +25,7 @@ import (
 // Status can be success or fail.
 // If status is missing its considered fail.
 type JobLog struct {
+	jobKind jobKind
 	JobID   string `json:"job_id"`
 	Name    string `json:"name"`
 	path    string
@@ -35,8 +36,9 @@ type JobLog struct {
 	sync.Mutex
 }
 
-func newJobLog(jobID, dirLog string, logCounter int64) (jlog *JobLog) {
+func newJobLog(kind jobKind, jobID, dirLog string, logCounter int64) (jlog *JobLog) {
 	jlog = &JobLog{
+		jobKind: kind,
 		JobID:   jobID,
 		Name:    fmt.Sprintf(`%s.%d`, jobID, logCounter),
 		Status:  JobStatusStarted,
@@ -139,6 +141,16 @@ func (jlog *JobLog) setStatus(status string) {
 
 func (jlog *JobLog) Write(b []byte) (n int, err error) {
 	jlog.Lock()
+	n = len(jlog.Content)
+	if n == 0 || n > 0 && jlog.Content[n-1] == '\n' {
+		var timestamp = TimeNow().UTC().Format(defTimeLayout)
+		jlog.Content = append(jlog.Content, []byte(timestamp)...)
+		jlog.Content = append(jlog.Content, ' ')
+		jlog.Content = append(jlog.Content, []byte(jlog.jobKind)...)
+		jlog.Content = append(jlog.Content, []byte(": ")...)
+		jlog.Content = append(jlog.Content, []byte(jlog.JobID)...)
+		jlog.Content = append(jlog.Content, []byte(": ")...)
+	}
 	jlog.Content = append(jlog.Content, b...)
 	jlog.Unlock()
 	return len(b), nil

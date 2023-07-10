@@ -353,11 +353,6 @@ func (job *Job) startQueue() {
 			}
 
 			jlog, err = job.execute(nil)
-			if err != nil {
-				mlog.Errf(`!!! job: %s: failed: %s.`, job.ID, err)
-			} else {
-				mlog.Outf(`job: %s: finished.`, job.ID)
-			}
 			job.finish(jlog, err)
 
 			select {
@@ -393,11 +388,6 @@ func (job *Job) startScheduler() {
 			}
 
 			jlog, err = job.execute(nil)
-			if err != nil {
-				mlog.Errf(`!!! job: %s: failed: %s.`, job.ID, err)
-			} else {
-				mlog.Outf(`job: %s: finished.`, job.ID)
-			}
 			job.finish(jlog, err)
 
 			select {
@@ -429,8 +419,6 @@ func (job *Job) startInterval() {
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
 
-		mlog.Outf(`job: %s: next running in %s.`, job.ID, nextInterval)
-
 		timer = time.NewTimer(nextInterval)
 		ever = true
 		for ever {
@@ -451,11 +439,6 @@ func (job *Job) startInterval() {
 				}
 
 				jlog, err = job.execute(nil)
-				if err != nil {
-					mlog.Errf(`!!! job: %s: failed: %s.`, job.ID, err)
-				} else {
-					mlog.Outf(`job: %s: finished.`, job.ID)
-				}
 				job.finish(jlog, err)
 
 				timer.Stop()
@@ -477,7 +460,6 @@ func (job *Job) startInterval() {
 // execute the job Call or commands.
 func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
 	job.env.jobq <- struct{}{}
-	mlog.Outf(`job: %s: started ...`, job.ID)
 	defer func() {
 		<-job.env.jobq
 	}()
@@ -485,12 +467,12 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 	job.Lock()
 	job.Status = JobStatusRunning
 	job.lastCounter++
-	jlog = newJobLog(job.ID, job.dirLog, job.lastCounter)
+	jlog = newJobLog(job.kind, job.ID, job.dirLog, job.lastCounter)
 	job.Logs = append(job.Logs, jlog)
 	job.logsPrune()
 	job.Unlock()
 
-	mlog.Outf(`job: %s: running ...`, job.ID)
+	_, _ = jlog.Write([]byte("=== BEGIN\n"))
 
 	// Call the job.
 	if job.Call != nil {
@@ -499,18 +481,15 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 	}
 
 	var (
-		now     time.Time
 		execCmd exec.Cmd
-		logTime string
 		cmd     string
 		x       int
 	)
 
 	// Run commands.
 	for x, cmd = range job.Commands {
-		now = TimeNow().UTC().Round(time.Second)
-		logTime = now.Format(defTimeLayout)
-		fmt.Fprintf(jlog, "\n%s === Execute %2d: %s\n", logTime, x, cmd)
+		_, _ = jlog.Write([]byte("\n"))
+		fmt.Fprintf(jlog, "--- Execute %2d: %s\n", x, cmd)
 
 		execCmd = exec.Cmd{
 			Path:   `/bin/sh`,
@@ -526,6 +505,8 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 			return jlog, err
 		}
 	}
+
+	_, _ = jlog.Write([]byte("=== DONE\n"))
 
 	return jlog, nil
 }
