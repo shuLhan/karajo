@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -234,15 +232,9 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 
 	job.startq = make(chan struct{}, 1)
 	job.stopq = make(chan struct{}, 1)
+	job.JobBase.kind = jobKindHttp
 
-	job.JobBase.init(name)
-
-	err = job.initDirsState(env)
-	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
-	}
-
-	err = job.JobBase.initLogs()
+	err = job.JobBase.init(env, name)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -286,31 +278,6 @@ func (job *JobHttp) init(env *Environment, name string) (err error) {
 
 	if len(job.HeaderSign) == 0 {
 		job.HeaderSign = HeaderNameXKarajoSign
-	}
-
-	err = job.JobBase.initTimer()
-	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
-	}
-
-	return nil
-}
-
-func (job *JobHttp) initDirsState(env *Environment) (err error) {
-	job.dirWork = filepath.Join(env.dirLibJobHttp, job.ID)
-	err = os.MkdirAll(job.dirWork, 0700)
-	if err != nil {
-		return err
-	}
-
-	job.dirLog = filepath.Join(env.dirLogJobHttp, job.ID)
-
-	// Remove previous log file.
-	_ = os.Remove(job.dirLog)
-
-	err = os.MkdirAll(job.dirLog, 0700)
-	if err != nil {
-		return err
 	}
 
 	return nil

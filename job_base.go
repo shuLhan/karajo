@@ -6,6 +6,7 @@ package karajo
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -83,10 +84,14 @@ type JobBase struct {
 	// This field is optional, default to 5.
 	LogRetention int `ini:"::log_retention" json:"log_retention,omitempty"`
 
+	kind jobKind
+
 	sync.Mutex
 }
 
-func (job *JobBase) init(name string) {
+func (job *JobBase) init(env *Environment, name string) (err error) {
+	var logp = `init`
+
 	job.finishq = make(chan struct{}, 1)
 
 	job.Name = name
@@ -95,6 +100,61 @@ func (job *JobBase) init(name string) {
 	if job.LogRetention <= 0 {
 		job.LogRetention = defJobLogRetention
 	}
+
+	err = job.initDirsState(env)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	err = job.initLogs()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	err = job.initTimer()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+	return nil
+}
+
+func (job *JobBase) initDirsState(env *Environment) (err error) {
+	var logp = `initDirsState`
+
+	switch job.kind {
+	case jobKindExec:
+		job.dirWork = filepath.Join(env.dirLibJob, job.ID)
+		err = os.MkdirAll(job.dirWork, 0700)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
+		job.dirLog = filepath.Join(env.dirLogJob, job.ID)
+		err = os.MkdirAll(job.dirLog, 0700)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
+		return nil
+
+	case jobKindHttp:
+		job.dirWork = filepath.Join(env.dirLibJobHttp, job.ID)
+		err = os.MkdirAll(job.dirWork, 0700)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
+		job.dirLog = filepath.Join(env.dirLogJobHttp, job.ID)
+
+		// Remove previous log file.
+		_ = os.Remove(job.dirLog)
+
+		err = os.MkdirAll(job.dirLog, 0700)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
+	return nil
 }
 
 // initLogs load the job logs state, counter and status.

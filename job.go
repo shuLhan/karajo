@@ -15,9 +15,7 @@ import (
 	"hash"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -252,8 +250,14 @@ func (job *Job) init(env *Environment, name string) (err error) {
 		logp = `init`
 	)
 
-	job.JobBase.init(name)
+	job.JobBase.kind = jobKindExec
 
+	err = job.JobBase.init(env, name)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	job.env = env
 	job.startq = make(chan struct{}, 1)
 	job.stopq = make(chan struct{}, 1)
 
@@ -267,23 +271,6 @@ func (job *Job) init(env *Environment, name string) (err error) {
 		return ErrJobEmptyCommandsOrCall
 	}
 
-	job.env = env
-
-	err = job.initDirsState(env)
-	if err != nil {
-		return err
-	}
-
-	err = job.initLogs()
-	if err != nil {
-		return err
-	}
-
-	err = job.JobBase.initTimer()
-	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
-	}
-
 	if len(job.HeaderSign) == 0 {
 		job.HeaderSign = HeaderNameXKarajoSign
 	}
@@ -295,22 +282,6 @@ func (job *Job) init(env *Environment, name string) (err error) {
 		// OK.
 	default:
 		job.AuthKind = JobAuthKindHmacSha256
-	}
-
-	return nil
-}
-
-func (job *Job) initDirsState(env *Environment) (err error) {
-	job.dirWork = filepath.Join(env.dirLibJob, job.ID)
-	err = os.MkdirAll(job.dirWork, 0700)
-	if err != nil {
-		return err
-	}
-
-	job.dirLog = filepath.Join(env.dirLogJob, job.ID)
-	err = os.MkdirAll(job.dirLog, 0700)
-	if err != nil {
-		return err
 	}
 
 	return nil
