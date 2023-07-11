@@ -267,20 +267,25 @@ func testKarajo_apiJobLog(t *testing.T, tdata *test.Data, cl *Client) {
 		exp []byte = tdata.Output[`apiJobLog.json`]
 
 		joblog *JobLog
-		data   interface{}
+		expErr string
 		got    []byte
 		err    error
 	)
 
-	joblog, err = testClient.JobLog(`test-job-success`, 1)
+	_, err = testClient.JobLog(`test-job-success`, 1)
+	expErr = `job ID test-job-success not found`
+	test.Assert(t, `With invalid job ID`, expErr, err.Error())
+
+	_, err = testClient.JobLog(`test_job_success`, -1)
+	expErr = `log #-1 not found`
+	test.Assert(t, `With invalid JobLog counter`, expErr, err.Error())
+
+	joblog, err = testClient.JobLog(`test_job_success`, 1)
 	if err != nil {
-		data = err
-	} else {
-		joblog.content = []byte(`<REDACTED>`)
-		data = joblog
+		t.Fatalf(`want no error, got %q`, err)
 	}
 
-	got, err = json.MarshalIndent(data, ``, `  `)
+	got, err = json.MarshalIndent(joblog, ``, `  `)
 	if err != nil {
 		t.Fatal(err)
 	}

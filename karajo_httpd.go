@@ -394,16 +394,12 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 
 		buf     bytes.Buffer
 		job     *Job
-		hlog    *JobLog
+		jlog    *JobLog
 		counter int64
 	)
 
 	id = strings.ToLower(id)
-	for _, job = range k.env.Jobs {
-		if job.ID == id {
-			break
-		}
-	}
+	job = k.env.job(id)
 	if job == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf(`job ID %s not found`, id)
