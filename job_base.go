@@ -238,6 +238,19 @@ func (job *JobBase) initTimer() (err error) {
 	return nil
 }
 
+// log get the JobLog by its counter.
+func (job *JobBase) log(counter int64) (jlog *JobLog) {
+	job.Lock()
+	for _, jlog = range job.Logs {
+		if jlog.Counter == counter {
+			job.Unlock()
+			return jlog
+		}
+	}
+	job.Unlock()
+	return nil
+}
+
 func (job *JobBase) logsPrune() {
 	var (
 		hlog     *JobLog

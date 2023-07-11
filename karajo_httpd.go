@@ -413,29 +413,19 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 		return nil, res
 	}
 
-	job.Lock()
-	var v *JobLog
-	for _, v = range job.Logs {
-		if v.Counter != counter {
-			continue
-		}
-		hlog = v
-		break
-	}
-	job.Unlock()
-
-	if hlog == nil {
+	jlog = job.JobBase.log(counter)
+	if jlog == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
 		goto out
 	}
 
-	err = hlog.load()
+	err = jlog.load()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	resbody, err = hlog.marshalJSON()
+	resbody, err = jlog.marshalJSON()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -606,29 +596,19 @@ func (k *Karajo) apiJobHttpLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 		return nil, res
 	}
 
-	job.Lock()
-	var v *JobLog
-	for _, v = range job.JobBase.Logs {
-		if v.Counter != counter {
-			continue
-		}
-		hlog = v
-		break
-	}
-	job.Unlock()
-
-	if hlog == nil {
+	jlog = job.JobBase.log(counter)
+	if jlog == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
 		goto out
 	}
 
-	err = hlog.load()
+	err = jlog.load()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	resbody, err = hlog.marshalJSON()
+	resbody, err = jlog.marshalJSON()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
