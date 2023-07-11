@@ -73,12 +73,12 @@ func TestKarajo_apis(t *testing.T) {
 		}
 	}()
 
-	defer func() {
+	t.Cleanup(func() {
 		var err = karajo.Stop()
 		if err != nil {
 			log.Fatal(err)
 		}
-	}()
+	})
 
 	var clientOpts = ClientOptions{
 		ClientOptions: libhttp.ClientOptions{

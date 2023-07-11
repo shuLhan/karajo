@@ -531,14 +531,15 @@ func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) (resb []byte, err er
 
 	job.resume(``)
 
-	job.Lock()
-	defer job.Unlock()
-
 	res = &libhttp.EndpointResponse{}
 	res.Code = http.StatusOK
 	res.Data = job
 
-	return json.Marshal(res)
+	job.Lock()
+	resb, err = json.Marshal(res)
+	job.Unlock()
+
+	return resb, err
 }
 
 // apiJobHttp HTTP API to get the JobHttp information by its ID.
@@ -579,7 +580,7 @@ func (k *Karajo) apiJobHttpLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 
 		buf     bytes.Buffer
 		job     *JobHttp
-		hlog    *JobLog
+		jlog    *JobLog
 		counter int64
 	)
 

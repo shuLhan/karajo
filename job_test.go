@@ -233,7 +233,7 @@ func TestJob_handleHttp(t *testing.T) {
 	}
 
 	go job.Start()
-	defer job.Stop()
+	t.Cleanup(job.Stop)
 
 	var (
 		jobReq = JobHttpRequest{
@@ -332,7 +332,7 @@ func TestJob_startInterval_Call(t *testing.T) {
 	}
 
 	go job.Start()
-	defer job.Stop()
+	t.Cleanup(job.Stop)
 
 	<-job.finishq
 

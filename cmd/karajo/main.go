@@ -23,7 +23,6 @@ const (
 
 func main() {
 	mlog.SetPrefix(`karajo:`)
-	defer mlog.Flush()
 
 	var (
 		env    *karajo.Environment
@@ -88,4 +87,6 @@ func main() {
 	if err != nil {
 		mlog.Fatalf(err.Error())
 	}
+
+	mlog.Flush()
 }

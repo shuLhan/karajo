@@ -352,7 +352,9 @@ func (job *Job) startQueue() {
 				continue
 			}
 
+			job.env.jobq <- struct{}{}
 			jlog, err = job.execute(nil)
+			<-job.env.jobq
 			job.finish(jlog, err)
 
 			select {
@@ -387,7 +389,9 @@ func (job *Job) startScheduler() {
 				continue
 			}
 
+			job.env.jobq <- struct{}{}
 			jlog, err = job.execute(nil)
+			<-job.env.jobq
 			job.finish(jlog, err)
 
 			select {
@@ -438,7 +442,9 @@ func (job *Job) startInterval() {
 					continue
 				}
 
+				job.env.jobq <- struct{}{}
 				jlog, err = job.execute(nil)
+				<-job.env.jobq
 				job.finish(jlog, err)
 
 				timer.Stop()
@@ -459,11 +465,6 @@ func (job *Job) startInterval() {
 
 // execute the job Call or commands.
 func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
-	job.env.jobq <- struct{}{}
-	defer func() {
-		<-job.env.jobq
-	}()
-
 	job.Lock()
 	job.Status = JobStatusRunning
 	job.lastCounter++

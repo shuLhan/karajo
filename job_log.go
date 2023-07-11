@@ -92,36 +92,27 @@ func parseJobLogName(dir, name string) (jlog *JobLog) {
 
 func (jlog *JobLog) flush() (err error) {
 	jlog.Lock()
-	defer jlog.Unlock()
 
 	jlog.Name = jlog.Name + `.` + jlog.Status
 	jlog.path = jlog.path + `.` + jlog.Status
 	err = os.WriteFile(jlog.path, jlog.content, 0600)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	jlog.Unlock()
+	return err
 }
 
 // load the content of log from storage.
 func (jlog *JobLog) load() (err error) {
 	jlog.Lock()
-	defer jlog.Unlock()
-
-	if len(jlog.content) != 0 {
-		return nil
+	if len(jlog.content) == 0 {
+		jlog.content, err = os.ReadFile(jlog.path)
 	}
-
-	jlog.content, err = os.ReadFile(jlog.path)
-	if err != nil {
-		return err
-	}
-	return nil
+	jlog.Unlock()
+	return err
 }
 
 func (jlog *JobLog) marshalJSON() ([]byte, error) {
 	jlog.Lock()
-	defer jlog.Unlock()
 
 	var (
 		buf     bytes.Buffer
@@ -131,6 +122,7 @@ func (jlog *JobLog) marshalJSON() ([]byte, error) {
 	fmt.Fprintf(&buf, `{"job_id":%q,"name":%q,"status":%q,"counter":%d,"content":%q}`,
 		jlog.JobID, jlog.Name, jlog.Status, jlog.Counter, content)
 
+	jlog.Unlock()
 	return buf.Bytes(), nil
 }
 

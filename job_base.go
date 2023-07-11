@@ -273,12 +273,11 @@ func (job *JobBase) logsPrune() {
 // or reached maximum running.
 func (job *JobBase) canStart() (err error) {
 	job.Lock()
-	defer job.Unlock()
-
 	if job.Status == JobStatusPaused {
-		return ErrJobPaused
+		err = ErrJobPaused
 	}
-	return nil
+	job.Unlock()
+	return err
 }
 
 // start check if the job can run, the job is not paused and has not reach
@@ -305,7 +304,6 @@ func (job *JobBase) start() (err error) {
 // success.
 func (job *JobBase) finish(jlog *JobLog, err error) {
 	job.Lock()
-	defer job.Unlock()
 
 	if err != nil {
 		job.Status = JobStatusFailed
@@ -327,6 +325,8 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 	} else if job.Interval > 0 {
 		job.NextRun = job.LastRun.Add(job.Interval)
 	}
+
+	job.Unlock()
 }
 
 // computeNextInterval compute the duration when the job will be running based
