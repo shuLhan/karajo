@@ -339,27 +339,15 @@ func (job *Job) Start() {
 // startQueue start Job queue that triggered only by HTTP request.
 func (job *Job) startQueue() {
 	var (
-		jlog *JobLog
-		err  error
+		err error
 	)
 
 	for {
 		select {
 		case <-job.startq:
-			err = job.start()
+			err = job.run()
 			if err != nil {
 				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-				continue
-			}
-
-			job.env.jobq <- struct{}{}
-			jlog, err = job.execute(nil)
-			<-job.env.jobq
-			job.finish(jlog, err)
-
-			select {
-			case job.finishq <- struct{}{}:
-			default:
 			}
 
 		case <-job.stopq:
@@ -370,8 +358,7 @@ func (job *Job) startQueue() {
 
 func (job *Job) startScheduler() {
 	var (
-		jlog *JobLog
-		err  error
+		err error
 	)
 
 	for {
@@ -383,20 +370,9 @@ func (job *Job) startScheduler() {
 			}
 
 		case <-job.startq:
-			err = job.start()
+			err = job.run()
 			if err != nil {
 				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-				continue
-			}
-
-			job.env.jobq <- struct{}{}
-			jlog, err = job.execute(nil)
-			<-job.env.jobq
-			job.finish(jlog, err)
-
-			select {
-			case job.finishq <- struct{}{}:
-			default:
 			}
 
 		case <-job.stopq:
@@ -411,7 +387,6 @@ func (job *Job) startInterval() {
 		now          time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
-		jlog         *JobLog
 		err          error
 		ever         bool
 	)
@@ -423,8 +398,12 @@ func (job *Job) startInterval() {
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
 
-		timer = time.NewTimer(nextInterval)
-		ever = true
+		if timer == nil {
+			timer = time.NewTimer(nextInterval)
+			ever = true
+		} else {
+			ever = timer.Reset(nextInterval)
+		}
 		for ever {
 			select {
 			case <-timer.C:
@@ -434,26 +413,12 @@ func (job *Job) startInterval() {
 				}
 
 			case <-job.startq:
-				err = job.start()
+				err = job.run()
 				if err != nil {
 					mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-					timer.Stop()
-					ever = false
-					continue
 				}
-
-				job.env.jobq <- struct{}{}
-				jlog, err = job.execute(nil)
-				<-job.env.jobq
-				job.finish(jlog, err)
-
 				timer.Stop()
 				ever = false
-
-				select {
-				case job.finishq <- struct{}{}:
-				default:
-				}
 
 			case <-job.stopq:
 				timer.Stop()
@@ -461,6 +426,27 @@ func (job *Job) startInterval() {
 			}
 		}
 	}
+}
+
+func (job *Job) run() (err error) {
+	err = job.JobBase.start()
+	if err != nil {
+		return err
+	}
+
+	var jlog *JobLog
+
+	job.env.jobq <- struct{}{}
+	jlog, err = job.execute(nil)
+	<-job.env.jobq
+	job.finish(jlog, err)
+
+	select {
+	case job.finishq <- struct{}{}:
+	default:
+	}
+
+	return nil
 }
 
 // execute the job Call or commands.

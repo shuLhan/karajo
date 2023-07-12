@@ -114,8 +114,7 @@ func (job *JobHttp) Start() {
 
 func (job *JobHttp) startScheduler() {
 	var (
-		jlog *JobLog
-		err  error
+		err error
 	)
 
 	for {
@@ -127,18 +126,9 @@ func (job *JobHttp) startScheduler() {
 			}
 
 		case <-job.startq:
-			err = job.start()
+			err = job.run()
 			if err != nil {
-				mlog.Errf(`!!! job_http: %s: %s`, job.ID, err)
-				continue
-			}
-
-			jlog, err = job.execute()
-			job.finish(jlog, err)
-
-			select {
-			case job.finishq <- struct{}{}:
-			default:
+				mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
 			}
 
 		case <-job.stopq:
@@ -153,7 +143,6 @@ func (job *JobHttp) startInterval() {
 		now          time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
-		jlog         *JobLog
 		err          error
 		ever         bool
 	)
@@ -165,8 +154,12 @@ func (job *JobHttp) startInterval() {
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
 
-		timer = time.NewTimer(nextInterval)
-		ever = true
+		if timer == nil {
+			timer = time.NewTimer(nextInterval)
+			ever = true
+		} else {
+			ever = timer.Reset(nextInterval)
+		}
 		for ever {
 			select {
 			case <-timer.C:
@@ -176,24 +169,12 @@ func (job *JobHttp) startInterval() {
 				}
 
 			case <-job.startq:
-				err = job.start()
+				err = job.run()
 				if err != nil {
 					mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
-					timer.Stop()
-					ever = false
-					continue
 				}
-
-				jlog, err = job.execute()
-				job.finish(jlog, err)
-
 				timer.Stop()
 				ever = false
-
-				select {
-				case job.finishq <- struct{}{}:
-				default:
-				}
 
 			case <-job.stopq:
 				timer.Stop()
@@ -201,6 +182,24 @@ func (job *JobHttp) startInterval() {
 			}
 		}
 	}
+}
+
+func (job *JobHttp) run() (err error) {
+	err = job.JobBase.start()
+	if err != nil {
+		return err
+	}
+
+	var jlog *JobLog
+
+	jlog, err = job.execute()
+	job.finish(jlog, err)
+
+	select {
+	case job.finishq <- struct{}{}:
+	default:
+	}
+	return nil
 }
 
 // Stop the job.
