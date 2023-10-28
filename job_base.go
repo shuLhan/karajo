@@ -212,9 +212,7 @@ func (job *JobBase) initLogs() (err error) {
 		}
 
 		fiModTime = fi.ModTime()
-		if job.LastRun.IsZero() {
-			job.LastRun = fiModTime
-		} else if fiModTime.After(job.LastRun) {
+		if fiModTime.After(job.LastRun) {
 			job.LastRun = fiModTime
 		}
 	}
