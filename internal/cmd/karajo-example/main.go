@@ -22,16 +22,17 @@ import (
 
 func main() {
 	var (
-		env = karajo.NewEnvironment()
-
+		env *karajo.Environment
 		k   *karajo.Karajo
 		err error
 	)
 
-	env.DirBase = `testdata/example`
-	env.DirPublic = `testdata/public`
-	env.Secret = `s3cret`
-	env.IsDevelopment = true
+	env, err = karajo.LoadEnvironment(`testdata/example/etc/karajo/karajo.conf`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	env.Jobs = make(map[string]*karajo.Job)
 
 	env.Jobs[`interval-1m-code`] = &karajo.Job{
 		JobBase: karajo.JobBase{
@@ -63,6 +64,7 @@ func main() {
 
 	// Example of JobHttp.
 
+	env.HttpJobs = make(map[string]*karajo.JobHttp)
 	env.HttpJobs[`interval-90s-code`] = &karajo.JobHttp{
 		JobBase: karajo.JobBase{
 			Description: `Trigger our webhook-github every 90 seconds by code.`,

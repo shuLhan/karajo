@@ -177,13 +177,19 @@ func (k *Karajo) Stop() (err error) {
 // started, running, success, failed, or paused.
 func (k *Karajo) workerNotification() {
 	var (
-		jlog        *JobLog
-		clientNotif notifClient
-		ok          bool
+		jlog         *JobLog
+		clientNotif  notifClient
+		notifName    string
+		logNotifName string
 	)
 	for jlog = range k.logq {
-		for _, clientNotif = range k.env.notif {
-			// TODO: filter by its name.
+		for _, logNotifName = range jlog.listNotif {
+			for notifName, clientNotif = range k.env.notif {
+				if logNotifName != notifName {
+					continue
+				}
+				go clientNotif.Send(jlog)
+			}
 		}
 	}
 }
