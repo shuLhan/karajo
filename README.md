@@ -235,6 +235,10 @@ log_retention = <number>
 command = <string>
 ...
 command = <string>
+notif_on_success = <string>
+...
+notif_on_failed = <string>
+...
 ```
 
 `name`:: Define the job name.
@@ -304,7 +308,13 @@ This option can be defined multiple times.
 It contains command to be executed, in order from top to bottom.
 The following environment variables are available inside the command:
 
-* KARAJO_JOB_COUNTER: contains the current job counter.
+`notif_on_success`:: List of notification that will be triggered when job
+finish with status "success".
+This option can be defined multiple times.
+
+`notif_on_failed`:: List of notification that will be triggered when job
+finish with status "failed".
+This option can be defined multiple times.
 
 
 ### JobHttp
@@ -332,6 +342,11 @@ http_request_type = [query|form|json]
 http_header = <string ":" string>
 http_timeout = <duration>
 http_insecure = <bool>
+
+notif_on_success = <string>
+...
+notif_on_failed = <string>
+...
 ```
 
 `name`:: The job name.
@@ -416,6 +431,14 @@ The value of this option is using the Go time.Duration format, for example,
 
 `http_insecure`:: Can be set to true if the "http_url" is HTTPS with unknown
 Certificate Authority.
+
+`notif_on_success`:: List of notification that will be triggered when job
+finish with status "success".
+This option can be defined multiple times.
+
+`notif_on_failed`:: List of notification that will be triggered when job
+finish with status "failed".
+This option can be defined multiple times.
 
 
 ## Examples

@@ -97,6 +97,22 @@ func TestEnvironment_loadJobs(t *testing.T) {
 					`x=$(($RANDOM%10)) && echo sleep in ${x}s && sleep $x`,
 				},
 			},
+			`notif-email-success`: &Job{
+				JobBase: JobBase{
+					Description: `Send notification when job success.`,
+					NotifOnSuccess: []string{
+						`email-to-shulhan`,
+						`email-to-ops`,
+					},
+					NotifOnFailed: []string{
+						`email-to-shulhan`,
+					},
+				},
+				Path: `/notif-email-success`,
+				Commands: []string{
+					`echo Test email notification`,
+				},
+			},
 		}
 
 		err error

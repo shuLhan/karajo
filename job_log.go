@@ -32,6 +32,11 @@ type JobLog struct {
 	Status  string `json:"status,omitempty"`
 	Content []byte `json:"content,omitempty"` // Only used to transfrom from/to JSON.
 	content []byte
+
+	// listNotif contains list of notification where the job log will be
+	// send.
+	listNotif []string
+
 	Counter int64 `json:"counter,omitempty"`
 
 	sync.Mutex

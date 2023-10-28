@@ -34,6 +34,8 @@ const (
 //	schedule =
 //	interval =
 //	log_retention =
+//	notif_on_success =
+//	notif_on_failed =
 type JobBase struct {
 	// The last time the job is finished running, in UTC.
 	LastRun time.Time `ini:"-" json:"last_run,omitempty"`
@@ -76,6 +78,14 @@ type JobBase struct {
 	dirWork string
 
 	dirLog string
+
+	// NotifOnSuccess define list of notification where the job's log will
+	// be send when job execution finish successfully.
+	NotifOnSuccess []string `ini:"::notif_on_success" json:"notif_on_success,omitempty"`
+
+	// NotifOnFailed define list of notification where the job's log will
+	// be send when job execution failed.
+	NotifOnFailed []string `ini:"::notif_on_failed" json:"notif_on_failed,omitempty"`
 
 	kind jobKind
 

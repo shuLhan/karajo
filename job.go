@@ -450,6 +450,14 @@ func (job *Job) run(logq chan<- *JobLog) (err error) {
 	<-job.env.jobq
 	job.finish(jlog, err)
 
+	switch jlog.Status {
+	case JobStatusSuccess:
+		jlog.listNotif = append(jlog.listNotif, job.NotifOnSuccess...)
+
+	case JobStatusFailed:
+		jlog.listNotif = append(jlog.listNotif, job.NotifOnFailed...)
+	}
+
 	select {
 	case logq <- jlog:
 	default:

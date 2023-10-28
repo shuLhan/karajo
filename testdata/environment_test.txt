@@ -70,6 +70,24 @@ Test LoadEnvironment.
       "name": "",
       "description": "The job to test manual run."
     },
+    "notif-email-success": {
+      "path": "/notif-email-success",
+      "commands": [
+        "echo Test email notification"
+      ],
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "",
+      "name": "",
+      "description": "Send notification when job success.",
+      "notif_on_success": [
+        "email-to-shulhan",
+        "email-to-ops"
+      ],
+      "notif_on_failed": [
+        "email-to-shulhan"
+      ]
+    },
     "test fail": {
       "path": "/test-fail",
       "auth_kind": "hmac-sha256",
