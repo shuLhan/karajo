@@ -282,7 +282,7 @@ func isLoginPage(path string) bool {
 }
 
 // unauthorized write HTTP status 401 Unauthorized and return false.
-func (k *Karajo) unauthorized(w http.ResponseWriter, req *http.Request) bool {
+func (k *Karajo) unauthorized(w http.ResponseWriter, _ *http.Request) bool {
 	w.WriteHeader(http.StatusUnauthorized)
 	fmt.Fprintf(w, `Unauthorized`)
 	return false

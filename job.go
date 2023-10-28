@@ -64,7 +64,7 @@ type JobHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 // to be executed.
 type Job struct {
 	// Shared Environment.
-	env *Environment `json:"-"`
+	env *Environment
 
 	startq chan struct{}
 	stopq  chan struct{}

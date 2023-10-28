@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+// Package internal provides function for development, including converting
+// ".adoc" files to HTML, embedding assets into Go code, and watching files
+// for previewing documentation.
 package internal
 
 import (

@@ -102,6 +102,7 @@ type JobHttp struct {
 	HttpInsecure bool `ini:"::http_insecure" json:"http_insecure,omitempty"`
 }
 
+// Start running the job.
 func (job *JobHttp) Start(logq chan<- *JobLog) {
 	if job.scheduler != nil {
 		job.startScheduler(logq)

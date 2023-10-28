@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// Module karajo implement HTTP workers and manager similar to cron but works
-// only on HTTP.
+// Package karajo implement HTTP workers and manager similar to cron but
+// works only on HTTP.
 //
-// karajo has the web user interface (WUI) for monitoring the jobs that run on
-// port 31937 by default and can be configurable.
+// karajo has the web user interface (WUI) for monitoring the jobs that run
+// on port 31937 by default and can be configurable.
 //
 // A single instance of karajo is configured through code or configuration
 // file using ini file format.

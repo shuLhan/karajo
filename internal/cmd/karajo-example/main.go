@@ -100,17 +100,17 @@ func main() {
 	}
 }
 
-func helloWorldFromInterval(log io.Writer, epr *libhttp.EndpointRequest) error {
+func helloWorldFromInterval(log io.Writer, _ *libhttp.EndpointRequest) error {
 	fmt.Fprintln(log, `Hello world from interval with code`)
 	return nil
 }
 
-func helloWorldFromSchedule(log io.Writer, epr *libhttp.EndpointRequest) error {
+func helloWorldFromSchedule(log io.Writer, _ *libhttp.EndpointRequest) error {
 	fmt.Fprintln(log, `Hello world from schedule`)
 	return nil
 }
 
-func webhookWithGithub(log io.Writer, epr *libhttp.EndpointRequest) error {
+func webhookWithGithub(log io.Writer, _ *libhttp.EndpointRequest) error {
 	fmt.Fprintln(log, `Hello world from Webhook github`)
 	return nil
 }
