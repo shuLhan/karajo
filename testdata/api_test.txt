@@ -94,10 +94,10 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiJobPause_run.json
 {
-  "code": 412,
+  "data": null,
   "message": "job is paused",
   "name": "ERR_JOB_PAUSED",
-  "data": null
+  "code": 412
 }
 
 <<< apiJobResume.json
@@ -136,9 +136,9 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiJobRun_notfound.json
 {
-  "code": 404,
   "message": "job not found: /test-job-notfound",
-  "name": "ERR_JOB_NOT_FOUND"
+  "name": "ERR_JOB_NOT_FOUND",
+  "code": 404
 }
 
 <<< apiJobLog.json
@@ -171,9 +171,9 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiJobHttp_notfound.json
 {
-  "code": 400,
   "message": "invalid or empty job id: test_notfound",
-  "name": "ERR_INVALID_JOB_ID"
+  "name": "ERR_INVALID_JOB_ID",
+  "code": 400
 }
 
 <<< apiJobHttpLog.json

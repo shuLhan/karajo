@@ -2,8 +2,6 @@ Test running Job with handleHttp.
 
 <<< handleHttp_response.json
 {
-  "code": 202,
-  "message": "OK",
   "data": {
     "path": "/test-job-handle-http",
     "auth_kind": "hmac-sha256",
@@ -13,7 +11,9 @@ Test running Job with handleHttp.
     "id": "test_job_handle_http",
     "name": "Test job handle HTTP",
     "log_retention": 5
-  }
+  },
+  "message": "OK",
+  "code": 202
 }
 
 <<< job_after.json
