@@ -355,11 +355,6 @@ func (env *Environment) initNotifs() (err error) {
 	)
 	env.notif = make(map[string]notifClient)
 	for name, envNotif = range env.Notif {
-		if len(envNotif.On) == 0 {
-			// No notification trigger set, ignore it.
-			continue
-		}
-
 		clientNotif, err = envNotif.createClient()
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)

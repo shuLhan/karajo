@@ -20,7 +20,6 @@ type EnvNotif struct {
 	SmtpPassword string   `ini:"::smtp_password"`
 	From         string   `ini:"::from"`
 	To           []string `ini:"::to"`
-	On           []string `ini:"::on"`
 	SmtpInsecure bool     `ini:"::smtp_insecure"`
 }
 

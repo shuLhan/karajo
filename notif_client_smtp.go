@@ -43,16 +43,6 @@ func newClientSmtp(envNotif EnvNotif) (cl *clientSmtp, err error) {
 	return cl, nil
 }
 
-func (cl *clientSmtp) IsStatusHandled(status string) bool {
-	var on string
-	for _, on = range cl.env.On {
-		if on == status {
-			return true
-		}
-	}
-	return false
-}
-
 // Send the job status and log to user.
 func (cl *clientSmtp) Send(jlog *JobLog) {
 	var (

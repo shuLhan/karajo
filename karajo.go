@@ -183,11 +183,7 @@ func (k *Karajo) workerNotification() {
 	)
 	for jlog = range k.logq {
 		for _, clientNotif = range k.env.notif {
-			ok = clientNotif.IsStatusHandled(jlog.Status)
-			if !ok {
-				continue
-			}
-			go clientNotif.Send(jlog)
+			// TODO: filter by its name.
 		}
 	}
 }

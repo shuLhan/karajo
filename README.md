@@ -146,9 +146,6 @@ smtp_password =
 smtp_insecure =
 to = your@mailbox.com
 to = ...
-on = success
-on = failed
-on = ...
 ```
 
 `$name`:: unique name for notification.
@@ -177,9 +174,6 @@ certificate when connecting with TLS or STARTTLS.
 
 `to`:: email address that will receive notification, can be defined more
 than one.
-
-`on`:: The job status when this notification will be triggered.
-Currently, the valid values are "success" and "failed".
 
 ###  User
 
