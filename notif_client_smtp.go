@@ -25,10 +25,11 @@ func newClientSmtp(envNotif EnvNotif) (cl *clientSmtp, err error) {
 	cl = &clientSmtp{
 		env: envNotif,
 		opts: smtp.ClientOptions{
-			ServerUrl: envNotif.SmtpServer,
-			AuthUser:  envNotif.SmtpUser,
-			AuthPass:  envNotif.SmtpPassword,
-			Insecure:  envNotif.SmtpInsecure,
+			ServerUrl:     envNotif.SmtpServer,
+			AuthUser:      envNotif.SmtpUser,
+			AuthPass:      envNotif.SmtpPassword,
+			AuthMechanism: smtp.SaslMechanismPlain,
+			Insecure:      envNotif.SmtpInsecure,
 		},
 	}
 
