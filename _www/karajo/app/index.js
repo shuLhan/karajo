@@ -16,10 +16,6 @@ async function main() {
   werr.innerHTML = "";
 
   doRefresh();
-
-  _refreshInterval = setInterval(() => {
-    doRefresh();
-  }, delay);
 }
 
 async function doRefresh() {
