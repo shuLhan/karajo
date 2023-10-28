@@ -398,6 +398,8 @@ func (env *Environment) initUsers() (err error) {
 }
 
 // loadConfigJob load jobs configuration from file.
+//
+// The conf file can contains one or more jobs configuration.
 func (env *Environment) loadConfigJob(conf string) (jobs map[string]*Job, err error) {
 	type jobContainer struct {
 		Jobs map[string]*Job `ini:"job"`

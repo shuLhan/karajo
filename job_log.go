@@ -14,9 +14,9 @@ import (
 	"sync"
 )
 
-// JobLog contains the content, status, and counter for log.
+// JobLog contains the content, status, and counter for job's log.
 //
-// Each log file is using the following format:
+// Each log file name is using the following format:
 //
 //	<job.ID>.<counter>.<status>
 //

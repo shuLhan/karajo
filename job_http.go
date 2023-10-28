@@ -30,12 +30,24 @@ const (
 // See the [JobBase]'s Interval and Schedule fields for more information on
 // how to setup periodic time.
 //
-// Each JobHttp execution send the parameter named `_karajo_epoch` with value
-// is current server Unix time.
-// If the request type is `query` then the parameter is inside the query URL.
-// If the request type is `form` then the parameter is inside the body.
-// If the request type is `json` then the parameter is inside the body as JSON
-// object, for example `{"_karajo_epoch":1656750073}`.
+// Each JobHttp execution send the parameter named "_karajo_epoch" with value
+// set to current server Unix timestamp.
+// If the request type is "query" then the parameter is inside the query URL.
+// If the request type is "form" then the parameter is inside the body.
+// If the request type is "json" then the parameter is inside the body as JSON
+// object, for example '{"_karajo_epoch":1656750073}'.
+//
+// The job configuration in INI format,
+//
+//	[job "name"]
+//	secret =
+//	header_sign =
+//	http_method =
+//	http_url =
+//	http_request_type =
+//	http_header =
+//	http_timeout =
+//	http_insecure =
 type JobHttp struct {
 	headers http.Header
 

@@ -62,6 +62,15 @@ type JobHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 //
 // Each Job contains a working directory, and a callback or list of commands
 // to be executed.
+//
+// The job configuration in INI format,
+//
+//	[job "name"]
+//	path =
+//	auth_kind =
+//	header_sign =
+//	secret =
+//	command =
 type Job struct {
 	// Shared Environment.
 	env *Environment
@@ -323,7 +332,7 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 	return resbody, err
 }
 
-// Start the Job timer only if its Interval is non-zero.
+// Start running the job, either by scheduler, interval, or queue.
 func (job *Job) Start(logq chan<- *JobLog) {
 	if job.scheduler != nil {
 		job.startScheduler(logq)
@@ -449,7 +458,7 @@ func (job *Job) run(logq chan<- *JobLog) (err error) {
 	return nil
 }
 
-// execute the job Call or commands.
+// execute the job Call or Commands.
 func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
 	job.Lock()
 	job.Status = JobStatusRunning
@@ -498,7 +507,7 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 	return jlog, nil
 }
 
-// Stop the Job timer execution.
+// Stop the Job execution.
 func (job *Job) Stop() {
 	mlog.Outf(`job: %s: stopping ...`, job.ID)
 

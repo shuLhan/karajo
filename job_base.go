@@ -26,6 +26,14 @@ const (
 )
 
 // JobBase define the base fields and commons methods for all Job types.
+//
+// The base configuration in INI format,
+//
+//	[job "name"]
+//	description =
+//	schedule =
+//	interval =
+//	log_retention =
 type JobBase struct {
 	// The last time the job is finished running, in UTC.
 	LastRun time.Time `ini:"-" json:"last_run,omitempty"`
@@ -34,20 +42,22 @@ type JobBase struct {
 	NextRun time.Time `ini:"-" json:"next_run,omitempty"`
 
 	scheduler *libtime.Scheduler
-	// ID of the job. It must be unique or the last job will replace the
-	// previous job with the same ID.
+
+	// ID of the job.
+	// It must be unique, otherwise when jobs loaded, the last job will
+	// replace the previous job with the same ID.
 	// If ID is empty, it will generated from Name by replacing
 	// non-alphanumeric character with '-'.
 	ID string `ini:"-" json:"id"`
 
-	// Name of job for readibility.
+	// Name of job for human.
 	Name string `ini:"-" json:"name"`
 
-	// The description of the Job.
-	// It could be plain text or simple HTML.
+	// Description of the Job.
+	// It could contains simple HTML tags.
 	Description string `ini:"::description" json:"description,omitempty"`
 
-	// The last status of the job.
+	// Status of the job on last execution.
 	Status string `ini:"-" json:"status,omitempty"`
 
 	// Schedule a timer that run periodically based on calendar or day
@@ -58,21 +68,22 @@ type JobBase struct {
 	//
 	// If both Schedule and Interval set, only Schedule will be processed.
 	//
-	// [time.Scheduler]: // https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler
+	// [time.Scheduler]: https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler
 	Schedule string `ini:"::schedule" json:"schedule,omitempty"`
 
 	// dirWork define the directory on the system where all commands
 	// will be executed.
 	dirWork string
-	dirLog  string
+
+	dirLog string
 
 	kind jobKind
 
-	// Cache of log sorted by its counter.
+	// Logs contains cache of log sorted by its counter.
 	Logs []*JobLog `json:"logs,omitempty"`
 
 	// Interval duration when job will be repeatedly executed.
-	// This field is optional, the minimum value is 1 minute.
+	// This field is optional, the minimum value is one minute.
 	//
 	// If both Schedule and Interval set, only Schedule will be processed.
 	Interval time.Duration `ini:"::interval" json:"interval,omitempty"`
@@ -86,6 +97,7 @@ type JobBase struct {
 	sync.Mutex
 }
 
+// init initialize the job ID, log retention, directories, logs, and timer.
 func (job *JobBase) init(env *Environment, name string) (err error) {
 	var logp = `init`
 
@@ -113,6 +125,15 @@ func (job *JobBase) init(env *Environment, name string) (err error) {
 	return nil
 }
 
+// initDirsState initialize the job working and log directories.
+//
+// For job with type exec, the working directory should be at
+// "$BASE/var/lib/karajo/job/$JOB_ID" and the log should be at
+// "$BASE/var/log/karajo/job/$JOB_ID".
+//
+// For job with type http, the working directory should be at
+// "$BASE/var/lib/karajo/job_http/$JOB_ID" and the log should be at
+// "$BASE/var/log/karajo/job_http/$JOB_ID".
 func (job *JobBase) initDirsState(env *Environment) (err error) {
 	var logp = `initDirsState`
 
@@ -152,7 +173,12 @@ func (job *JobBase) initDirsState(env *Environment) (err error) {
 	return nil
 }
 
-// initLogs load the job logs state, counter and status.
+// initLogs load the job logs state, counter, and status.
+//
+// For each file in job's log directory, parse the log file name in the form
+// of "$JOB_ID.$COUNTER.$STATUS" to get its counter and status.
+//
+// The logs then stored in ascending order by its counter.
 func (job *JobBase) initLogs() (err error) {
 	var (
 		dir       *os.File
@@ -247,6 +273,11 @@ func (job *JobBase) log(counter int64) (jlog *JobLog) {
 	return nil
 }
 
+// logsPrune remove log files based on number of logs retention policy.
+// This function assume that Logs has been sorted in ascending order.
+//
+// For example, if total logs is 10 and log retention is 5, the first five log
+// items will be pruned.
 func (job *JobBase) logsPrune() {
 	var (
 		hlog     *JobLog
@@ -276,12 +307,10 @@ func (job *JobBase) canStart() (err error) {
 	return err
 }
 
-// start check if the job can run, the job is not paused and has not reach
-// maximum run.
+// start try starting the job.
 // If its can run, the status changes to `started`.
 //
-// If the job is paused, the LastRun will be set to current time and return
-// ErrJobPaused.
+// If the job is paused, it will return ErrJobPaused.
 func (job *JobBase) start() (err error) {
 	err = job.canStart()
 	if err != nil {
