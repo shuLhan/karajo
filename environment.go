@@ -355,6 +355,10 @@ func (env *Environment) initNotifs() (err error) {
 	)
 	env.notif = make(map[string]notifClient)
 	for name, envNotif = range env.Notif {
+		envNotif.Name = name
+
+		envNotif.init()
+
 		clientNotif, err = envNotif.createClient()
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)

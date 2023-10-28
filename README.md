@@ -164,8 +164,10 @@ For smtp+starttls, if no port is given, client will connect to server at
 port 587.
 
 `smtp_user`:: user name for submission.
+If start with '$' it will read from system environment.
 
 `smtp_password`:: password for smtp_user submission.
+If start with '$' it will read from system environment.
 
 `smtp_insecure`::  if set to true it will disable verifying remote
 certificate when connecting with TLS or STARTTLS.
