@@ -72,7 +72,7 @@ func main() {
 		err    error
 	)
 
-	flag.StringVar(&config, `config`, ``, `the karajo configuration file`)
+	flag.StringVar(&config, `config`, `/etc/karajo/karajo.conf`, `The karajo configuration file`)
 	flag.Parse()
 
 	cmd = flag.Arg(0)
