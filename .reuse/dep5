@@ -39,3 +39,7 @@ License: GPL-3.0-or-later
 Files: testdata/*
 Copyright: 2022 Shulhan <ms@kilabit.info>
 License: GPL-3.0-or-later
+
+Files: internal/cmd/karajo-example/testdata/*
+Copyright: 2022 Shulhan <ms@kilabit.info>
+License: GPL-3.0-or-later

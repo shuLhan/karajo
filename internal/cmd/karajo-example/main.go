@@ -27,7 +27,7 @@ func main() {
 		err error
 	)
 
-	env, err = karajo.LoadEnv(`testdata/example/etc/karajo/karajo.conf`)
+	env, err = karajo.LoadEnv(`internal/cmd/karajo-example/testdata/etc/karajo/karajo.conf`)
 	if err != nil {
 		log.Fatal(err)
 	}
