@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 Test HTTP APIs response.
 
 >>> test.conf
