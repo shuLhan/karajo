@@ -19,7 +19,7 @@ import (
 var (
 	testTimeNow = time.Date(2023, time.January, 9, 0, 0, 0, 0, time.UTC)
 
-	testEnv    *Environment
+	testEnv    *Env
 	testClient *Client
 )
 
@@ -47,7 +47,7 @@ func TestKarajo_apis(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testEnv, err = ParseEnvironment(tdata.Input[`test.conf`])
+	testEnv, err = ParseEnv(tdata.Input[`test.conf`])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,8 +89,8 @@ func TestKarajo_apis(t *testing.T) {
 	testClient = NewClient(clientOpts)
 	waitServerAlive(t, testClient)
 
-	t.Run(`apiEnvironment`, func(tt *testing.T) {
-		testKarajo_apiEnvironment(tt, tdata)
+	t.Run(`apiEnv`, func(tt *testing.T) {
+		testKarajo_apiEnv(tt, tdata)
 	})
 
 	t.Run(`apiJobPause`, func(tt *testing.T) {
@@ -143,17 +143,17 @@ func waitServerAlive(t *testing.T, cl *Client) {
 	}
 }
 
-func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data) {
+func testKarajo_apiEnv(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiEnvironment.json`]
+		exp []byte = tdata.Output[`apiEnv.json`]
 
-		gotEnv *Environment
+		gotEnv *Env
 		job    *JobExec
 		got    []byte
 		err    error
 	)
 
-	gotEnv, err = testClient.Environment()
+	gotEnv, err = testClient.Env()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +167,7 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	test.Assert(t, `apiEnvironment`, string(exp), string(got))
+	test.Assert(t, `apiEnv`, string(exp), string(got))
 }
 
 func testKarajo_apiJobPause(t *testing.T, tdata *test.Data) {

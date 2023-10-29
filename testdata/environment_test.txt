@@ -1,4 +1,4 @@
-Test LoadEnvironment.
+Test LoadEnv.
 
 <<< environment.json
 {

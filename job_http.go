@@ -102,7 +102,7 @@ type JobHttp struct {
 
 	// HttpTimeout custom HTTP timeout for this job.
 	// This field is optional, if not set default to global timeout in
-	// Environment.HttpTimeout.
+	// Env.HttpTimeout.
 	// To make job run without timeout, set the value to negative.
 	HttpTimeout time.Duration `ini:"::http_timeout" json:"http_timeout"`
 
@@ -227,7 +227,7 @@ func (job *JobHttp) Stop() {
 }
 
 // init initialize the job, compute the last run and the next run.
-func (job *JobHttp) init(env *Environment, name string) (err error) {
+func (job *JobHttp) init(env *Env, name string) (err error) {
 	var logp = `init`
 
 	job.startq = make(chan struct{}, 1)

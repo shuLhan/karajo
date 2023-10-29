@@ -185,12 +185,12 @@ GET /karajo/api/environment
 
 **Response**
 
-On success, it will return the Environment object,
+On success, it will return the Env object,
 
 ----
 {
 	"code": 200,
-	"data": <Environment>
+	"data": <Env>
 }
 ----
 

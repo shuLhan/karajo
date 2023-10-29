@@ -197,7 +197,7 @@ func TestJobExec_authHmacSha256(t *testing.T) {
 func TestJobExec_handleHttp(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
-		env         = Environment{
+		env         = Env{
 			DirBase: testBaseDir,
 			Secret:  `s3cret`,
 		}
@@ -294,7 +294,7 @@ func TestJobExec_handleHttp(t *testing.T) {
 func TestJobExec_startInterval_Call(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
-		env         = Environment{
+		env         = Env{
 			DirBase: testBaseDir,
 			Secret:  `s3cret`,
 		}

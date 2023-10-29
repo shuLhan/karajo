@@ -29,21 +29,21 @@ func NewClient(opts ClientOptions) (cl *Client) {
 	return cl
 }
 
-// Environment get the server environment.
-func (cl *Client) Environment() (env *Environment, err error) {
+// Env get the server environment.
+func (cl *Client) Env() (env *Env, err error) {
 	var (
-		logp = `Environment`
+		logp = `Env`
 
 		res     *libhttp.EndpointResponse
 		resBody []byte
 	)
 
-	_, resBody, err = cl.Client.Get(apiEnvironment, nil, nil)
+	_, resBody, err = cl.Client.Get(apiEnv, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	env = &Environment{}
+	env = &Env{}
 	res = &libhttp.EndpointResponse{
 		Data: env,
 	}

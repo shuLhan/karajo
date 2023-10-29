@@ -65,7 +65,7 @@ func main() {
 	mlog.SetPrefix(`karajo:`)
 
 	var (
-		env    *karajo.Environment
+		env    *karajo.Env
 		k      *karajo.Karajo
 		config string
 		cmd    string
@@ -89,7 +89,7 @@ func main() {
 		return
 	}
 
-	env, err = karajo.LoadEnvironment(config)
+	env, err = karajo.LoadEnv(config)
 	if err != nil {
 		mlog.Fatalf(err.Error())
 	}

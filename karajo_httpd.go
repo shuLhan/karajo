@@ -26,7 +26,7 @@ const HeaderNameXKarajoSign = `X-Karajo-Sign`
 const (
 	apiAuthLogin = `/karajo/api/auth/login`
 
-	apiEnvironment = `/karajo/api/environment`
+	apiEnv = `/karajo/api/environment`
 
 	apiJobHttp       = `/karajo/api/job_http`
 	apiJobHttpLog    = `/karajo/api/job_http/log`
@@ -116,10 +116,10 @@ func (k *Karajo) registerApis() (err error) {
 
 	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         apiEnvironment,
+		Path:         apiEnv,
 		RequestType:  libhttp.RequestTypeNone,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiEnvironment,
+		Call:         k.apiEnv,
 	})
 	if err != nil {
 		return err
@@ -347,9 +347,9 @@ func (k *Karajo) apiAuthLogin(epr *libhttp.EndpointRequest) (respBody []byte, er
 	return respBody, nil
 }
 
-func (k *Karajo) apiEnvironment(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+func (k *Karajo) apiEnv(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
-		logp = `apiEnvironment`
+		logp = `apiEnv`
 		res  = &libhttp.EndpointResponse{}
 	)
 

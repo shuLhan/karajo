@@ -22,7 +22,7 @@ func TestKarajo_apiAuthLogin(t *testing.T) {
 			Password: `$2a$10$9XMRfqpnzY2421fwYm5dd.CidJf7dHHWIESeeNGXuajHRf.Lqzy7a`, // s3cret
 
 		}
-		env = &Environment{
+		env = &Env{
 			Users: map[string]*User{
 				user.Name: user,
 			},
@@ -121,7 +121,7 @@ func TestKarajo_apiAuthLogin(t *testing.T) {
 
 func TestKarajo_handleFSAuth(t *testing.T) {
 	var (
-		env = &Environment{
+		env = &Env{
 			Users: map[string]*User{},
 		}
 		k = &Karajo{

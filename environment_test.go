@@ -10,10 +10,10 @@ import (
 	"github.com/shuLhan/share/lib/test"
 )
 
-func TestLoadEnvironment(t *testing.T) {
+func TestLoadEnv(t *testing.T) {
 	var (
 		tdata *test.Data
-		env   *Environment
+		env   *Env
 		got   []byte
 		exp   []byte
 		err   error
@@ -24,7 +24,7 @@ func TestLoadEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	env, err = LoadEnvironment(`testdata/karajo.conf`)
+	env, err = LoadEnv(`testdata/karajo.conf`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,12 +51,12 @@ func TestLoadEnvironment(t *testing.T) {
 
 	exp = tdata.Output[`environment.json`]
 
-	test.Assert(t, `LoadEnvironment`, string(exp), string(got))
+	test.Assert(t, `LoadEnv`, string(exp), string(got))
 }
 
-func TestEnvironment_loadJobs(t *testing.T) {
+func TestEnv_loadJobs(t *testing.T) {
 	var (
-		env = &Environment{
+		env = &Env{
 			dirConfigJobd: `testdata/etc/karajo/job.d`,
 		}
 		expJobs = map[string]*JobExec{

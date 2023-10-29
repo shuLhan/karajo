@@ -10,10 +10,10 @@ import (
 	"github.com/shuLhan/share/lib/test"
 )
 
-func TestEnvNotif_ParseEnvironment(t *testing.T) {
+func TestEnvNotif_ParseEnv(t *testing.T) {
 	var (
 		tdata *test.Data
-		env   *Environment
+		env   *Env
 		err   error
 	)
 
@@ -22,7 +22,7 @@ func TestEnvNotif_ParseEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	env, err = ParseEnvironment(tdata.Input[`karajo.conf`])
+	env, err = ParseEnv(tdata.Input[`karajo.conf`])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,5 +37,5 @@ func TestEnvNotif_ParseEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	test.Assert(t, `Notif: ParseEnvironment`, string(expRawEnv), string(gotRawEnv))
+	test.Assert(t, `Notif: ParseEnv`, string(expRawEnv), string(gotRawEnv))
 }

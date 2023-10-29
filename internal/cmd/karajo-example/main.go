@@ -22,12 +22,12 @@ import (
 
 func main() {
 	var (
-		env *karajo.Environment
+		env *karajo.Env
 		k   *karajo.Karajo
 		err error
 	)
 
-	env, err = karajo.LoadEnvironment(`testdata/example/etc/karajo/karajo.conf`)
+	env, err = karajo.LoadEnv(`testdata/example/etc/karajo/karajo.conf`)
 	if err != nil {
 		log.Fatal(err)
 	}

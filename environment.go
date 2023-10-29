@@ -27,8 +27,8 @@ const (
 	defMaxJobRunning = 1
 )
 
-// Environment contains configuration for HTTP server, logs, and list of jobs.
-type Environment struct {
+// Env contains configuration for HTTP server, logs, and list of jobs.
+type Env struct {
 	// List of JobExec by name.
 	ExecJobs map[string]*JobExec `ini:"job" json:"jobs"`
 
@@ -144,10 +144,10 @@ type Environment struct {
 	IsDevelopment bool `json:"is_development"`
 }
 
-// LoadEnvironment load the configuration from the ini file format.
-func LoadEnvironment(file string) (env *Environment, err error) {
+// LoadEnv load the configuration from the ini file format.
+func LoadEnv(file string) (env *Env, err error) {
 	var (
-		logp = `LoadEnvironment`
+		logp = `LoadEnv`
 		cfg  *ini.Ini
 	)
 
@@ -156,7 +156,7 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	env = &Environment{
+	env = &Env{
 		file: file,
 	}
 
@@ -168,11 +168,11 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 	return env, nil
 }
 
-// NewEnvironment create and initialize new Environment with default values,
+// NewEnv create and initialize new Env with default values,
 // where Name is "karajo", listen address is ":31937", base directory is "/",
 // HTTP timeout is 5 minutes, and maximum job running is 1.
-func NewEnvironment() (env *Environment) {
-	env = &Environment{
+func NewEnv() (env *Env) {
+	env = &Env{
 		Name:          defEnvName,
 		ExecJobs:      make(map[string]*JobExec),
 		HttpJobs:      make(map[string]*JobHttp),
@@ -185,13 +185,13 @@ func NewEnvironment() (env *Environment) {
 	return env
 }
 
-// ParseEnvironment parse the environment from raw bytes.
-func ParseEnvironment(content []byte) (env *Environment, err error) {
+// ParseEnv parse the environment from raw bytes.
+func ParseEnv(content []byte) (env *Env, err error) {
 	var (
-		logp = `ParseEnvironment`
+		logp = `ParseEnv`
 	)
 
-	env = &Environment{}
+	env = &Env{}
 
 	err = ini.Unmarshal(content, env)
 	if err != nil {
@@ -202,7 +202,7 @@ func ParseEnvironment(content []byte) (env *Environment, err error) {
 }
 
 // job get the JobExec by its ID.
-func (env *Environment) job(id string) (job *JobExec) {
+func (env *Env) job(id string) (job *JobExec) {
 	for _, job = range env.ExecJobs {
 		if job.ID == id {
 			return job
@@ -212,7 +212,7 @@ func (env *Environment) job(id string) (job *JobExec) {
 }
 
 // jobHttp get the registered JobHttp by its ID.
-func (env *Environment) jobHttp(id string) (job *JobHttp) {
+func (env *Env) jobHttp(id string) (job *JobHttp) {
 	for _, job = range env.HttpJobs {
 		if job.ID == id {
 			return job
@@ -221,7 +221,7 @@ func (env *Environment) jobHttp(id string) (job *JobHttp) {
 	return nil
 }
 
-func (env *Environment) init() (err error) {
+func (env *Env) init() (err error) {
 	var (
 		logp = `init`
 
@@ -298,7 +298,7 @@ func (env *Environment) init() (err error) {
 }
 
 // initDirs create all job and log directories.
-func (env *Environment) initDirs() (err error) {
+func (env *Env) initDirs() (err error) {
 	var (
 		logp = `initDirs`
 	)
@@ -345,7 +345,7 @@ func (env *Environment) initDirs() (err error) {
 }
 
 // initNotifs initialize the notification.
-func (env *Environment) initNotifs() (err error) {
+func (env *Env) initNotifs() (err error) {
 	var (
 		logp = `initNotifs`
 
@@ -369,7 +369,7 @@ func (env *Environment) initNotifs() (err error) {
 }
 
 // initUsers load users for authentication from $DirBase/etc/karajo/user.conf.
-func (env *Environment) initUsers() (err error) {
+func (env *Env) initUsers() (err error) {
 	var (
 		logp         = `initUsers`
 		fileUserConf = filepath.Join(env.dirConfig, `user.conf`)
@@ -399,7 +399,7 @@ func (env *Environment) initUsers() (err error) {
 // loadConfigJob load jobs configuration from file.
 //
 // The conf file can contains one or more jobs configuration.
-func (env *Environment) loadConfigJob(conf string) (jobs map[string]*JobExec, err error) {
+func (env *Env) loadConfigJob(conf string) (jobs map[string]*JobExec, err error) {
 	type jobContainer struct {
 		ExecJobs map[string]*JobExec `ini:"job"`
 	}
@@ -429,7 +429,7 @@ func (env *Environment) loadConfigJob(conf string) (jobs map[string]*JobExec, er
 }
 
 // loadConfigJobHttp load JobHttp configuration from file.
-func (env *Environment) loadConfigJobHttp(conf string) (httpJobs map[string]*JobHttp, err error) {
+func (env *Env) loadConfigJobHttp(conf string) (httpJobs map[string]*JobHttp, err error) {
 	type jobContainer struct {
 		HttpJobs map[string]*JobHttp `ini:"job.http"`
 	}
@@ -459,7 +459,7 @@ func (env *Environment) loadConfigJobHttp(conf string) (httpJobs map[string]*Job
 }
 
 // loadJobd load all job configurations from a directory.
-func (env *Environment) loadJobd() (err error) {
+func (env *Env) loadJobd() (err error) {
 	var (
 		logp = `loadJobd`
 
@@ -523,7 +523,7 @@ func (env *Environment) loadJobd() (err error) {
 }
 
 // loadJobHttpd load all JobHttp configurations from a directory.
-func (env *Environment) loadJobHttpd() (err error) {
+func (env *Env) loadJobHttpd() (err error) {
 	var (
 		logp = `loadJobHttpd`
 
@@ -586,7 +586,7 @@ func (env *Environment) loadJobHttpd() (err error) {
 	return nil
 }
 
-func (env *Environment) lockAllJob() {
+func (env *Env) lockAllJob() {
 	var job *JobExec
 	for _, job = range env.ExecJobs {
 		job.Lock()
@@ -598,7 +598,7 @@ func (env *Environment) lockAllJob() {
 	}
 }
 
-func (env *Environment) unlockAllJob() {
+func (env *Env) unlockAllJob() {
 	var job *JobExec
 	for _, job = range env.ExecJobs {
 		job.Unlock()

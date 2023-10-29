@@ -49,7 +49,7 @@ var (
 // Karajo HTTP server and jobs manager.
 type Karajo struct {
 	httpd *libhttp.Server
-	env   *Environment
+	env   *Env
 	sm    *sessionManager
 
 	// logq is used to collect all job log once they finished.
@@ -69,7 +69,7 @@ func Sign(payload, secret []byte) (sign string) {
 }
 
 // New create and initialize Karajo from configuration file.
-func New(env *Environment) (k *Karajo, err error) {
+func New(env *Env) (k *Karajo, err error) {
 	var logp = `New`
 
 	err = env.init()

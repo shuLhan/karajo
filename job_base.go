@@ -108,7 +108,7 @@ type JobBase struct {
 }
 
 // init initialize the job ID, log retention, directories, logs, and timer.
-func (job *JobBase) init(env *Environment, name string) (err error) {
+func (job *JobBase) init(env *Env, name string) (err error) {
 	var logp = `init`
 
 	job.Name = name
@@ -144,7 +144,7 @@ func (job *JobBase) init(env *Environment, name string) (err error) {
 // For job with type http, the working directory should be at
 // "$BASE/var/lib/karajo/job_http/$JOB_ID" and the log should be at
 // "$BASE/var/log/karajo/job_http/$JOB_ID".
-func (job *JobBase) initDirsState(env *Environment) (err error) {
+func (job *JobBase) initDirsState(env *Env) (err error) {
 	var logp = `initDirsState`
 
 	switch job.kind {

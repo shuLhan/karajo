@@ -73,8 +73,8 @@ type JobExecHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 //	secret =
 //	command =
 type JobExec struct {
-	// Shared Environment.
-	env *Environment
+	// Shared Env.
+	env *Env
 
 	startq chan struct{}
 	stopq  chan struct{}
@@ -115,7 +115,7 @@ type JobExec struct {
 	HeaderSign string `ini:"::header_sign" json:"header_sign,omitempty"`
 
 	// Secret define a string to validate the signature of request.
-	// If its empty, it will be set to global Secret from Environment.
+	// If its empty, it will be set to global Secret from Env.
 	Secret string `ini:"::secret" json:"-"`
 
 	// Commands list of command to be executed.
@@ -251,11 +251,11 @@ func (job *JobExec) generateCmdEnvs() (env []string) {
 //
 // For JobExec that need to be triggered by HTTP request the Path and Secret
 // _must_ not be empty.
-// If Secret is not set then it will default to Environment's Secret.
+// If Secret is not set then it will default to Env's Secret.
 //
 // It will return an error ErrJobEmptyCommandsOrCall if one of the Call or
 // Commands is not set.
-func (job *JobExec) init(env *Environment, name string) (err error) {
+func (job *JobExec) init(env *Env, name string) (err error) {
 	var (
 		logp = `init`
 	)
