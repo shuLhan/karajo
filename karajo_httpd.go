@@ -64,7 +64,7 @@ var (
 )
 
 // initHttpd initialize the HTTP server, including registering its endpoints
-// and Job endpoints.
+// and JobExec endpoints.
 func (k *Karajo) initHttpd() (err error) {
 	var (
 		logp       = `initHttpd`
@@ -200,11 +200,11 @@ func (k *Karajo) registerApis() (err error) {
 	return nil
 }
 
-// registerJobsHook register endpoint for executing Job using HTTP POST.
+// registerJobsHook register endpoint for executing JobExec using HTTP POST.
 func (k *Karajo) registerJobsHook() (err error) {
-	var job *Job
+	var job *JobExec
 
-	for _, job = range k.env.Jobs {
+	for _, job = range k.env.ExecJobs {
 		if len(job.Path) == 0 {
 			// Ignore any job that does not have path.
 			continue
@@ -393,7 +393,7 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
 
 		buf     bytes.Buffer
-		job     *Job
+		job     *JobExec
 		jlog    *JobLog
 		counter int64
 	)
@@ -448,7 +448,7 @@ out:
 	return resbody, nil
 }
 
-// apiJobPause pause the Job.
+// apiJobPause pause the JobExec.
 //
 // Request format,
 //
@@ -466,7 +466,7 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err err
 		logp = `apiJobPause`
 
 		res *libhttp.EndpointResponse
-		job *Job
+		job *JobExec
 		id  string
 	)
 
@@ -495,7 +495,7 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err err
 	return resb, err
 }
 
-// apiJobResume resume the paused Job.
+// apiJobResume resume the paused JobExec.
 //
 // # Request
 //
@@ -513,7 +513,7 @@ func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) (resb []byte, err er
 		logp = `apiJobResume`
 
 		res *libhttp.EndpointResponse
-		job *Job
+		job *JobExec
 		id  string
 	)
 

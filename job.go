@@ -31,7 +31,7 @@ const (
 	jobEnvPathValue = `/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl`
 )
 
-// List of Job AuthKind for authorization.
+// List of JobExec AuthKind for authorization.
 const (
 	JobAuthKindGithub     = `github`
 	JobAuthKindHmacSha256 = `hmac-sha256` // Default AuthKind if not set.
@@ -47,23 +47,24 @@ const (
 	sourcehutPublicKey   = `uX7KWyyDNMaBma4aVbJ/cbUQpdjqczuCyK/HxzV/u+4=`
 )
 
-// JobHttpHandler define an handler for triggering a Job using HTTP.
+// JobExecHttpHandler define an handler for triggering a JobExec using HTTP.
 //
 // The log parameter is used to log all output and error.
 // The epr parameter contains HTTP request, body, and response writer.
-type JobHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
+type JobExecHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 
-// Job a job can be triggered manually by sending HTTP POST request or
+// JobExec define a job to execute Go code or list of commands.
+// A JobExec can be triggered manually by sending HTTP POST request or
 // automatically by timer (per interval or schedule).
 //
 // For job triggered by HTTP request, the Path and Secret must be set.
 // For job triggered by timer, the Interval or Schedule must not be empty.
 // See the [JobBase]'s Interval and Schedule fields for more information.
 //
-// Each Job contains a working directory, and a callback or list of commands
-// to be executed.
+// Each JobExec contains a working directory, and a callback or list of
+// commands to be executed.
 //
-// The job configuration in INI format,
+// The JobExec configuration in INI format,
 //
 //	[job "name"]
 //	path =
@@ -71,7 +72,7 @@ type JobHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 //	header_sign =
 //	secret =
 //	command =
-type Job struct {
+type JobExec struct {
 	// Shared Environment.
 	env *Environment
 
@@ -80,16 +81,16 @@ type Job struct {
 
 	// Call define a function or method to be called, as an
 	// alternative to Commands.
-	// This field is optional, it is only used if Job created through
-	// code.
-	Call JobHttpHandler `ini:"-" json:"-"`
+	// This field is optional, it is only used if JobExec created
+	// through code.
+	Call JobExecHttpHandler `ini:"-" json:"-"`
 
-	// HTTP path where Job can be triggered using HTTP.
+	// HTTP path where JobExec can be triggered using HTTP.
 	// The Path is automatically prefixed with "/karajo/api/job/run", it
 	// is not static.
 	// For example, if it set to "/my", then the actual path would be
 	// "/karajo/api/job/run/my".
-	// This field is optional and unique between Job.
+	// This field is optional and unique between JobExec.
 	Path string `ini:"::path" json:"path,omitempty"`
 
 	// Supported AuthKind are,
@@ -129,7 +130,7 @@ type Job struct {
 }
 
 // authorize the hook based on the AuthKind.
-func (job *Job) authorize(headers http.Header, reqbody []byte) (err error) {
+func (job *JobExec) authorize(headers http.Header, reqbody []byte) (err error) {
 	var (
 		logp = `authorize`
 	)
@@ -158,7 +159,7 @@ func (job *Job) authorize(headers http.Header, reqbody []byte) (err error) {
 }
 
 // authGithub authorize the Github Webhook request.
-func (job *Job) authGithub(headers http.Header, reqbody []byte) (err error) {
+func (job *JobExec) authGithub(headers http.Header, reqbody []byte) (err error) {
 	var (
 		logp    = `authGithub`
 		gotSign = headers.Get(githubHeaderSign256)
@@ -182,7 +183,7 @@ func (job *Job) authGithub(headers http.Header, reqbody []byte) (err error) {
 }
 
 // authGithub authorize the Sourcehut Webhook request.
-func (job *Job) authSourcehut(headers http.Header, reqbody []byte, pubkey ed25519.PublicKey) (err error) {
+func (job *JobExec) authSourcehut(headers http.Header, reqbody []byte, pubkey ed25519.PublicKey) (err error) {
 	var (
 		logp    = `authSourcehut`
 		signb64 = headers.Get(sourcehutHeaderSign)
@@ -219,7 +220,7 @@ func (job *Job) authSourcehut(headers http.Header, reqbody []byte, pubkey ed2551
 //
 // The signature is generated using HMAC-SHA256 algorithm using Secret as key
 // and request body as message.
-func (job *Job) authHmacSha256(headers http.Header, reqbody []byte) (err error) {
+func (job *JobExec) authHmacSha256(headers http.Header, reqbody []byte) (err error) {
 	var (
 		logp    = `authHmacSha256`
 		gotSign = headers.Get(job.HeaderSign)
@@ -240,21 +241,21 @@ func (job *Job) authHmacSha256(headers http.Header, reqbody []byte) (err error) 
 	return nil
 }
 
-func (job *Job) generateCmdEnvs() (env []string) {
+func (job *JobExec) generateCmdEnvs() (env []string) {
 	env = append(env, fmt.Sprintf(`%s=%d`, jobEnvCounter, job.lastCounter))
 	env = append(env, fmt.Sprintf(`%s=%s`, jobEnvPath, jobEnvPathValue))
 	return env
 }
 
-// init initialize the Job.
+// init initialize the JobExec.
 //
-// For Job that need to be triggered by HTTP request the Path and Secret
+// For JobExec that need to be triggered by HTTP request the Path and Secret
 // _must_ not be empty.
 // If Secret is not set then it will default to Environment's Secret.
 //
 // It will return an error ErrJobEmptyCommandsOrCall if one of the Call or
 // Commands is not set.
-func (job *Job) init(env *Environment, name string) (err error) {
+func (job *JobExec) init(env *Environment, name string) (err error) {
 	var (
 		logp = `init`
 	)
@@ -296,11 +297,11 @@ func (job *Job) init(env *Environment, name string) (err error) {
 	return nil
 }
 
-// handleHttp handle trigger to run the Job from HTTP request.
+// handleHttp handle trigger to run the JobExec from HTTP request.
 //
 // Once the signature is verified it will response immediately and run the
 // actual process in the new goroutine.
-func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+func (job *JobExec) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var logp = `handleHttp`
 
 	// Authenticated request by checking the request body.
@@ -333,7 +334,7 @@ func (job *Job) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err er
 }
 
 // Start running the job, either by scheduler, interval, or queue.
-func (job *Job) Start(logq chan<- *JobLog) {
+func (job *JobExec) Start(logq chan<- *JobLog) {
 	if job.scheduler != nil {
 		job.startScheduler(logq)
 		return
@@ -345,8 +346,8 @@ func (job *Job) Start(logq chan<- *JobLog) {
 	job.startQueue(logq)
 }
 
-// startQueue start Job queue that triggered only by HTTP request.
-func (job *Job) startQueue(logq chan<- *JobLog) {
+// startQueue start JobExec queue that triggered only by HTTP request.
+func (job *JobExec) startQueue(logq chan<- *JobLog) {
 	var (
 		err error
 	)
@@ -365,7 +366,7 @@ func (job *Job) startQueue(logq chan<- *JobLog) {
 	}
 }
 
-func (job *Job) startScheduler(logq chan<- *JobLog) {
+func (job *JobExec) startScheduler(logq chan<- *JobLog) {
 	var (
 		err error
 	)
@@ -391,7 +392,7 @@ func (job *Job) startScheduler(logq chan<- *JobLog) {
 	}
 }
 
-func (job *Job) startInterval(logq chan<- *JobLog) {
+func (job *JobExec) startInterval(logq chan<- *JobLog) {
 	var (
 		now          time.Time
 		nextInterval time.Duration
@@ -437,7 +438,7 @@ func (job *Job) startInterval(logq chan<- *JobLog) {
 	}
 }
 
-func (job *Job) run(logq chan<- *JobLog) (err error) {
+func (job *JobExec) run(logq chan<- *JobLog) (err error) {
 	err = job.JobBase.start()
 	if err != nil {
 		return err
@@ -467,7 +468,7 @@ func (job *Job) run(logq chan<- *JobLog) (err error) {
 }
 
 // execute the job Call or Commands.
-func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
+func (job *JobExec) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
 	job.Lock()
 	job.Status = JobStatusRunning
 	job.lastCounter++
@@ -515,8 +516,8 @@ func (job *Job) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) 
 	return jlog, nil
 }
 
-// Stop the Job execution.
-func (job *Job) Stop() {
+// Stop the JobExec daemon.
+func (job *JobExec) Stop() {
 	mlog.Outf(`job: %s: stopping ...`, job.ID)
 
 	select {

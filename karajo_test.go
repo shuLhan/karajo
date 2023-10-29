@@ -148,7 +148,7 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data) {
 		exp []byte = tdata.Output[`apiEnvironment.json`]
 
 		gotEnv *Environment
-		job    *Job
+		job    *JobExec
 		got    []byte
 		err    error
 	)
@@ -158,7 +158,7 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data) {
 		t.Fatal(err)
 	}
 
-	for _, job = range gotEnv.Jobs {
+	for _, job = range gotEnv.ExecJobs {
 		job.Logs = nil
 	}
 	gotEnv.DirBase = `<REDACTED>`
@@ -172,7 +172,7 @@ func testKarajo_apiEnvironment(t *testing.T, tdata *test.Data) {
 
 func testKarajo_apiJobPause(t *testing.T, tdata *test.Data) {
 	var (
-		job  *Job
+		job  *JobExec
 		data interface{}
 		exp  []byte
 		got  []byte
@@ -195,7 +195,7 @@ func testKarajo_apiJobPause(t *testing.T, tdata *test.Data) {
 	exp = tdata.Output[`apiJobPause.json`]
 	test.Assert(t, `apiJobPause`, string(exp), string(got))
 
-	// Try triggering the Job to run...
+	// Try triggering the JobExec to run...
 
 	job, err = testClient.JobRun(`/test-job-success`)
 	if err != nil {
@@ -217,7 +217,7 @@ func testKarajo_apiJobRun_success(t *testing.T, tdata *test.Data) {
 	var (
 		exp []byte = tdata.Output[`apiJobRun_success.json`]
 
-		job  *Job
+		job  *JobExec
 		data interface{}
 		got  []byte
 		err  error
@@ -242,7 +242,7 @@ func testKarajo_apiJobRun_notfound(t *testing.T, tdata *test.Data) {
 	var (
 		exp []byte = tdata.Output[`apiJobRun_notfound.json`]
 
-		job  *Job
+		job  *JobExec
 		data interface{}
 		got  []byte
 		err  error
@@ -297,7 +297,7 @@ func testKarajo_apiJobResume(t *testing.T, tdata *test.Data) {
 	var (
 		exp []byte = tdata.Output[`apiJobResume.json`]
 
-		job  *Job
+		job  *JobExec
 		data interface{}
 		got  []byte
 		err  error

@@ -29,8 +29,8 @@ const (
 
 // Environment contains configuration for HTTP server, logs, and list of jobs.
 type Environment struct {
-	// List of Job by name.
-	Jobs map[string]*Job `ini:"job" json:"jobs"`
+	// List of JobExec by name.
+	ExecJobs map[string]*JobExec `ini:"job" json:"jobs"`
 
 	// jobq is the channel that limit the number of job running at the
 	// same time.
@@ -73,13 +73,13 @@ type Environment struct {
 	//	|                +-- job.d/
 	//	|                +-- job_http.d/
 	//	|
-	//	+-- /var/lib/karajo/ +-- job/$Job.ID
-	//	|                    +-- job_http/$Job.ID
+	//	+-- /var/lib/karajo/ +-- job/$JobExec.ID
+	//	|                    +-- job_http/$JobHttp.ID
 	//	|
-	//	+-- /var/log/karajo/ +-- job/$Job.ID
-	//	|                    +-- job_http/$Job.ID
+	//	+-- /var/log/karajo/ +-- job/$JobExec.ID
+	//	|                    +-- job_http/$JobHttp.ID
 	//	|
-	//	+-- /var/run/karajo/job_http/$Job.ID
+	//	+-- /var/run/karajo/job_http/$JobHttp.ID
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
@@ -174,7 +174,7 @@ func LoadEnvironment(file string) (env *Environment, err error) {
 func NewEnvironment() (env *Environment) {
 	env = &Environment{
 		Name:          defEnvName,
-		Jobs:          make(map[string]*Job),
+		ExecJobs:      make(map[string]*JobExec),
 		HttpJobs:      make(map[string]*JobHttp),
 		Users:         make(map[string]*User),
 		ListenAddress: defListenAddress,
@@ -201,9 +201,9 @@ func ParseEnvironment(content []byte) (env *Environment, err error) {
 	return env, nil
 }
 
-// job get the Job by its ID.
-func (env *Environment) job(id string) (job *Job) {
-	for _, job = range env.Jobs {
+// job get the JobExec by its ID.
+func (env *Environment) job(id string) (job *JobExec) {
+	for _, job = range env.ExecJobs {
 		if job.ID == id {
 			return job
 		}
@@ -225,7 +225,7 @@ func (env *Environment) init() (err error) {
 	var (
 		logp = `init`
 
-		job     *Job
+		job     *JobExec
 		jobHttp *JobHttp
 		name    string
 	)
@@ -275,7 +275,7 @@ func (env *Environment) init() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	for name, job = range env.Jobs {
+	for name, job = range env.ExecJobs {
 		err = job.init(env, name)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
@@ -399,9 +399,9 @@ func (env *Environment) initUsers() (err error) {
 // loadConfigJob load jobs configuration from file.
 //
 // The conf file can contains one or more jobs configuration.
-func (env *Environment) loadConfigJob(conf string) (jobs map[string]*Job, err error) {
+func (env *Environment) loadConfigJob(conf string) (jobs map[string]*JobExec, err error) {
 	type jobContainer struct {
-		Jobs map[string]*Job `ini:"job"`
+		ExecJobs map[string]*JobExec `ini:"job"`
 	}
 
 	var (
@@ -422,8 +422,8 @@ func (env *Environment) loadConfigJob(conf string) (jobs map[string]*Job, err er
 		return nil, fmt.Errorf(`%s: %s: %w`, logp, conf, err)
 	}
 
-	jobs = jobc.Jobs
-	jobc.Jobs = nil
+	jobs = jobc.ExecJobs
+	jobc.ExecJobs = nil
 
 	return jobs, nil
 }
@@ -469,8 +469,8 @@ func (env *Environment) loadJobd() (err error) {
 		fm      os.FileMode
 		name    string
 		jobConf string
-		jobs    map[string]*Job
-		job     *Job
+		jobs    map[string]*JobExec
+		job     *JobExec
 	)
 
 	jobd, err = os.Open(env.dirConfigJobd)
@@ -486,8 +486,8 @@ func (env *Environment) loadJobd() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	if env.Jobs == nil {
-		env.Jobs = make(map[string]*Job)
+	if env.ExecJobs == nil {
+		env.ExecJobs = make(map[string]*JobExec)
 	}
 
 	for _, de = range listde {
@@ -516,7 +516,7 @@ func (env *Environment) loadJobd() (err error) {
 		}
 
 		for name, job = range jobs {
-			env.Jobs[name] = job
+			env.ExecJobs[name] = job
 		}
 	}
 	return nil
@@ -587,8 +587,8 @@ func (env *Environment) loadJobHttpd() (err error) {
 }
 
 func (env *Environment) lockAllJob() {
-	var job *Job
-	for _, job = range env.Jobs {
+	var job *JobExec
+	for _, job = range env.ExecJobs {
 		job.Lock()
 	}
 
@@ -599,8 +599,8 @@ func (env *Environment) lockAllJob() {
 }
 
 func (env *Environment) unlockAllJob() {
-	var job *Job
-	for _, job = range env.Jobs {
+	var job *JobExec
+	for _, job = range env.ExecJobs {
 		job.Unlock()
 	}
 

@@ -58,8 +58,8 @@ func (cl *Client) Environment() (env *Environment, err error) {
 	return env, nil
 }
 
-// JobPause pause the Job by its ID.
-func (cl *Client) JobPause(id string) (job *Job, err error) {
+// JobPause pause the JobExec by its ID.
+func (cl *Client) JobPause(id string) (job *JobExec, err error) {
 	var (
 		logp   = `JobPause`
 		now    = TimeNow().UTC().Unix()
@@ -85,7 +85,7 @@ func (cl *Client) JobPause(id string) (job *Job, err error) {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	job = &Job{}
+	job = &JobExec{}
 	res = &libhttp.EndpointResponse{
 		Data: job,
 	}
@@ -102,8 +102,8 @@ func (cl *Client) JobPause(id string) (job *Job, err error) {
 	return job, nil
 }
 
-// JobResume resume the Job execution by its ID.
-func (cl *Client) JobResume(id string) (job *Job, err error) {
+// JobResume resume the JobExec execution by its ID.
+func (cl *Client) JobResume(id string) (job *JobExec, err error) {
 	var (
 		logp   = `JobResume`
 		now    = TimeNow().UTC().Unix()
@@ -129,7 +129,7 @@ func (cl *Client) JobResume(id string) (job *Job, err error) {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	job = &Job{}
+	job = &JobExec{}
 	res = &libhttp.EndpointResponse{
 		Data: job,
 	}
@@ -146,10 +146,10 @@ func (cl *Client) JobResume(id string) (job *Job, err error) {
 	return job, nil
 }
 
-// JobRun trigger the Job by its path.
-func (cl *Client) JobRun(jobPath string) (job *Job, err error) {
+// JobRun trigger the JobExec by its path.
+func (cl *Client) JobRun(jobPath string) (job *JobExec, err error) {
 	var (
-		logp       = `Job`
+		logp       = `JobExec`
 		timeNow    = TimeNow()
 		apiJobPath = path.Join(apiJobRun, jobPath)
 		header     = http.Header{}
@@ -194,7 +194,7 @@ func (cl *Client) JobRun(jobPath string) (job *Job, err error) {
 	return job, nil
 }
 
-// JobLog get the Job log by its ID and counter.
+// JobLog get the JobExec log by its ID and counter.
 func (cl *Client) JobLog(jobID string, counter int) (joblog *JobLog, err error) {
 	var (
 		logp   = `JobLog`

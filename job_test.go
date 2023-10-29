@@ -27,7 +27,7 @@ func TestJob_authGithub(t *testing.T) {
 	}
 
 	var (
-		jhook = Job{
+		jhook = JobExec{
 			Secret:   `s3cret`,
 			AuthKind: JobAuthKindGithub,
 		}
@@ -84,7 +84,7 @@ func TestJob_authSourcehut(t *testing.T) {
 	}
 
 	var (
-		jhook = Job{
+		jhook = JobExec{
 			AuthKind: JobAuthKindSourcehut,
 		}
 		payload = []byte(`_karajo_sign=123`)
@@ -151,7 +151,7 @@ func TestJob_authHmacSha256(t *testing.T) {
 	}
 
 	var (
-		jhook = Job{
+		jhook = JobExec{
 			AuthKind:   JobAuthKindHmacSha256,
 			Secret:     `s3cret`,
 			HeaderSign: HeaderNameXKarajoSign,
@@ -193,7 +193,7 @@ func TestJob_authHmacSha256(t *testing.T) {
 	}
 }
 
-// TestJob_handleHttp test Job's Call with HTTP request.
+// TestJob_handleHttp test JobExec Call with HTTP request.
 func TestJob_handleHttp(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
@@ -201,7 +201,7 @@ func TestJob_handleHttp(t *testing.T) {
 			DirBase: testBaseDir,
 			Secret:  `s3cret`,
 		}
-		job = Job{
+		job = JobExec{
 			JobBase: JobBase{
 				Name: `Test job handle HTTP`,
 			},
@@ -290,7 +290,7 @@ func TestJob_handleHttp(t *testing.T) {
 	test.Assert(t, `job_after`, string(exp), string(got))
 }
 
-// TestJob_startInterval_Call test Job's Call with Interval.
+// TestJob_startInterval_Call test JobExec Call with Interval.
 func TestJob_startInterval_Call(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
@@ -298,7 +298,7 @@ func TestJob_startInterval_Call(t *testing.T) {
 			DirBase: testBaseDir,
 			Secret:  `s3cret`,
 		}
-		job = Job{
+		job = JobExec{
 			JobBase: JobBase{
 				Name:     `Test job timer`,
 				Interval: time.Minute,

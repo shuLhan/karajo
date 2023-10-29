@@ -32,27 +32,27 @@ func main() {
 		log.Fatal(err)
 	}
 
-	env.Jobs = make(map[string]*karajo.Job)
+	env.ExecJobs = make(map[string]*karajo.JobExec)
 
-	env.Jobs[`interval-1m-code`] = &karajo.Job{
+	env.ExecJobs[`interval-1m-code`] = &karajo.JobExec{
 		JobBase: karajo.JobBase{
-			Description: `Job with interval 1 minute, initialize by code.`,
+			Description: `JobExec with interval 1 minute, initialize by code.`,
 			Interval:    1 * time.Minute,
 		},
 		Path: `/interval-1m-code`,
 		Call: helloWorldFromInterval,
 	}
 
-	env.Jobs[`schedule-hourly-5m-code`] = &karajo.Job{
+	env.ExecJobs[`schedule-hourly-5m-code`] = &karajo.JobExec{
 		JobBase: karajo.JobBase{
-			Description: `Job with schedule every hour at minutes 5.`,
+			Description: `JobExec with schedule every hour at minutes 5.`,
 			Schedule:    `hourly@0,5,10,15,20,25,30,35,40,45,50,55`,
 		},
 		Path: `/schedule-hourly-5m-code-code`,
 		Call: helloWorldFromSchedule,
 	}
 
-	env.Jobs[`webhook-github-code`] = &karajo.Job{
+	env.ExecJobs[`webhook-github-code`] = &karajo.JobExec{
 		JobBase: karajo.JobBase{
 			Description: `Webhook using github authentication.`,
 		},

@@ -59,8 +59,8 @@ func TestEnvironment_loadJobs(t *testing.T) {
 		env = &Environment{
 			dirConfigJobd: `testdata/etc/karajo/job.d`,
 		}
-		expJobs = map[string]*Job{
-			`Scheduler hourly 5m`: &Job{
+		expJobs = map[string]*JobExec{
+			`Scheduler hourly 5m`: &JobExec{
 				JobBase: JobBase{
 					Schedule: `hourly@0,5,10,15,20,25,30,35,40,45,50,55`,
 				},
@@ -70,7 +70,7 @@ func TestEnvironment_loadJobs(t *testing.T) {
 					`echo Test job scheduler hourly per 5m`,
 				},
 			},
-			`Scheduler minutely`: &Job{
+			`Scheduler minutely`: &JobExec{
 				JobBase: JobBase{
 					Schedule: `minutely`,
 				},
@@ -80,7 +80,7 @@ func TestEnvironment_loadJobs(t *testing.T) {
 					`echo Test job scheduler per minute`,
 				},
 			},
-			`Test auth_kind github`: &Job{
+			`Test auth_kind github`: &JobExec{
 				AuthKind: `github`,
 				Path:     `/github`,
 				Secret:   `s3cret`,
@@ -88,7 +88,7 @@ func TestEnvironment_loadJobs(t *testing.T) {
 					`echo auth_kind is github`,
 				},
 			},
-			`test success`: &Job{
+			`test success`: &JobExec{
 				Path:   `/test-success`,
 				Secret: `s3cret`,
 				Commands: []string{
@@ -97,7 +97,7 @@ func TestEnvironment_loadJobs(t *testing.T) {
 					`x=$(($RANDOM%10)) && echo sleep in ${x}s && sleep $x`,
 				},
 			},
-			`notif-email-success`: &Job{
+			`notif-email-success`: &JobExec{
 				JobBase: JobBase{
 					Description: `Send notification when job success.`,
 					NotifOnSuccess: []string{
@@ -123,5 +123,5 @@ func TestEnvironment_loadJobs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	test.Assert(t, `loadJobs`, expJobs, env.Jobs)
+	test.Assert(t, `loadJobs`, expJobs, env.ExecJobs)
 }

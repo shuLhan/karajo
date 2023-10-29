@@ -137,7 +137,7 @@ func (k *Karajo) initMemfs() (err error) {
 func (k *Karajo) Start() (err error) {
 	var (
 		jobHttp *JobHttp
-		job     *Job
+		job     *JobExec
 	)
 
 	mlog.Outf(`started the karajo server at http://%s/karajo`, k.httpd.Addr)
@@ -146,7 +146,7 @@ func (k *Karajo) Start() (err error) {
 		go k.workerNotification()
 	}
 
-	for _, job = range k.env.Jobs {
+	for _, job = range k.env.ExecJobs {
 		go job.Start(k.logq)
 	}
 	for _, jobHttp = range k.env.HttpJobs {
@@ -160,21 +160,21 @@ func (k *Karajo) Start() (err error) {
 func (k *Karajo) Stop() (err error) {
 	var (
 		jobHttp *JobHttp
-		job     *Job
+		job     *JobExec
 	)
 
 	for _, jobHttp = range k.env.HttpJobs {
 		jobHttp.Stop()
 	}
-	for _, job = range k.env.Jobs {
+	for _, job = range k.env.ExecJobs {
 		job.Stop()
 	}
 
 	return k.httpd.Stop(5 * time.Second)
 }
 
-// workerNotification receive JobLog from Job and JobHttp everytime their
-// started, running, success, failed, or paused.
+// workerNotification receive JobLog from JobExec and JobHttp everytime
+// their started, running, success, failed, or paused.
 func (k *Karajo) workerNotification() {
 	var (
 		jlog         *JobLog
