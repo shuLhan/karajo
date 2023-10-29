@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	git.sr.ht/~shulhan/ciigo v0.10.0
-	github.com/shuLhan/share v0.50.0
+	github.com/shuLhan/share v0.50.1-0.20231029100815-d714934c3b42
 	golang.org/x/crypto v0.14.0
 )
 
