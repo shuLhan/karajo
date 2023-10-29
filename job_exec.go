@@ -301,7 +301,7 @@ func (job *JobExec) init(env *Env, name string) (err error) {
 	return nil
 }
 
-// handleHttp handle trigger to run the JobExec from HTTP request.
+// handleHttp trigger running the JobExec by HTTP request.
 //
 // Once the signature is verified it will response immediately and run the
 // actual process in the new goroutine.
@@ -323,7 +323,7 @@ func (job *JobExec) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, er
 
 	select {
 	case job.startq <- struct{}{}:
-		res.Code = http.StatusAccepted
+		res.Code = http.StatusOK
 		res.Message = `OK`
 		res.Data = job
 	default:

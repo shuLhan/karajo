@@ -13,7 +13,7 @@ Test running Job with handleHttp.
     "log_retention": 5
   },
   "message": "OK",
-  "code": 202
+  "code": 200
 }
 
 <<< job_after.json
