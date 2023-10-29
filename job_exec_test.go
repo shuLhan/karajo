@@ -18,7 +18,7 @@ import (
 	"github.com/shuLhan/share/lib/test"
 )
 
-func TestJob_authGithub(t *testing.T) {
+func TestJobExec_authGithub(t *testing.T) {
 	type testCase struct {
 		headers  http.Header
 		desc     string
@@ -75,7 +75,7 @@ func TestJob_authGithub(t *testing.T) {
 	}
 }
 
-func TestJob_authSourcehut(t *testing.T) {
+func TestJobExec_authSourcehut(t *testing.T) {
 	type testCase struct {
 		headers  http.Header
 		desc     string
@@ -142,7 +142,7 @@ func TestJob_authSourcehut(t *testing.T) {
 	}
 }
 
-func TestJob_authHmacSha256(t *testing.T) {
+func TestJobExec_authHmacSha256(t *testing.T) {
 	type testCase struct {
 		headers  http.Header
 		desc     string
@@ -193,8 +193,8 @@ func TestJob_authHmacSha256(t *testing.T) {
 	}
 }
 
-// TestJob_handleHttp test JobExec Call with HTTP request.
-func TestJob_handleHttp(t *testing.T) {
+// TestJobExec_handleHttp test JobExec Call with HTTP request.
+func TestJobExec_handleHttp(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
 		env         = Environment{
@@ -290,8 +290,8 @@ func TestJob_handleHttp(t *testing.T) {
 	test.Assert(t, `job_after`, string(exp), string(got))
 }
 
-// TestJob_startInterval_Call test JobExec Call with Interval.
-func TestJob_startInterval_Call(t *testing.T) {
+// TestJobExec_startInterval_Call test JobExec Call with Interval.
+func TestJobExec_startInterval_Call(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
 		env         = Environment{
@@ -347,5 +347,5 @@ func TestJob_startInterval_Call(t *testing.T) {
 	job.Unlock()
 
 	exp = tdata.Output[`job_after.json`]
-	test.Assert(t, `TestJob_Call`, string(exp), string(got))
+	test.Assert(t, `TestJobExec_Call`, string(exp), string(got))
 }
