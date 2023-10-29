@@ -233,7 +233,9 @@ func TestJobExec_handleHttp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	go job.Start(logq)
+	var jobq = make(chan struct{}, env.MaxJobRunning)
+
+	go job.Start(jobq, logq)
 	t.Cleanup(job.Stop)
 
 	var (
@@ -333,7 +335,9 @@ func TestJobExec_startInterval_Call(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	go job.Start(logq)
+	var jobq = make(chan struct{}, env.MaxJobRunning)
+
+	go job.Start(jobq, logq)
 	t.Cleanup(job.Stop)
 
 	<-logq

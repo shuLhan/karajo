@@ -52,6 +52,11 @@ type Karajo struct {
 	env   *Env
 	sm    *sessionManager
 
+	// jobq is the channel that limit the number of job running at the
+	// same time.
+	// This limit can be overwritten by MaxJobRunning.
+	jobq chan struct{}
+
 	// logq is used to collect all job log once they finished.
 	logq chan *JobLog
 }
@@ -80,6 +85,7 @@ func New(env *Env) (k *Karajo, err error) {
 	k = &Karajo{
 		env:  env,
 		sm:   newSessionManager(),
+		jobq: make(chan struct{}, env.MaxJobRunning),
 		logq: make(chan *JobLog),
 	}
 
@@ -147,10 +153,10 @@ func (k *Karajo) Start() (err error) {
 	}
 
 	for _, job = range k.env.ExecJobs {
-		go job.Start(k.logq)
+		go job.Start(k.jobq, k.logq)
 	}
 	for _, jobHttp = range k.env.HttpJobs {
-		go jobHttp.Start(k.logq)
+		go jobHttp.Start(k.jobq, k.logq)
 	}
 
 	return k.httpd.Start()

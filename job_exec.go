@@ -73,8 +73,13 @@ type JobExecHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 //	secret =
 //	command =
 type JobExec struct {
-	// Shared Env.
-	env *Env
+	// jobq is a channel passed by Karajo instance to limit number of
+	// job running at the same time.
+	jobq chan struct{}
+
+	// logq is publish-only channel passed by Karajo instance to
+	// communicate job log.
+	logq chan<- *JobLog
 
 	startq chan struct{}
 	stopq  chan struct{}
@@ -267,7 +272,6 @@ func (job *JobExec) init(env *Env, name string) (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	job.env = env
 	job.startq = make(chan struct{}, 1)
 	job.stopq = make(chan struct{}, 1)
 
@@ -333,21 +337,25 @@ func (job *JobExec) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, er
 	return resbody, err
 }
 
-// Start running the job, either by scheduler, interval, or queue.
-func (job *JobExec) Start(logq chan<- *JobLog) {
+// Start the job queue, either by scheduler, interval, or waiting for
+// request.
+func (job *JobExec) Start(jobq chan struct{}, logq chan<- *JobLog) {
+	job.jobq = jobq
+	job.logq = logq
+
 	if job.scheduler != nil {
-		job.startScheduler(logq)
+		job.startScheduler()
 		return
 	}
 	if job.Interval > 0 {
-		job.startInterval(logq)
+		job.startInterval()
 		return
 	}
-	job.startQueue(logq)
+	job.startQueue()
 }
 
 // startQueue start JobExec queue that triggered only by HTTP request.
-func (job *JobExec) startQueue(logq chan<- *JobLog) {
+func (job *JobExec) startQueue() {
 	var (
 		err error
 	)
@@ -355,7 +363,7 @@ func (job *JobExec) startQueue(logq chan<- *JobLog) {
 	for {
 		select {
 		case <-job.startq:
-			err = job.run(logq)
+			err = job.run()
 			if err != nil {
 				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
 			}
@@ -366,7 +374,7 @@ func (job *JobExec) startQueue(logq chan<- *JobLog) {
 	}
 }
 
-func (job *JobExec) startScheduler(logq chan<- *JobLog) {
+func (job *JobExec) startScheduler() {
 	var (
 		err error
 	)
@@ -380,7 +388,7 @@ func (job *JobExec) startScheduler(logq chan<- *JobLog) {
 			}
 
 		case <-job.startq:
-			err = job.run(logq)
+			err = job.run()
 			if err != nil {
 				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
 			}
@@ -392,7 +400,7 @@ func (job *JobExec) startScheduler(logq chan<- *JobLog) {
 	}
 }
 
-func (job *JobExec) startInterval(logq chan<- *JobLog) {
+func (job *JobExec) startInterval() {
 	var (
 		now          time.Time
 		nextInterval time.Duration
@@ -423,7 +431,7 @@ func (job *JobExec) startInterval(logq chan<- *JobLog) {
 				}
 
 			case <-job.startq:
-				err = job.run(logq)
+				err = job.run()
 				if err != nil {
 					mlog.Errf(`!!! job: %s: %s`, job.ID, err)
 				}
@@ -438,7 +446,7 @@ func (job *JobExec) startInterval(logq chan<- *JobLog) {
 	}
 }
 
-func (job *JobExec) run(logq chan<- *JobLog) (err error) {
+func (job *JobExec) run() (err error) {
 	err = job.JobBase.start()
 	if err != nil {
 		return err
@@ -446,9 +454,9 @@ func (job *JobExec) run(logq chan<- *JobLog) (err error) {
 
 	var jlog *JobLog
 
-	job.env.jobq <- struct{}{}
+	job.jobq <- struct{}{}
 	jlog, err = job.execute(nil)
-	<-job.env.jobq
+	<-job.jobq
 	job.finish(jlog, err)
 
 	switch jlog.Status {
@@ -460,7 +468,7 @@ func (job *JobExec) run(logq chan<- *JobLog) (err error) {
 	}
 
 	select {
-	case logq <- jlog:
+	case job.logq <- jlog:
 	default:
 	}
 
@@ -516,7 +524,7 @@ func (job *JobExec) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err err
 	return jlog, nil
 }
 
-// Stop the JobExec daemon.
+// Stop the JobExec queue.
 func (job *JobExec) Stop() {
 	mlog.Outf(`job: %s: stopping ...`, job.ID)
 

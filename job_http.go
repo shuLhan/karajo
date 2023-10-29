@@ -49,6 +49,14 @@ const (
 //	http_timeout =
 //	http_insecure =
 type JobHttp struct {
+	// jobq is a channel passed by Karajo instance to limit number of
+	// job running at the same time.
+	jobq chan struct{}
+
+	// logq is publish-only channel passed by Karajo instance to
+	// communicate job log.
+	logq chan<- *JobLog
+
 	headers http.Header
 
 	// httpc define the HTTP client that will execute the http_url.
@@ -115,17 +123,20 @@ type JobHttp struct {
 }
 
 // Start running the job.
-func (job *JobHttp) Start(logq chan<- *JobLog) {
+func (job *JobHttp) Start(jobq chan struct{}, logq chan<- *JobLog) {
+	job.jobq = jobq
+	job.logq = logq
+
 	if job.scheduler != nil {
-		job.startScheduler(logq)
+		job.startScheduler()
 		return
 	}
 	if job.Interval > 0 {
-		job.startInterval(logq)
+		job.startInterval()
 	}
 }
 
-func (job *JobHttp) startScheduler(logq chan<- *JobLog) {
+func (job *JobHttp) startScheduler() {
 	var (
 		err error
 	)
@@ -139,7 +150,7 @@ func (job *JobHttp) startScheduler(logq chan<- *JobLog) {
 			}
 
 		case <-job.startq:
-			err = job.run(logq)
+			err = job.run()
 			if err != nil {
 				mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
 			}
@@ -151,7 +162,7 @@ func (job *JobHttp) startScheduler(logq chan<- *JobLog) {
 	}
 }
 
-func (job *JobHttp) startInterval(logq chan<- *JobLog) {
+func (job *JobHttp) startInterval() {
 	var (
 		now          time.Time
 		nextInterval time.Duration
@@ -182,7 +193,7 @@ func (job *JobHttp) startInterval(logq chan<- *JobLog) {
 				}
 
 			case <-job.startq:
-				err = job.run(logq)
+				err = job.run()
 				if err != nil {
 					mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
 				}
@@ -197,7 +208,7 @@ func (job *JobHttp) startInterval(logq chan<- *JobLog) {
 	}
 }
 
-func (job *JobHttp) run(logq chan<- *JobLog) (err error) {
+func (job *JobHttp) run() (err error) {
 	err = job.JobBase.start()
 	if err != nil {
 		return err
@@ -209,7 +220,7 @@ func (job *JobHttp) run(logq chan<- *JobLog) (err error) {
 	job.finish(jlog, err)
 
 	select {
-	case logq <- jlog:
+	case job.logq <- jlog:
 	default:
 	}
 	return nil

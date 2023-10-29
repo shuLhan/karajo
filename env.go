@@ -32,11 +32,6 @@ type Env struct {
 	// List of JobExec by name.
 	ExecJobs map[string]*JobExec `ini:"job" json:"jobs"`
 
-	// jobq is the channel that limit the number of job running at the
-	// same time.
-	// This limit can be overwritten by MaxJobRunning.
-	jobq chan struct{}
-
 	// List of JobHttp by name.
 	HttpJobs map[string]*JobHttp `ini:"job.http" json:"http_jobs"`
 
@@ -244,7 +239,6 @@ func (env *Env) init() (err error) {
 	if env.MaxJobRunning <= 0 {
 		env.MaxJobRunning = defMaxJobRunning
 	}
-	env.jobq = make(chan struct{}, env.MaxJobRunning)
 
 	if len(env.Secret) == 0 {
 		rand.Seed(time.Now().Unix())
