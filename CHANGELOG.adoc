@@ -1,8 +1,85 @@
 = karajo changelog
-Shulhan <ms@kilabit.info>
 :toc:
 :sectanchors:
 :sectlinks:
+
+[#v0_8_0]
+== karajo v0.8.0 (2023-11-10)
+
+[#v0_8_0__new_features]
+=== New features
+
+all: implement notification using email::
++
+Karajo server now support sending notification when the job success or
+failed with inline log inside the email body.
+
+[#v0_8_0__breaking_changes]
+=== Breaking changes
+
+all: change the JobHttp log to use the same as Job::
++
+--
+Previously, the JobHttp use single file for log with limited size.
+The way it works is quite complex, we need to maintain one file and a
+buffer that able to truncate the log if its reached its max size.
+We also need to store the job state in separate file.
+
+In this changes, we replace the JobHttp log mechanism to use the same
+as Job, where each execution will be log separately.
+Not only this give us less complex code, it also remove some duplicate
+code.
+
+In the HTTP API we changes the path to get the JobHttp log to match with
+Job path.
+--
+
+[#v0_8_0__bug_fixes]
+=== Bug fixes
+
+all: fix the HTTP API to get the Job log::
++
+The loop set job to non-nil if the Job ID not found, which may return
+the wrong Job log.
+
+all: changes the HTTP response code for a success JobExec run to 200::
++
+--
+Previously, in the HTTP endpoint for running a job, we return HTTP status
+code 202 (Accepted) on success, but in the WUI we check using 200 (OK).
+
+This changes fix this by return HTTP status code 200 to make it consistent
+with other endpoints.
+--
+
+[#v0_8_0__enhancements]
+=== Enhancements
+
+www/karajo: changes the right status::
++
+For Job with interval or schedule based show the Next run counter in
+hours, minutes, and seconds.
+Other Job type (WebHook) will be display the Last time its executed.
+
+job_log: store the log content under unexported field content::
++
+--
+The goal is to minimize response size in API get environment.
+Imagine we have 10 jobs with 10 logs each, where each log may contains
+~10KB in size, in total we will return 10*10*10 KB in response body.
+
+To minimze this, return the log content only when requested through
+API to get Job or JobHttp Log.
+--
+
+karajo/app: do not auto refresh the dashboard::
++
+Adding auto refresh consume more resources (bandwidth, cpu) on both
+side, client and server.
+The job logs or information is rarely changes, so no need to auto refresh
+it.
+
+cmd/karajo: set default configuration to "/etc/karajo/karajo.conf"::
 
 
 [#v0_7_0]

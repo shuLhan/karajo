@@ -29,7 +29,7 @@ import (
 )
 
 // Version of this library and program.
-const Version = `0.7.1-dev`
+const Version = `0.8.0`
 
 // TimeNow return the current time.
 // It can be used in testing to provide static, predictable time.
