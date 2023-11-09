@@ -1,13 +1,13 @@
 # Maintainer: shulhan <ms@kilabit.info>
 
 pkgname=karajo-git
-pkgver=0.5.0.r62.gc58ab1c
+pkgver=0.7.0.r42.gef379d6
 pkgrel=1
 
 pkgdesc="Worker, scheduler, and WebHook with HTTP."
 arch=(x86_64)
 url='https://sr.ht/~shulhan/karajo'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 
 makedepends=(
 	'go'
@@ -18,7 +18,6 @@ provides=('karajo')
 
 source=(
 	"$pkgname::git+https://git.sr.ht/~shulhan/karajo"
-	#"$pkgname::git+file:///home/ms/go/src/git.sr.ht/~shulhan/karajo"
 )
 sha256sums=(
 	'SKIP'
