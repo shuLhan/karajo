@@ -3,11 +3,13 @@
 
 [Unit]
 Description=karajo
+After=network.target
 
 [Service]
 User=karajo
 WorkingDirectory=/var/lib/karajo
 ExecStart=/usr/bin/karajo -config /etc/karajo/karajo.conf
+Restart=on-failure
 RestartSec=5s
 
 [Install]
