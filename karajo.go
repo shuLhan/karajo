@@ -48,9 +48,12 @@ var (
 
 // Karajo HTTP server and jobs manager.
 type Karajo struct {
-	httpd *libhttp.Server
-	env   *Env
-	sm    *sessionManager
+	// Httpd the HTTP server that Karajo use.
+	// One can register additional endpoints here.
+	Httpd *libhttp.Server
+
+	env *Env
+	sm  *sessionManager
 
 	// jobq is the channel that limit the number of job running at the
 	// same time.
@@ -146,7 +149,7 @@ func (k *Karajo) Start() (err error) {
 		job     *JobExec
 	)
 
-	mlog.Outf(`started the karajo server at http://%s/karajo`, k.httpd.Addr)
+	mlog.Outf(`started the karajo server at http://%s/karajo`, k.Httpd.Addr)
 
 	if len(k.env.notif) > 0 {
 		go k.workerNotification()
@@ -159,7 +162,7 @@ func (k *Karajo) Start() (err error) {
 		go jobHttp.Start(k.jobq, k.logq)
 	}
 
-	return k.httpd.Start()
+	return k.Httpd.Start()
 }
 
 // Stop all the jobs and the HTTP server.
@@ -176,7 +179,7 @@ func (k *Karajo) Stop() (err error) {
 		job.Stop()
 	}
 
-	return k.httpd.Stop(5 * time.Second)
+	return k.Httpd.Stop(5 * time.Second)
 }
 
 // workerNotification receive JobLog from JobExec and JobHttp everytime

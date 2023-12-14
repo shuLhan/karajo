@@ -81,7 +81,7 @@ func (k *Karajo) initHttpd() (err error) {
 		}
 	)
 
-	k.httpd, err = libhttp.NewServer(&serverOpts)
+	k.Httpd, err = libhttp.NewServer(&serverOpts)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -103,7 +103,7 @@ func (k *Karajo) initHttpd() (err error) {
 func (k *Karajo) registerApis() (err error) {
 	var logp = `registerApis`
 
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiAuthLogin,
 		RequestType:  libhttp.RequestTypeForm,
@@ -114,7 +114,7 @@ func (k *Karajo) registerApis() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiEnv,
 		RequestType:  libhttp.RequestTypeNone,
@@ -125,7 +125,7 @@ func (k *Karajo) registerApis() (err error) {
 		return err
 	}
 
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobLog,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -135,7 +135,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobPause,
 		RequestType:  libhttp.RequestTypeForm,
@@ -145,7 +145,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobPause, err)
 	}
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobResume,
 		RequestType:  libhttp.RequestTypeForm,
@@ -156,7 +156,7 @@ func (k *Karajo) registerApis() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobResume, err)
 	}
 
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobHttp,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -166,7 +166,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobHttpLog,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -176,7 +176,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobHttpPause,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -186,7 +186,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobHttpResume,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -210,7 +210,7 @@ func (k *Karajo) registerJobsHook() (err error) {
 			continue
 		}
 
-		err = k.httpd.RegisterEndpoint(&libhttp.Endpoint{
+		err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
 			Method:       libhttp.RequestMethodPost,
 			Path:         path.Join(apiJobRun, job.Path),
 			RequestType:  libhttp.RequestTypeJSON,
