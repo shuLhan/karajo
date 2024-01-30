@@ -32,7 +32,7 @@ Workflow on karajo,
 	              |   |   | timer   |   | timer |
 	              |   |   v         |   v       |
 	              | +---------+   +-------+     |
-	INTERNET <----- | JobHttp |   | Job   | <----- INTERNET
+	INTERNET <----- | JobHTTP |   | Job   | <----- INTERNET
 	              | +---------+   +-------+     |
 	              \------------------|----------/
 	                                 |
@@ -110,9 +110,7 @@ func main() {
 	}()
 
 	go func() {
-		var (
-			c chan os.Signal = make(chan os.Signal, 1)
-		)
+		var c = make(chan os.Signal, 1)
 
 		signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 		<-c

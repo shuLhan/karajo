@@ -12,7 +12,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"hash"
 	"io"
 	"net/http"
 	"os/exec"
@@ -47,11 +46,11 @@ const (
 	sourcehutPublicKey   = `uX7KWyyDNMaBma4aVbJ/cbUQpdjqczuCyK/HxzV/u+4=`
 )
 
-// JobExecHttpHandler define an handler for triggering a JobExec using HTTP.
+// JobExecHTTPHandler define an handler for triggering a JobExec using HTTP.
 //
 // The log parameter is used to log all output and error.
 // The epr parameter contains HTTP request, body, and response writer.
-type JobExecHttpHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
+type JobExecHTTPHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 
 // JobExec define a job to execute Go code or list of commands.
 // A JobExec can be triggered manually by sending HTTP POST request or
@@ -88,7 +87,7 @@ type JobExec struct {
 	// alternative to Commands.
 	// This field is optional, it is only used if JobExec created
 	// through code.
-	Call JobExecHttpHandler `ini:"-" json:"-"`
+	Call JobExecHTTPHandler `ini:"-" json:"-"`
 
 	// HTTP path where JobExec can be triggered using HTTP.
 	// The Path is automatically prefixed with "/karajo/api/job/run", it
@@ -301,12 +300,12 @@ func (job *JobExec) init(env *Env, name string) (err error) {
 	return nil
 }
 
-// handleHttp trigger running the JobExec by HTTP request.
+// handleHTTP trigger running the JobExec by HTTP request.
 //
 // Once the signature is verified it will response immediately and run the
 // actual process in the new goroutine.
-func (job *JobExec) handleHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
-	var logp = `handleHttp`
+func (job *JobExec) handleHTTP(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+	var logp = `handleHTTP`
 
 	// Authenticated request by checking the request body.
 	err = job.authorize(epr.HttpRequest.Header, epr.RequestBody)
@@ -552,12 +551,10 @@ func decodeSourcehutPublicKey() (pubkey ed25519.PublicKey, err error) {
 }
 
 func signHmacSha1(payload, secret []byte) (sign string) {
-	var (
-		signer hash.Hash = hmac.New(sha1.New, secret)
-		bsign  []byte
-	)
+	var signer = hmac.New(sha1.New, secret)
+
 	_, _ = signer.Write(payload)
-	bsign = signer.Sum(nil)
+	var bsign = signer.Sum(nil)
 	sign = hex.EncodeToString(bsign)
 	return sign
 }

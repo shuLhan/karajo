@@ -62,31 +62,31 @@ func main() {
 		Call:     webhookWithGithub,
 	}
 
-	// Example of JobHttp.
+	// Example of JobHTTP.
 
-	env.HttpJobs = make(map[string]*karajo.JobHttp)
-	env.HttpJobs[`interval-90s-code`] = &karajo.JobHttp{
+	env.HTTPJobs = make(map[string]*karajo.JobHTTP)
+	env.HTTPJobs[`interval-90s-code`] = &karajo.JobHTTP{
 		JobBase: karajo.JobBase{
 			Description: `Trigger our webhook-github every 90 seconds by code.`,
 			Interval:    90 * time.Second,
 		},
 		Secret:          `s3cret`,
 		HeaderSign:      `X-Hub-Signature-256`,
-		HttpMethod:      `POST`,
-		HttpUrl:         `/karajo/api/job/run/webhook-github`,
-		HttpRequestType: `json`,
+		HTTPMethod:      `POST`,
+		HTTPURL:         `/karajo/api/job/run/webhook-github`,
+		HTTPRequestType: `json`,
 	}
 
-	env.HttpJobs[`schedule-6m-code`] = &karajo.JobHttp{
+	env.HTTPJobs[`schedule-6m-code`] = &karajo.JobHTTP{
 		JobBase: karajo.JobBase{
 			Description: `Trigger our webhook-github-code by schedule every 6m.`,
 			Schedule:    `hourly@0,6,12,18,24,30,36,42,48,54`,
 		},
 		Secret:          `s3cret`,
 		HeaderSign:      `X-Hub-Signature-256`,
-		HttpMethod:      `POST`,
-		HttpUrl:         `/karajo/api/job/run/webhook-github-code`,
-		HttpRequestType: `json`,
+		HTTPMethod:      `POST`,
+		HTTPURL:         `/karajo/api/job/run/webhook-github-code`,
+		HTTPRequestType: `json`,
 	}
 
 	k, err = karajo.New(env)

@@ -28,10 +28,10 @@ const (
 
 	apiEnv = `/karajo/api/environment`
 
-	apiJobHttp       = `/karajo/api/job_http`
-	apiJobHttpLog    = `/karajo/api/job_http/log`
-	apiJobHttpPause  = `/karajo/api/job_http/pause`
-	apiJobHttpResume = `/karajo/api/job_http/resume`
+	apiJobHTTP       = `/karajo/api/job_http`
+	apiJobHTTPLog    = `/karajo/api/job_http/log`
+	apiJobHTTPPause  = `/karajo/api/job_http/pause`
+	apiJobHTTPResume = `/karajo/api/job_http/resume`
 
 	apiJobLog    = `/karajo/api/job/log`
 	apiJobPause  = `/karajo/api/job/pause`
@@ -41,7 +41,7 @@ const (
 
 // List of known pathes.
 const (
-	pathKarajoApi = `/karajo/api/`
+	pathKarajoAPI = `/karajo/api/`
 	pathKarajoApp = `/karajo/app/`
 )
 
@@ -63,11 +63,11 @@ var (
 	}
 )
 
-// initHttpd initialize the HTTP server, including registering its endpoints
+// initHTTPd initialize the HTTP server, including registering its endpoints
 // and JobExec endpoints.
-func (k *Karajo) initHttpd() (err error) {
+func (k *Karajo) initHTTPd() (err error) {
 	var (
-		logp       = `initHttpd`
+		logp       = `initHTTPd`
 		serverOpts = libhttp.ServerOptions{
 			Address: k.env.ListenAddress,
 			Conn: &http.Server{
@@ -81,12 +81,12 @@ func (k *Karajo) initHttpd() (err error) {
 		}
 	)
 
-	k.Httpd, err = libhttp.NewServer(&serverOpts)
+	k.HTTPd, err = libhttp.NewServer(&serverOpts)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = k.registerApis()
+	err = k.registerAPIs()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -99,11 +99,11 @@ func (k *Karajo) initHttpd() (err error) {
 	return nil
 }
 
-// registerApis register the public HTTP APIs.
-func (k *Karajo) registerApis() (err error) {
-	var logp = `registerApis`
+// registerAPIs register the public HTTP APIs.
+func (k *Karajo) registerAPIs() (err error) {
+	var logp = `registerAPIs`
 
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiAuthLogin,
 		RequestType:  libhttp.RequestTypeForm,
@@ -114,7 +114,7 @@ func (k *Karajo) registerApis() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiEnv,
 		RequestType:  libhttp.RequestTypeNone,
@@ -125,7 +125,7 @@ func (k *Karajo) registerApis() (err error) {
 		return err
 	}
 
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobLog,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -135,7 +135,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobPause,
 		RequestType:  libhttp.RequestTypeForm,
@@ -145,7 +145,7 @@ func (k *Karajo) registerApis() (err error) {
 	if err != nil {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobPause, err)
 	}
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobResume,
 		RequestType:  libhttp.RequestTypeForm,
@@ -156,42 +156,42 @@ func (k *Karajo) registerApis() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobResume, err)
 	}
 
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         apiJobHttp,
+		Path:         apiJobHTTP,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobHttp,
+		Call:         k.apiJobHTTP,
 	})
 	if err != nil {
 		return err
 	}
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         apiJobHttpLog,
+		Path:         apiJobHTTPLog,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobHttpLog,
+		Call:         k.apiJobHTTPLog,
 	})
 	if err != nil {
 		return err
 	}
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         apiJobHttpPause,
+		Path:         apiJobHTTPPause,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobHttpPause,
+		Call:         k.apiJobHTTPPause,
 	})
 	if err != nil {
 		return err
 	}
-	err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         apiJobHttpResume,
+		Path:         apiJobHTTPResume,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobHttpResume,
+		Call:         k.apiJobHTTPResume,
 	})
 	if err != nil {
 		return err
@@ -210,12 +210,12 @@ func (k *Karajo) registerJobsHook() (err error) {
 			continue
 		}
 
-		err = k.Httpd.RegisterEndpoint(&libhttp.Endpoint{
+		err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 			Method:       libhttp.RequestMethodPost,
 			Path:         path.Join(apiJobRun, job.Path),
 			RequestType:  libhttp.RequestTypeJSON,
 			ResponseType: libhttp.ResponseTypeJSON,
-			Call:         job.handleHttp,
+			Call:         job.handleHTTP,
 		})
 		if err != nil {
 			return err
@@ -271,7 +271,7 @@ func isRequireAuth(path string) bool {
 	if strings.HasPrefix(path, pathKarajoApp) {
 		return true
 	}
-	if strings.HasPrefix(path, pathKarajoApi) {
+	if strings.HasPrefix(path, pathKarajoAPI) {
 		return true
 	}
 	return false
@@ -387,10 +387,10 @@ func (k *Karajo) apiEnv(epr *libhttp.EndpointRequest) (resbody []byte, err error
 // If the jobID and counter exist it will return the JobLog object as JSON.
 func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
-		logp              = `apiJobLog`
-		res               = &libhttp.EndpointResponse{}
-		id         string = epr.HttpRequest.Form.Get(paramNameID)
-		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
+		logp       = `apiJobLog`
+		res        = &libhttp.EndpointResponse{}
+		id         = epr.HttpRequest.Form.Get(paramNameID)
+		counterStr = epr.HttpRequest.Form.Get(paramNameCounter)
 
 		buf     bytes.Buffer
 		job     *JobExec
@@ -542,50 +542,50 @@ func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) (resb []byte, err er
 	return resb, err
 }
 
-// apiJobHttp HTTP API to get the JobHttp information by its ID.
-func (k *Karajo) apiJobHttp(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+// apiJobHTTP HTTP API to get the JobHTTP information by its ID.
+func (k *Karajo) apiJobHTTP(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
-		res              = &libhttp.EndpointResponse{}
-		id      string   = epr.HttpRequest.Form.Get(paramNameID)
-		jobHttp *JobHttp = k.env.jobHttp(id)
+		res     = &libhttp.EndpointResponse{}
+		id      = epr.HttpRequest.Form.Get(paramNameID)
+		jobHTTP = k.env.jobHTTP(id)
 	)
 
-	if jobHttp == nil {
+	if jobHTTP == nil {
 		return nil, errInvalidJobID(id)
 	}
 
 	res.Code = http.StatusOK
-	res.Data = jobHttp
+	res.Data = jobHTTP
 
-	jobHttp.Lock()
+	jobHTTP.Lock()
 	resbody, err = json.Marshal(res)
-	jobHttp.Unlock()
+	jobHTTP.Unlock()
 
 	return resbody, err
 }
 
-// apiJobHttpLog HTTP API to get the logs for JobHttp by its ID.
+// apiJobHTTPLog HTTP API to get the logs for JobHTTP by its ID.
 //
 // Request format,
 //
 //	GET /karajo/api/job_http/log?id=<jobID>&counter=<counter>
 //
 // If the jobID and counter exist it will return the JobLog object as JSON.
-func (k *Karajo) apiJobHttpLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+func (k *Karajo) apiJobHTTPLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
-		logp              = `apiJobHttpLog`
-		res               = &libhttp.EndpointResponse{}
-		id         string = epr.HttpRequest.Form.Get(paramNameID)
-		counterStr string = epr.HttpRequest.Form.Get(paramNameCounter)
+		logp       = `apiJobHTTPLog`
+		res        = &libhttp.EndpointResponse{}
+		id         = epr.HttpRequest.Form.Get(paramNameID)
+		counterStr = epr.HttpRequest.Form.Get(paramNameCounter)
 
 		buf     bytes.Buffer
-		job     *JobHttp
+		job     *JobHTTP
 		jlog    *JobLog
 		counter int64
 	)
 
 	id = strings.ToLower(id)
-	job = k.env.jobHttp(id)
+	job = k.env.jobHTTP(id)
 	if job == nil {
 		return nil, errInvalidJobID(id)
 	}
@@ -632,13 +632,13 @@ out:
 	return resbody, nil
 }
 
-// apiJobHttpPause HTTP API to pause running the JobHttp.
-func (k *Karajo) apiJobHttpPause(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+// apiJobHTTPPause HTTP API to pause running the JobHTTP.
+func (k *Karajo) apiJobHTTPPause(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		res = &libhttp.EndpointResponse{}
 
 		id      string
-		jobHttp *JobHttp
+		jobHTTP *JobHTTP
 	)
 
 	err = k.httpAuthorize(epr, []byte(epr.HttpRequest.URL.RawQuery))
@@ -647,26 +647,26 @@ func (k *Karajo) apiJobHttpPause(epr *libhttp.EndpointRequest) (resb []byte, err
 	}
 
 	id = epr.HttpRequest.Form.Get(paramNameID)
-	jobHttp = k.env.jobHttp(id)
-	if jobHttp == nil {
+	jobHTTP = k.env.jobHTTP(id)
+	if jobHTTP == nil {
 		return nil, errInvalidJobID(id)
 	}
 
-	jobHttp.pause()
+	jobHTTP.pause()
 
 	res.Code = http.StatusOK
-	res.Data = jobHttp
+	res.Data = jobHTTP
 
 	return json.Marshal(res)
 }
 
-// apiJobHttpResume HTTP API to resume running JobHttp.
-func (k *Karajo) apiJobHttpResume(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+// apiJobHTTPResume HTTP API to resume running JobHTTP.
+func (k *Karajo) apiJobHTTPResume(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		res = &libhttp.EndpointResponse{}
 
 		id      string
-		jobHttp *JobHttp
+		jobHTTP *JobHTTP
 	)
 
 	err = k.httpAuthorize(epr, []byte(epr.HttpRequest.URL.RawQuery))
@@ -675,15 +675,15 @@ func (k *Karajo) apiJobHttpResume(epr *libhttp.EndpointRequest) (resb []byte, er
 	}
 
 	id = epr.HttpRequest.Form.Get(paramNameID)
-	jobHttp = k.env.jobHttp(id)
-	if jobHttp == nil {
+	jobHTTP = k.env.jobHTTP(id)
+	if jobHTTP == nil {
 		return nil, errInvalidJobID(id)
 	}
 
-	jobHttp.resume(JobStatusStarted)
+	jobHTTP.resume(JobStatusStarted)
 
 	res.Code = http.StatusOK
-	res.Data = jobHttp
+	res.Data = jobHTTP
 
 	return json.Marshal(res)
 }

@@ -9,5 +9,5 @@ type jobKind string
 // List of job kind.
 const (
 	jobKindExec jobKind = `job`
-	jobKindHttp jobKind = `job_http`
+	jobKindHTTP jobKind = `job_http`
 )

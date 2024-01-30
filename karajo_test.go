@@ -34,10 +34,10 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestKarajo_apis(t *testing.T) {
+func TestKarajoAPIs(t *testing.T) {
 	var (
 		tdata   *test.Data
-		httpJob *JobHttp
+		httpJob *JobHTTP
 		karajo  *Karajo
 		err     error
 	)
@@ -62,7 +62,7 @@ func TestKarajo_apis(t *testing.T) {
 
 	// Set the job LastRun to the current time so it will not run when
 	// server started.
-	for _, httpJob = range testEnv.HttpJobs {
+	for _, httpJob = range testEnv.HTTPJobs {
 		httpJob.LastRun = testTimeNow
 	}
 
@@ -90,41 +90,41 @@ func TestKarajo_apis(t *testing.T) {
 	waitServerAlive(t, testClient)
 
 	t.Run(`apiEnv`, func(tt *testing.T) {
-		testKarajo_apiEnv(tt, tdata)
+		testKarajoAPIEnv(tt, tdata)
 	})
 
 	t.Run(`apiJobPause`, func(tt *testing.T) {
-		testKarajo_apiJobPause(tt, tdata)
+		testKarajoAPIJobPause(tt, tdata)
 	})
 	t.Run(`apiJobResume`, func(tt *testing.T) {
-		testKarajo_apiJobResume(tt, tdata)
+		testKarajoAPIJobResume(tt, tdata)
 	})
 
-	t.Run(`apiJobRun_success`, func(tt *testing.T) {
-		testKarajo_apiJobRun_success(tt, tdata)
+	t.Run(`apiJobRunSuccess`, func(tt *testing.T) {
+		testKarajoAPIJobRunSuccess(tt, tdata)
 	})
 
-	t.Run(`apiJobRun_notfound`, func(tt *testing.T) {
-		testKarajo_apiJobRun_notfound(tt, tdata)
+	t.Run(`apiJobRunNotfound`, func(tt *testing.T) {
+		testKarajoAPIJobRunNotfound(tt, tdata)
 	})
 	t.Run(`apiJobLog`, func(tt *testing.T) {
-		testKarajo_apiJobLog(tt, tdata)
+		testKarajoAPIJobLog(tt, tdata)
 	})
 
-	t.Run(`apiJobHttp_success`, func(tt *testing.T) {
-		testKarajo_apiJobHttp_success(tt, tdata)
+	t.Run(`apiJobHTTPSuccess`, func(tt *testing.T) {
+		testKarajoAPIJobHTTPSuccess(tt, tdata)
 	})
-	t.Run(`apiJobHttp_notfound`, func(tt *testing.T) {
-		testKarajo_apiJobHttp_notfound(tt, tdata)
+	t.Run(`apiJobHTTPNotfound`, func(tt *testing.T) {
+		testKarajoAPIJobHTTPNotfound(tt, tdata)
 	})
-	t.Run(`apiJobHttpLog`, func(tt *testing.T) {
-		testKarajo_apiJobHttpLog(tt, tdata)
+	t.Run(`apiJobHTTPLog`, func(tt *testing.T) {
+		testKarajoAPIJobHTTPLog(tt, tdata)
 	})
-	t.Run(`apiJobHttpPause`, func(tt *testing.T) {
-		testKarajo_apiJobHttpPause(tt, tdata)
+	t.Run(`apiJobHTTPPause`, func(tt *testing.T) {
+		testKarajoAPIJobHTTPPause(tt, tdata)
 	})
-	t.Run(`apiJobHttpResume`, func(tt *testing.T) {
-		testKarajo_apiJobHttpResume(tt, tdata)
+	t.Run(`apiJobHTTPResume`, func(tt *testing.T) {
+		testKarajoAPIJobHTTPResume(tt, tdata)
 	})
 }
 
@@ -143,9 +143,9 @@ func waitServerAlive(t *testing.T, cl *Client) {
 	}
 }
 
-func testKarajo_apiEnv(t *testing.T, tdata *test.Data) {
+func testKarajoAPIEnv(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiEnv.json`]
+		exp = tdata.Output[`apiEnv.json`]
 
 		gotEnv *Env
 		job    *JobExec
@@ -170,7 +170,7 @@ func testKarajo_apiEnv(t *testing.T, tdata *test.Data) {
 	test.Assert(t, `apiEnv`, string(exp), string(got))
 }
 
-func testKarajo_apiJobPause(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobPause(t *testing.T, tdata *test.Data) {
 	var (
 		job  *JobExec
 		data interface{}
@@ -213,9 +213,9 @@ func testKarajo_apiJobPause(t *testing.T, tdata *test.Data) {
 	test.Assert(t, `apiJobPause_run`, string(exp), string(got))
 }
 
-func testKarajo_apiJobRun_success(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobRunSuccess(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiJobRun_success.json`]
+		exp = tdata.Output[`apiJobRun_success.json`]
 
 		job  *JobExec
 		data interface{}
@@ -235,12 +235,12 @@ func testKarajo_apiJobRun_success(t *testing.T, tdata *test.Data) {
 		t.Fatal(err)
 	}
 
-	test.Assert(t, `apiJobRun_success`, string(exp), string(got))
+	test.Assert(t, `apiJobRunSuccess`, string(exp), string(got))
 }
 
-func testKarajo_apiJobRun_notfound(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobRunNotfound(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiJobRun_notfound.json`]
+		exp = tdata.Output[`apiJobRun_notfound.json`]
 
 		job  *JobExec
 		data interface{}
@@ -259,12 +259,12 @@ func testKarajo_apiJobRun_notfound(t *testing.T, tdata *test.Data) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	test.Assert(t, `apiJobRun_notfound`, string(exp), string(got))
+	test.Assert(t, `apiJobRunNotfound`, string(exp), string(got))
 }
 
-func testKarajo_apiJobLog(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobLog(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiJobLog.json`]
+		exp = tdata.Output[`apiJobLog.json`]
 
 		joblog *JobLog
 		expErr string
@@ -293,9 +293,9 @@ func testKarajo_apiJobLog(t *testing.T, tdata *test.Data) {
 	test.Assert(t, `apiJobLog.json`, string(exp), string(got))
 }
 
-func testKarajo_apiJobResume(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobResume(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiJobResume.json`]
+		exp = tdata.Output[`apiJobResume.json`]
 
 		job  *JobExec
 		data interface{}
@@ -319,16 +319,16 @@ func testKarajo_apiJobResume(t *testing.T, tdata *test.Data) {
 	test.Assert(t, `apiJobResume`, string(exp), string(got))
 }
 
-func testKarajo_apiJobHttp_success(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobHTTPSuccess(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiJobHttp_success.json`]
+		exp = tdata.Output[`apiJobHTTP_success.json`]
 
-		gotJob *JobHttp
+		gotJob *JobHTTP
 		got    []byte
 		err    error
 	)
 
-	gotJob, err = testClient.JobHttp(`test_success`)
+	gotJob, err = testClient.JobHTTP(`test_success`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -337,20 +337,20 @@ func testKarajo_apiJobHttp_success(t *testing.T, tdata *test.Data) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	test.Assert(t, `apiJobHttp_success`, string(exp), string(got))
+	test.Assert(t, `apiJobHTTPSuccess`, string(exp), string(got))
 }
 
-func testKarajo_apiJobHttp_notfound(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobHTTPNotfound(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiJobHttp_notfound.json`]
+		exp = tdata.Output[`apiJobHTTP_notfound.json`]
 
 		data   interface{}
-		gotJob *JobHttp
+		gotJob *JobHTTP
 		got    []byte
 		err    error
 	)
 
-	gotJob, err = testClient.JobHttp(`test_notfound`)
+	gotJob, err = testClient.JobHTTP(`test_notfound`)
 	if err != nil {
 		data = err
 	} else {
@@ -361,13 +361,13 @@ func testKarajo_apiJobHttp_notfound(t *testing.T, tdata *test.Data) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	test.Assert(t, `apiJobHttp_notfound`, string(exp), string(got))
+	test.Assert(t, `apiJobHTTPNotfound`, string(exp), string(got))
 }
 
-func testKarajo_apiJobHttpLog(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobHTTPLog(t *testing.T, tdata *test.Data) {
 	var (
 		id      = `test_success`
-		jobHttp = testEnv.jobHttp(id)
+		jobHTTP = testEnv.jobHTTP(id)
 
 		data    interface{}
 		jlog    *JobLog
@@ -378,13 +378,13 @@ func testKarajo_apiJobHttpLog(t *testing.T, tdata *test.Data) {
 	)
 
 	// Add dummy logs.
-	jobHttp.lastCounter++
-	jlog = newJobLog(&jobHttp.JobBase)
+	jobHTTP.lastCounter++
+	jlog = newJobLog(&jobHTTP.JobBase)
 	_, _ = jlog.Write([]byte("The first log\n"))
-	jobHttp.Logs = append(jobHttp.Logs, jlog)
+	jobHTTP.Logs = append(jobHTTP.Logs, jlog)
 	_ = jlog.flush()
 
-	gotJlog, err = testClient.JobHttpLog(id, int(jobHttp.lastCounter))
+	gotJlog, err = testClient.JobHTTPLog(id, int(jobHTTP.lastCounter))
 	if err != nil {
 		data = err
 	} else {
@@ -396,21 +396,21 @@ func testKarajo_apiJobHttpLog(t *testing.T, tdata *test.Data) {
 		t.Fatal(err)
 	}
 
-	exp = tdata.Output[`apiJobHttpLog.json`]
-	test.Assert(t, `apiJobHttpLog`, string(exp), string(got))
+	exp = tdata.Output[`apiJobHTTPLog.json`]
+	test.Assert(t, `apiJobHTTPLog`, string(exp), string(got))
 }
 
-func testKarajo_apiJobHttpPause(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobHTTPPause(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiJobHttpPause.json`]
+		exp = tdata.Output[`apiJobHTTPPause.json`]
 
 		data interface{}
-		job  *JobHttp
+		job  *JobHTTP
 		got  []byte
 		err  error
 	)
 
-	job, err = testClient.JobHttpPause(`test_success`)
+	job, err = testClient.JobHTTPPause(`test_success`)
 	if err != nil {
 		data = err
 	} else {
@@ -421,20 +421,20 @@ func testKarajo_apiJobHttpPause(t *testing.T, tdata *test.Data) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	test.Assert(t, `apiJobHttpPause`, string(exp), string(got))
+	test.Assert(t, `apiJobHTTPPause`, string(exp), string(got))
 }
 
-func testKarajo_apiJobHttpResume(t *testing.T, tdata *test.Data) {
+func testKarajoAPIJobHTTPResume(t *testing.T, tdata *test.Data) {
 	var (
-		exp []byte = tdata.Output[`apiJobHttpResume.json`]
+		exp = tdata.Output[`apiJobHTTPResume.json`]
 
 		data interface{}
-		job  *JobHttp
+		job  *JobHTTP
 		got  []byte
 		err  error
 	)
 
-	job, err = testClient.JobHttpResume(`test_success`)
+	job, err = testClient.JobHTTPResume(`test_success`)
 	if err != nil {
 		data = err
 	} else {
@@ -445,5 +445,5 @@ func testKarajo_apiJobHttpResume(t *testing.T, tdata *test.Data) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	test.Assert(t, `apiJobHttpResume`, string(exp), string(got))
+	test.Assert(t, `apiJobHTTPResume`, string(exp), string(got))
 }

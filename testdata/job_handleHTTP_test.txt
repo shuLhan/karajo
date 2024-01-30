@@ -1,6 +1,6 @@
-Test running Job with handleHttp.
+Test running Job with handleHTTP.
 
-<<< handleHttp_response.json
+<<< handleHTTP_response.json
 {
   "data": {
     "path": "/test-job-handle-http",

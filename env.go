@@ -22,7 +22,7 @@ import (
 const (
 	defDirBase       = `/`
 	defEnvName       = `karajo`
-	defHttpTimeout   = 5 * time.Minute
+	defHTTPTimeout   = 5 * time.Minute
 	defListenAddress = `127.0.0.1:31937`
 	defMaxJobRunning = 1
 )
@@ -32,8 +32,8 @@ type Env struct {
 	// List of JobExec by name.
 	ExecJobs map[string]*JobExec `ini:"job" json:"jobs"`
 
-	// List of JobHttp by name.
-	HttpJobs map[string]*JobHttp `ini:"job.http" json:"http_jobs"`
+	// List of JobHTTP by name.
+	HTTPJobs map[string]*JobHTTP `ini:"job.http" json:"http_jobs"`
 
 	// Notif contains list of notification setting.
 	Notif map[string]EnvNotif `ini:"notif" json:"-"`
@@ -69,12 +69,12 @@ type Env struct {
 	//	|                +-- job_http.d/
 	//	|
 	//	+-- /var/lib/karajo/ +-- job/$JobExec.ID
-	//	|                    +-- job_http/$JobHttp.ID
+	//	|                    +-- job_http/$JobHTTP.ID
 	//	|
 	//	+-- /var/log/karajo/ +-- job/$JobExec.ID
-	//	|                    +-- job_http/$JobHttp.ID
+	//	|                    +-- job_http/$JobHTTP.ID
 	//	|
-	//	+-- /var/run/karajo/job_http/$JobHttp.ID
+	//	+-- /var/run/karajo/job_http/$JobHTTP.ID
 	//
 	// Each job log stored under directory /var/log/karajo/job and the job
 	// state under directory /var/run/karajo/job.
@@ -88,20 +88,20 @@ type Env struct {
 	// Each job configuration end with `.conf`.
 	dirConfigJobd string
 
-	// dirConfigJobHttpd the directory where JobHttp configuration
+	// dirConfigJobHTTPd the directory where JobHTTP configuration
 	// loaded.
-	// This is to simplify managing JobHttp by splitting it per file.
-	// Each JobHttp configuration end with `.conf`.
-	dirConfigJobHttpd string
+	// This is to simplify managing JobHTTP by splitting it per file.
+	// Each JobHTTP configuration end with `.conf`.
+	dirConfigJobHTTPd string
 
 	dirLibJob     string
-	dirLibJobHttp string
+	dirLibJobHTTP string
 
 	dirLogJob     string
-	dirLogJobHttp string
+	dirLogJobHTTP string
 
-	// dirRunJobHttp define the directory where JobHttp state is stored.
-	dirRunJobHttp string
+	// dirRunJobHTTP define the directory where JobHTTP state is stored.
+	dirRunJobHTTP string
 
 	file string
 
@@ -123,12 +123,12 @@ type Env struct {
 	Secret  string `ini:"karajo::secret" json:"-"`
 	secretb []byte
 
-	// HttpTimeout define the global HTTP client timeout when executing
+	// HTTPTimeout define the global HTTP client timeout when executing
 	// each jobs.
 	// This field is optional, default to 5 minutes.
 	// The value of this option is using the Go [time.Duration]
 	// format, for example, "30s" for 30 seconds, "1m" for 1 minute.
-	HttpTimeout time.Duration `ini:"karajo::http_timeout" json:"http_timeout"`
+	HTTPTimeout time.Duration `ini:"karajo::http_timeout" json:"http_timeout"`
 
 	// MaxJobRunning define the maximum job running at the same time.
 	// This field is optional default to 1.
@@ -170,11 +170,11 @@ func NewEnv() (env *Env) {
 	env = &Env{
 		Name:          defEnvName,
 		ExecJobs:      make(map[string]*JobExec),
-		HttpJobs:      make(map[string]*JobHttp),
+		HTTPJobs:      make(map[string]*JobHTTP),
 		Users:         make(map[string]*User),
 		ListenAddress: defListenAddress,
 		DirBase:       defDirBase,
-		HttpTimeout:   defHttpTimeout,
+		HTTPTimeout:   defHTTPTimeout,
 		MaxJobRunning: defMaxJobRunning,
 	}
 	return env
@@ -206,9 +206,9 @@ func (env *Env) job(id string) (job *JobExec) {
 	return nil
 }
 
-// jobHttp get the registered JobHttp by its ID.
-func (env *Env) jobHttp(id string) (job *JobHttp) {
-	for _, job = range env.HttpJobs {
+// jobHTTP get the registered JobHTTP by its ID.
+func (env *Env) jobHTTP(id string) (job *JobHTTP) {
+	for _, job = range env.HTTPJobs {
 		if job.ID == id {
 			return job
 		}
@@ -221,7 +221,7 @@ func (env *Env) init() (err error) {
 		logp = `init`
 
 		job     *JobExec
-		jobHttp *JobHttp
+		jobHTTP *JobHTTP
 		name    string
 	)
 
@@ -233,8 +233,8 @@ func (env *Env) init() (err error) {
 	if len(env.ListenAddress) == 0 {
 		env.ListenAddress = defListenAddress
 	}
-	if env.HttpTimeout == 0 {
-		env.HttpTimeout = defHttpTimeout
+	if env.HTTPTimeout == 0 {
+		env.HTTPTimeout = defHTTPTimeout
 	}
 	if env.MaxJobRunning <= 0 {
 		env.MaxJobRunning = defMaxJobRunning
@@ -276,13 +276,13 @@ func (env *Env) init() (err error) {
 		}
 	}
 
-	err = env.loadJobHttpd()
+	err = env.loadJobHTTPd()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	for name, jobHttp = range env.HttpJobs {
-		err = jobHttp.init(env, name)
+	for name, jobHTTP = range env.HTTPJobs {
+		err = jobHTTP.init(env, name)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
@@ -303,7 +303,7 @@ func (env *Env) initDirs() (err error) {
 
 	env.dirConfig = filepath.Join(env.DirBase, `etc`, defEnvName)
 	env.dirConfigJobd = filepath.Join(env.DirBase, `etc`, defEnvName, `job.d`)
-	env.dirConfigJobHttpd = filepath.Join(env.DirBase, `etc`, defEnvName, `job_http.d`)
+	env.dirConfigJobHTTPd = filepath.Join(env.DirBase, `etc`, defEnvName, `job_http.d`)
 
 	env.dirLibJob = filepath.Join(env.DirBase, `var`, `lib`, defEnvName, `job`)
 	err = os.MkdirAll(env.dirLibJob, 0700)
@@ -311,10 +311,10 @@ func (env *Env) initDirs() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLibJob, err)
 	}
 
-	env.dirLibJobHttp = filepath.Join(env.DirBase, `var`, `lib`, defEnvName, `job_http`)
-	err = os.MkdirAll(env.dirLibJobHttp, 0700)
+	env.dirLibJobHTTP = filepath.Join(env.DirBase, `var`, `lib`, defEnvName, `job_http`)
+	err = os.MkdirAll(env.dirLibJobHTTP, 0700)
 	if err != nil {
-		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLibJobHttp, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLibJobHTTP, err)
 	}
 
 	env.dirLogJob = filepath.Join(env.DirBase, `var`, `log`, defEnvName, `job`)
@@ -323,16 +323,16 @@ func (env *Env) initDirs() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLogJob, err)
 	}
 
-	env.dirLogJobHttp = filepath.Join(env.DirBase, `var`, `log`, defEnvName, `job_http`)
-	err = os.MkdirAll(env.dirLogJobHttp, 0700)
+	env.dirLogJobHTTP = filepath.Join(env.DirBase, `var`, `log`, defEnvName, `job_http`)
+	err = os.MkdirAll(env.dirLogJobHTTP, 0700)
 	if err != nil {
-		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLogJobHttp, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, env.dirLogJobHTTP, err)
 	}
 
-	env.dirRunJobHttp = filepath.Join(env.DirBase, `var`, `run`, defEnvName, `job_http`)
-	err = os.MkdirAll(env.dirRunJobHttp, 0700)
+	env.dirRunJobHTTP = filepath.Join(env.DirBase, `var`, `run`, defEnvName, `job_http`)
+	err = os.MkdirAll(env.dirRunJobHTTP, 0700)
 	if err != nil {
-		return fmt.Errorf(`%s: %s: %w`, logp, env.dirRunJobHttp, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, env.dirRunJobHTTP, err)
 	}
 
 	return nil
@@ -422,14 +422,14 @@ func (env *Env) loadConfigJob(conf string) (jobs map[string]*JobExec, err error)
 	return jobs, nil
 }
 
-// loadConfigJobHttp load JobHttp configuration from file.
-func (env *Env) loadConfigJobHttp(conf string) (httpJobs map[string]*JobHttp, err error) {
+// loadConfigJobHTTP load JobHTTP configuration from file.
+func (env *Env) loadConfigJobHTTP(conf string) (httpJobs map[string]*JobHTTP, err error) {
 	type jobContainer struct {
-		HttpJobs map[string]*JobHttp `ini:"job.http"`
+		HTTPJobs map[string]*JobHTTP `ini:"job.http"`
 	}
 
 	var (
-		logp = `loadConfigJobHttp`
+		logp = `loadConfigJobHTTP`
 
 		cfg *ini.Ini
 	)
@@ -446,8 +446,8 @@ func (env *Env) loadConfigJobHttp(conf string) (httpJobs map[string]*JobHttp, er
 		return nil, fmt.Errorf(`%s: %s: %w`, logp, conf, err)
 	}
 
-	httpJobs = jobc.HttpJobs
-	jobc.HttpJobs = nil
+	httpJobs = jobc.HTTPJobs
+	jobc.HTTPJobs = nil
 
 	return httpJobs, nil
 }
@@ -516,10 +516,10 @@ func (env *Env) loadJobd() (err error) {
 	return nil
 }
 
-// loadJobHttpd load all JobHttp configurations from a directory.
-func (env *Env) loadJobHttpd() (err error) {
+// loadJobHTTPd load all JobHTTP configurations from a directory.
+func (env *Env) loadJobHTTPd() (err error) {
 	var (
-		logp = `loadJobHttpd`
+		logp = `loadJobHTTPd`
 
 		jobd     *os.File
 		listde   []os.DirEntry
@@ -527,11 +527,11 @@ func (env *Env) loadJobHttpd() (err error) {
 		fm       os.FileMode
 		name     string
 		fileConf string
-		httpJobs map[string]*JobHttp
-		httpJob  *JobHttp
+		httpJobs map[string]*JobHTTP
+		httpJob  *JobHTTP
 	)
 
-	jobd, err = os.Open(env.dirConfigJobHttpd)
+	jobd, err = os.Open(env.dirConfigJobHTTPd)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil
@@ -544,8 +544,8 @@ func (env *Env) loadJobHttpd() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	if env.HttpJobs == nil {
-		env.HttpJobs = make(map[string]*JobHttp)
+	if env.HTTPJobs == nil {
+		env.HTTPJobs = make(map[string]*JobHTTP)
 	}
 
 	for _, de = range listde {
@@ -566,15 +566,15 @@ func (env *Env) loadJobHttpd() (err error) {
 			continue
 		}
 
-		fileConf = filepath.Join(env.dirConfigJobHttpd, name)
+		fileConf = filepath.Join(env.dirConfigJobHTTPd, name)
 
-		httpJobs, err = env.loadConfigJobHttp(fileConf)
+		httpJobs, err = env.loadConfigJobHTTP(fileConf)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 
 		for name, httpJob = range httpJobs {
-			env.HttpJobs[name] = httpJob
+			env.HTTPJobs[name] = httpJob
 		}
 	}
 	return nil
@@ -586,9 +586,9 @@ func (env *Env) lockAllJob() {
 		job.Lock()
 	}
 
-	var jobHttp *JobHttp
-	for _, jobHttp = range env.HttpJobs {
-		jobHttp.Lock()
+	var jobHTTP *JobHTTP
+	for _, jobHTTP = range env.HTTPJobs {
+		jobHTTP.Lock()
 	}
 }
 
@@ -598,8 +598,8 @@ func (env *Env) unlockAllJob() {
 		job.Unlock()
 	}
 
-	var jobHttp *JobHttp
-	for _, jobHttp = range env.HttpJobs {
-		jobHttp.Unlock()
+	var jobHTTP *JobHTTP
+	for _, jobHTTP = range env.HTTPJobs {
+		jobHTTP.Unlock()
 	}
 }

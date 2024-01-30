@@ -12,7 +12,7 @@ import (
 
 func TestJobBase_computeNextInterval(t *testing.T) {
 	type testCase struct {
-		jobHttp *JobHttp
+		jobHTTP *JobHTTP
 		desc    string
 		exp     time.Duration
 	}
@@ -24,7 +24,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 
 	var cases = []testCase{{
 		desc: `Last run is -2*interval`,
-		jobHttp: &JobHttp{
+		jobHTTP: &JobHTTP{
 			JobBase: JobBase{
 				LastRun:  now.Add(-2 * interval),
 				Interval: interval,
@@ -32,7 +32,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 		},
 	}, {
 		desc: `Last run is now`,
-		jobHttp: &JobHttp{
+		jobHTTP: &JobHTTP{
 			JobBase: JobBase{
 				LastRun:  now.UTC(),
 				Interval: interval,
@@ -41,7 +41,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 		exp: interval,
 	}, {
 		desc: `Last run is half-interval ago`,
-		jobHttp: &JobHttp{
+		jobHTTP: &JobHTTP{
 			JobBase: JobBase{
 				LastRun:  now.Add(-1 * (interval / 2)),
 				Interval: interval,
@@ -50,7 +50,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 		exp: interval / 2,
 	}, {
 		desc: `Last run > now?`,
-		jobHttp: &JobHttp{
+		jobHTTP: &JobHTTP{
 			JobBase: JobBase{
 				LastRun:  now.Add(1 * interval),
 				Interval: interval,
@@ -64,7 +64,7 @@ func TestJobBase_computeNextInterval(t *testing.T) {
 		got time.Duration
 	)
 	for _, c = range cases {
-		got = c.jobHttp.computeNextInterval(now)
+		got = c.jobHTTP.computeNextInterval(now)
 		test.Assert(t, c.desc, c.exp, got)
 	}
 }

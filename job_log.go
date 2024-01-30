@@ -60,11 +60,7 @@ func newJobLog(job *JobBase) (jlog *JobLog) {
 // status.
 // If the name is not valid, the file is removed and it will return nil.
 func parseJobLogName(dir, name string) (jlog *JobLog) {
-	var (
-		logFields []string = strings.Split(name, `.`)
-
-		err error
-	)
+	var logFields = strings.Split(name, `.`)
 
 	jlog = &JobLog{
 		Name: name,
@@ -77,6 +73,8 @@ func parseJobLogName(dir, name string) (jlog *JobLog) {
 	}
 
 	jlog.JobID = logFields[0]
+
+	var err error
 
 	jlog.Counter, err = strconv.ParseInt(logFields[1], 10, 64)
 	if err != nil {

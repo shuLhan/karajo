@@ -17,20 +17,20 @@ import (
 )
 
 const (
-	defJobHttpMethod = http.MethodGet
+	defJobHTTPMethod = http.MethodGet
 	defJobInterval   = 30 * time.Second
 	defJosParamEpoch = "_karajo_epoch"
 
 	defTimeLayout = "2006-01-02 15:04:05 MST"
 )
 
-// JobHttp A JobHttp is a periodic job that send HTTP request to external HTTP
+// JobHTTP A JobHTTP is a periodic job that send HTTP request to external HTTP
 // server (or to karajo Job itself).
 //
 // See the [JobBase]'s Interval and Schedule fields for more information on
 // how to setup periodic time.
 //
-// Each JobHttp execution send the parameter named "_karajo_epoch" with value
+// Each JobHTTP execution send the parameter named "_karajo_epoch" with value
 // set to current server Unix timestamp.
 // If the request type is "query" then the parameter is inside the query URL.
 // If the request type is "form" then the parameter is inside the body.
@@ -48,7 +48,7 @@ const (
 //	http_header =
 //	http_timeout =
 //	http_insecure =
-type JobHttp struct {
+type JobHTTP struct {
 	// jobq is a channel passed by Karajo instance to limit number of
 	// job running at the same time.
 	jobq chan struct{}
@@ -78,18 +78,18 @@ type JobHttp struct {
 	// Default to "X-Karajo-Sign" if its empty.
 	HeaderSign string `ini:"::header_sign" json:"header_sign,omitempty"`
 
-	// HttpMethod HTTP method to be used in request for job execution.
+	// HTTPMethod HTTP method to be used in request for job execution.
 	// Its accept only GET, POST, PUT, or DELETE.
 	// This field is optional, default to GET.
-	HttpMethod string `ini:"::http_method" json:"http_method"`
+	HTTPMethod string `ini:"::http_method" json:"http_method"`
 
 	// The HTTP URL where the job will be executed.
 	// This field is required.
-	HttpUrl    string `ini:"::http_url" json:"http_url"`
-	baseUri    string
-	requestUri string
+	HTTPURL    string `ini:"::http_url" json:"http_url"`
+	baseURI    string
+	requestURI string
 
-	// HttpRequestType The header Content-Type to be set on request.
+	// HTTPRequestType The header Content-Type to be set on request.
 	//
 	//   - (empty string): no header Content-Type set.
 	//   - query: no header Content-Type to be set, reserved for future
@@ -98,32 +98,32 @@ type JobHttp struct {
 	//   "application/x-www-form-urlencoded".
 	//   - json: header Content-Type set to "application/json".
 	//
-	// The type "form" and "json" only applicable if the HttpMethod is
+	// The type "form" and "json" only applicable if the HTTPMethod is
 	// POST or PUT.
 	// This field is optional, default to query.
-	HttpRequestType string `ini:"::http_request_type" json:"http_request_type"`
+	HTTPRequestType string `ini:"::http_request_type" json:"http_request_type"`
 
-	// Optional HTTP headers for HttpUrl, in the format of "K: V".
-	HttpHeaders []string `ini:"::http_header" json:"http_headers,omitempty"`
+	// Optional HTTP headers for HTTPURL, in the format of "K: V".
+	HTTPHeaders []string `ini:"::http_header" json:"http_headers,omitempty"`
 
 	JobBase
 
-	// HttpTimeout custom HTTP timeout for this job.
+	// HTTPTimeout custom HTTP timeout for this job.
 	// This field is optional, if not set default to global timeout in
-	// Env.HttpTimeout.
+	// Env.HTTPTimeout.
 	// To make job run without timeout, set the value to negative.
-	HttpTimeout time.Duration `ini:"::http_timeout" json:"http_timeout"`
+	HTTPTimeout time.Duration `ini:"::http_timeout" json:"http_timeout"`
 
 	requestMethod libhttp.RequestMethod
 	requestType   libhttp.RequestType
 
-	// HttpInsecure can be set to true if the http_url is HTTPS with
+	// HTTPInsecure can be set to true if the http_url is HTTPS with
 	// unknown Certificate Authority.
-	HttpInsecure bool `ini:"::http_insecure" json:"http_insecure,omitempty"`
+	HTTPInsecure bool `ini:"::http_insecure" json:"http_insecure,omitempty"`
 }
 
 // Start running the job.
-func (job *JobHttp) Start(jobq chan struct{}, logq chan<- *JobLog) {
+func (job *JobHTTP) Start(jobq chan struct{}, logq chan<- *JobLog) {
 	job.jobq = jobq
 	job.logq = logq
 
@@ -136,7 +136,7 @@ func (job *JobHttp) Start(jobq chan struct{}, logq chan<- *JobLog) {
 	}
 }
 
-func (job *JobHttp) startScheduler() {
+func (job *JobHTTP) startScheduler() {
 	var (
 		err error
 	)
@@ -162,7 +162,7 @@ func (job *JobHttp) startScheduler() {
 	}
 }
 
-func (job *JobHttp) startInterval() {
+func (job *JobHTTP) startInterval() {
 	var (
 		now          time.Time
 		nextInterval time.Duration
@@ -208,7 +208,7 @@ func (job *JobHttp) startInterval() {
 	}
 }
 
-func (job *JobHttp) run() (err error) {
+func (job *JobHTTP) run() (err error) {
 	err = job.JobBase.start()
 	if err != nil {
 		return err
@@ -227,7 +227,7 @@ func (job *JobHttp) run() (err error) {
 }
 
 // Stop the job.
-func (job *JobHttp) Stop() {
+func (job *JobHTTP) Stop() {
 	mlog.Outf(`%s: %s: stopping ...`, job.kind, job.ID)
 	select {
 	case job.stopq <- struct{}{}:
@@ -238,34 +238,34 @@ func (job *JobHttp) Stop() {
 }
 
 // init initialize the job, compute the last run and the next run.
-func (job *JobHttp) init(env *Env, name string) (err error) {
+func (job *JobHTTP) init(env *Env, name string) (err error) {
 	var logp = `init`
 
 	job.startq = make(chan struct{}, 1)
 	job.stopq = make(chan struct{}, 1)
-	job.JobBase.kind = jobKindHttp
+	job.JobBase.kind = jobKindHTTP
 
 	err = job.JobBase.init(env, name)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = job.initHttpMethod()
+	err = job.initHTTPMethod()
 	if err != nil {
 		return err
 	}
 
-	err = job.initHttpRequestType()
+	err = job.initHTTPRequestType()
 	if err != nil {
 		return err
 	}
 
-	err = job.initHttpUrl(env.ListenAddress)
+	err = job.initHTTPURL(env.ListenAddress)
 	if err != nil {
 		return err
 	}
 
-	err = job.initHttpHeaders()
+	err = job.initHTTPHeaders()
 	if err != nil {
 		return err
 	}
@@ -273,19 +273,19 @@ func (job *JobHttp) init(env *Env, name string) (err error) {
 	job.params = make(map[string]interface{})
 
 	var httpClientOpts = &libhttp.ClientOptions{
-		ServerUrl:     job.baseUri,
+		ServerUrl:     job.baseURI,
 		Headers:       job.headers,
-		AllowInsecure: job.HttpInsecure,
+		AllowInsecure: job.HTTPInsecure,
 	}
 	job.httpc = libhttp.NewClient(httpClientOpts)
 
-	if job.HttpTimeout == 0 {
-		job.HttpTimeout = env.HttpTimeout
-	} else if job.HttpTimeout < 0 {
+	if job.HTTPTimeout == 0 {
+		job.HTTPTimeout = env.HTTPTimeout
+	} else if job.HTTPTimeout < 0 {
 		// Negative value means 0 on net/http.Client.
-		job.HttpTimeout = 0
+		job.HTTPTimeout = 0
 	}
-	job.httpc.Client.Timeout = job.HttpTimeout
+	job.httpc.Client.Timeout = job.HTTPTimeout
 
 	if len(job.HeaderSign) == 0 {
 		job.HeaderSign = HeaderNameXKarajoSign
@@ -294,17 +294,17 @@ func (job *JobHttp) init(env *Env, name string) (err error) {
 	return nil
 }
 
-// initHttpMethod check if defined HTTP method is valid.
+// initHTTPMethod check if defined HTTP method is valid.
 // If its empty, set default to GET, otherwise return an error.
-func (job *JobHttp) initHttpMethod() (err error) {
-	job.HttpMethod = strings.TrimSpace(job.HttpMethod)
-	if len(job.HttpMethod) == 0 {
-		job.HttpMethod = defJobHttpMethod
+func (job *JobHTTP) initHTTPMethod() (err error) {
+	job.HTTPMethod = strings.TrimSpace(job.HTTPMethod)
+	if len(job.HTTPMethod) == 0 {
+		job.HTTPMethod = defJobHTTPMethod
 		job.requestMethod = libhttp.RequestMethodGet
 		return nil
 	}
 
-	var vstr = strings.ToUpper(job.HttpMethod)
+	var vstr = strings.ToUpper(job.HTTPMethod)
 
 	switch vstr {
 	case http.MethodGet:
@@ -321,8 +321,8 @@ func (job *JobHttp) initHttpMethod() (err error) {
 	return nil
 }
 
-func (job *JobHttp) initHttpRequestType() (err error) {
-	var vstr = strings.ToLower(job.HttpRequestType)
+func (job *JobHTTP) initHTTPRequestType() (err error) {
+	var vstr = strings.ToLower(job.HTTPRequestType)
 	switch vstr {
 	case ``, `query`:
 		job.requestType = libhttp.RequestTypeQuery
@@ -336,41 +336,41 @@ func (job *JobHttp) initHttpRequestType() (err error) {
 	return nil
 }
 
-func (job *JobHttp) initHttpUrl(serverAddress string) (err error) {
-	if job.HttpUrl[0] == '/' {
-		job.baseUri = fmt.Sprintf(`http://%s`, serverAddress)
-		job.requestUri = job.HttpUrl
+func (job *JobHTTP) initHTTPURL(serverAddress string) (err error) {
+	if job.HTTPURL[0] == '/' {
+		job.baseURI = fmt.Sprintf(`http://%s`, serverAddress)
+		job.requestURI = job.HTTPURL
 		return nil
 	}
 
 	var (
-		httpUrl *url.URL
+		httpURL *url.URL
 		port    string
 	)
 
-	httpUrl, err = url.Parse(job.HttpUrl)
+	httpURL, err = url.Parse(job.HTTPURL)
 	if err != nil {
-		return fmt.Errorf(`%s: invalid http_url %q: %w`, job.ID, job.HttpUrl, err)
+		return fmt.Errorf(`%s: invalid http_url %q: %w`, job.ID, job.HTTPURL, err)
 	}
 
-	port = httpUrl.Port()
+	port = httpURL.Port()
 	if len(port) == 0 {
-		if httpUrl.Scheme == `https` {
+		if httpURL.Scheme == `https` {
 			port = `443`
 		} else {
 			port = `80`
 		}
 	}
 
-	job.baseUri = fmt.Sprintf(`%s://%s:%s`, httpUrl.Scheme, httpUrl.Hostname(), port)
-	job.requestUri = httpUrl.RequestURI()
+	job.baseURI = fmt.Sprintf(`%s://%s:%s`, httpURL.Scheme, httpURL.Hostname(), port)
+	job.requestURI = httpURL.RequestURI()
 
 	return nil
 }
 
-func (job *JobHttp) initHttpHeaders() (err error) {
-	if len(job.HttpHeaders) > 0 {
-		job.headers = make(http.Header, len(job.HttpHeaders))
+func (job *JobHTTP) initHTTPHeaders() (err error) {
+	if len(job.HTTPHeaders) > 0 {
+		job.headers = make(http.Header, len(job.HTTPHeaders))
 	}
 
 	var (
@@ -378,7 +378,7 @@ func (job *JobHttp) initHttpHeaders() (err error) {
 		kv []string
 	)
 
-	for _, h = range job.HttpHeaders {
+	for _, h = range job.HTTPHeaders {
 		kv = strings.SplitN(h, `:`, 2)
 		if len(kv) != 2 {
 			return fmt.Errorf(`%s: invalid header %q`, job.ID, h)
@@ -389,7 +389,7 @@ func (job *JobHttp) initHttpHeaders() (err error) {
 	return nil
 }
 
-func (job *JobHttp) execute() (jlog *JobLog, err error) {
+func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 	var (
 		logp    = `execute`
 		now     = TimeNow().UTC().Round(time.Second)
@@ -413,10 +413,10 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 
 	switch job.requestType {
 	case libhttp.RequestTypeQuery, libhttp.RequestTypeForm:
-		params, rawb = job.paramsToUrlValues()
+		params, rawb = job.paramsToURLValues()
 
 	case libhttp.RequestTypeJSON:
-		params, rawb, err = job.paramsToJson()
+		params, rawb, err = job.paramsToJSON()
 		if err != nil {
 			return jlog, fmt.Errorf(`%s: %w`, logp, err)
 		}
@@ -427,7 +427,7 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 		headers.Set(job.HeaderSign, sign)
 	}
 
-	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestUri, job.requestType, headers, params)
+	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestURI, job.requestType, headers, params)
 	if err != nil {
 		return jlog, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -460,7 +460,7 @@ func (job *JobHttp) execute() (jlog *JobLog, err error) {
 	return jlog, nil
 }
 
-func (job *JobHttp) paramsToJson() (obj map[string]interface{}, raw []byte, err error) {
+func (job *JobHTTP) paramsToJSON() (obj map[string]interface{}, raw []byte, err error) {
 	raw, err = json.Marshal(job.params)
 	if err != nil {
 		return nil, nil, err
@@ -468,8 +468,8 @@ func (job *JobHttp) paramsToJson() (obj map[string]interface{}, raw []byte, err 
 	return job.params, raw, nil
 }
 
-// paramsToUrlValues convert the job parameters to url.Values.
-func (job *JobHttp) paramsToUrlValues() (url.Values, []byte) {
+// paramsToURLValues convert the job parameters to url.Values.
+func (job *JobHTTP) paramsToURLValues() (url.Values, []byte) {
 	var (
 		urlValues = url.Values{}
 
@@ -482,7 +482,7 @@ func (job *JobHttp) paramsToUrlValues() (url.Values, []byte) {
 	return urlValues, []byte(urlValues.Encode())
 }
 
-func (job *JobHttp) setStatus(status string) {
+func (job *JobHTTP) setStatus(status string) {
 	job.Lock()
 	job.Status = status
 	job.Unlock()

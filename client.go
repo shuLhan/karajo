@@ -154,7 +154,7 @@ func (cl *Client) JobRun(jobPath string) (job *JobExec, err error) {
 		apiJobPath = path.Join(apiJobRun, jobPath)
 		header     = http.Header{}
 
-		req = JobHttpRequest{
+		req = JobHTTPRequest{
 			Epoch: timeNow.Unix(),
 		}
 
@@ -226,10 +226,10 @@ func (cl *Client) JobLog(jobID string, counter int) (joblog *JobLog, err error) 
 	return nil, res
 }
 
-// JobHttp get JobHttp detail by its ID.
-func (cl *Client) JobHttp(id string) (httpJob *JobHttp, err error) {
+// JobHTTP get JobHTTP detail by its ID.
+func (cl *Client) JobHTTP(id string) (httpJob *JobHTTP, err error) {
 	var (
-		logp   = `JobHttp`
+		logp   = `JobHTTP`
 		params = url.Values{}
 
 		res     *libhttp.EndpointResponse
@@ -238,12 +238,12 @@ func (cl *Client) JobHttp(id string) (httpJob *JobHttp, err error) {
 
 	params.Set(`id`, id)
 
-	_, resBody, err = cl.Client.Get(apiJobHttp, nil, params)
+	_, resBody, err = cl.Client.Get(apiJobHTTP, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	httpJob = &JobHttp{}
+	httpJob = &JobHTTP{}
 	res = &libhttp.EndpointResponse{
 		Data: httpJob,
 	}
@@ -258,10 +258,10 @@ func (cl *Client) JobHttp(id string) (httpJob *JobHttp, err error) {
 	return httpJob, nil
 }
 
-// JobHttpLog get the job logs by its ID.
-func (cl *Client) JobHttpLog(id string, counter int) (jlog *JobLog, err error) {
+// JobHTTPLog get the job logs by its ID.
+func (cl *Client) JobHTTPLog(id string, counter int) (jlog *JobLog, err error) {
 	var (
-		logp   = `JobHttpLog`
+		logp   = `JobHTTPLog`
 		params = url.Values{}
 
 		res     *libhttp.EndpointResponse
@@ -271,7 +271,7 @@ func (cl *Client) JobHttpLog(id string, counter int) (jlog *JobLog, err error) {
 	params.Set(paramNameID, id)
 	params.Set(paramNameCounter, strconv.Itoa(counter))
 
-	_, resBody, err = cl.Client.Get(apiJobHttpLog, nil, params)
+	_, resBody, err = cl.Client.Get(apiJobHTTPLog, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -290,10 +290,10 @@ func (cl *Client) JobHttpLog(id string, counter int) (jlog *JobLog, err error) {
 	return nil, res
 }
 
-// JobHttpPause pause the HTTP job by its ID.
-func (cl *Client) JobHttpPause(id string) (jobHttp *JobHttp, err error) {
+// JobHTTPPause pause the HTTP job by its ID.
+func (cl *Client) JobHTTPPause(id string) (jobHTTP *JobHTTP, err error) {
 	var (
-		logp   = `JobHttpPause`
+		logp   = `JobHTTPPause`
 		params = url.Values{}
 		header = http.Header{}
 
@@ -307,13 +307,13 @@ func (cl *Client) JobHttpPause(id string) (jobHttp *JobHttp, err error) {
 	sign = Sign([]byte(params.Encode()), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Client.Post(apiJobHttpPause, header, params)
+	_, resBody, err = cl.Client.Post(apiJobHTTPPause, header, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	res = &libhttp.EndpointResponse{
-		Data: &jobHttp,
+		Data: &jobHTTP,
 	}
 
 	err = json.Unmarshal(resBody, res)
@@ -324,13 +324,13 @@ func (cl *Client) JobHttpPause(id string) (jobHttp *JobHttp, err error) {
 		res.Data = nil
 		return nil, res
 	}
-	return jobHttp, nil
+	return jobHTTP, nil
 }
 
-// JobHttpResume resume the HTTP job by its ID.
-func (cl *Client) JobHttpResume(id string) (jobHttp *JobHttp, err error) {
+// JobHTTPResume resume the HTTP job by its ID.
+func (cl *Client) JobHTTPResume(id string) (jobHTTP *JobHTTP, err error) {
 	var (
-		logp   = `JobHttpResume`
+		logp   = `JobHTTPResume`
 		params = url.Values{}
 		header = http.Header{}
 
@@ -344,13 +344,13 @@ func (cl *Client) JobHttpResume(id string) (jobHttp *JobHttp, err error) {
 	sign = Sign([]byte(params.Encode()), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Client.Post(apiJobHttpResume, header, params)
+	_, resBody, err = cl.Client.Post(apiJobHTTPResume, header, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	res = &libhttp.EndpointResponse{
-		Data: &jobHttp,
+		Data: &jobHTTP,
 	}
 
 	err = json.Unmarshal(resBody, res)
@@ -361,5 +361,5 @@ func (cl *Client) JobHttpResume(id string) (jobHttp *JobHttp, err error) {
 		res.Data = nil
 		return nil, res
 	}
-	return jobHttp, nil
+	return jobHTTP, nil
 }

@@ -18,7 +18,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"hash"
 	"net/http"
 	"time"
 
@@ -48,9 +47,9 @@ var (
 
 // Karajo HTTP server and jobs manager.
 type Karajo struct {
-	// Httpd the HTTP server that Karajo use.
+	// HTTPd the HTTP server that Karajo use.
 	// One can register additional endpoints here.
-	Httpd *libhttp.Server
+	HTTPd *libhttp.Server
 
 	env *Env
 	sm  *sessionManager
@@ -66,12 +65,10 @@ type Karajo struct {
 
 // Sign generate hex string of HMAC + SHA256 of payload using the secret.
 func Sign(payload, secret []byte) (sign string) {
-	var (
-		signer hash.Hash = hmac.New(sha256.New, secret)
-		bsign  []byte
-	)
+	var signer = hmac.New(sha256.New, secret)
+
 	_, _ = signer.Write(payload)
-	bsign = signer.Sum(nil)
+	var bsign = signer.Sum(nil)
 	sign = hex.EncodeToString(bsign)
 	return sign
 }
@@ -99,7 +96,7 @@ func New(env *Env) (k *Karajo, err error) {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = k.initHttpd()
+	err = k.initHTTPd()
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -145,11 +142,11 @@ func (k *Karajo) initMemfs() (err error) {
 // Start all the jobs and the HTTP server.
 func (k *Karajo) Start() (err error) {
 	var (
-		jobHttp *JobHttp
+		jobHTTP *JobHTTP
 		job     *JobExec
 	)
 
-	mlog.Outf(`started the karajo server at http://%s/karajo`, k.Httpd.Addr)
+	mlog.Outf(`started the karajo server at http://%s/karajo`, k.HTTPd.Addr)
 
 	if len(k.env.notif) > 0 {
 		go k.workerNotification()
@@ -158,31 +155,31 @@ func (k *Karajo) Start() (err error) {
 	for _, job = range k.env.ExecJobs {
 		go job.Start(k.jobq, k.logq)
 	}
-	for _, jobHttp = range k.env.HttpJobs {
-		go jobHttp.Start(k.jobq, k.logq)
+	for _, jobHTTP = range k.env.HTTPJobs {
+		go jobHTTP.Start(k.jobq, k.logq)
 	}
 
-	return k.Httpd.Start()
+	return k.HTTPd.Start()
 }
 
 // Stop all the jobs and the HTTP server.
 func (k *Karajo) Stop() (err error) {
 	var (
-		jobHttp *JobHttp
+		jobHTTP *JobHTTP
 		job     *JobExec
 	)
 
-	for _, jobHttp = range k.env.HttpJobs {
-		jobHttp.Stop()
+	for _, jobHTTP = range k.env.HTTPJobs {
+		jobHTTP.Stop()
 	}
 	for _, job = range k.env.ExecJobs {
 		job.Stop()
 	}
 
-	return k.Httpd.Stop(5 * time.Second)
+	return k.HTTPd.Stop(5 * time.Second)
 }
 
-// workerNotification receive JobLog from JobExec and JobHttp everytime
+// workerNotification receive JobLog from JobExec and JobHTTP everytime
 // their started, running, success, failed, or paused.
 func (k *Karajo) workerNotification() {
 	var (

@@ -39,7 +39,7 @@ func TestLoadEnv(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = env.loadJobHttpd()
+	err = env.loadJobHTTPd()
 	if err != nil {
 		t.Fatal(err)
 	}

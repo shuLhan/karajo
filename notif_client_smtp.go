@@ -11,25 +11,25 @@ import (
 	"github.com/shuLhan/share/lib/smtp"
 )
 
-// clientSmtp client for SMTP.
-type clientSmtp struct {
+// clientSMTP client for SMTP.
+type clientSMTP struct {
 	conn *smtp.Client
 	opts smtp.ClientOptions
 	env  EnvNotif
 }
 
-// newClientSmtp create new client for SMTP.
-func newClientSmtp(envNotif EnvNotif) (cl *clientSmtp, err error) {
-	var logp = `newClientSmtp`
+// newClientSMTP create new client for SMTP.
+func newClientSMTP(envNotif EnvNotif) (cl *clientSMTP, err error) {
+	var logp = `newClientSMTP`
 
-	cl = &clientSmtp{
+	cl = &clientSMTP{
 		env: envNotif,
 		opts: smtp.ClientOptions{
-			ServerUrl:     envNotif.SmtpServer,
-			AuthUser:      envNotif.SmtpUser,
-			AuthPass:      envNotif.SmtpPassword,
+			ServerUrl:     envNotif.SMTPServer,
+			AuthUser:      envNotif.SMTPUser,
+			AuthPass:      envNotif.SMTPPassword,
 			AuthMechanism: smtp.SaslMechanismPlain,
-			Insecure:      envNotif.SmtpInsecure,
+			Insecure:      envNotif.SMTPInsecure,
 		},
 	}
 
@@ -45,9 +45,9 @@ func newClientSmtp(envNotif EnvNotif) (cl *clientSmtp, err error) {
 }
 
 // Send the job status and log to user.
-func (cl *clientSmtp) Send(jlog *JobLog) {
+func (cl *clientSMTP) Send(jlog *JobLog) {
 	var (
-		logp = `clientSmtp.Send`
+		logp = `clientSMTP.Send`
 		msg  = email.Message{}
 
 		v    string

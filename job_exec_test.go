@@ -193,8 +193,8 @@ func TestJobExec_authHmacSha256(t *testing.T) {
 	}
 }
 
-// TestJobExec_handleHttp test JobExec Call with HTTP request.
-func TestJobExec_handleHttp(t *testing.T) {
+// TestJobExec_handleHTTP test JobExec Call with HTTP request.
+func TestJobExec_handleHTTP(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
 		env         = Env{
@@ -218,7 +218,7 @@ func TestJobExec_handleHttp(t *testing.T) {
 		err   error
 	)
 
-	tdata, err = test.LoadData(`testdata/job_handleHttp_test.txt`)
+	tdata, err = test.LoadData(`testdata/job_handleHTTP_test.txt`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +239,7 @@ func TestJobExec_handleHttp(t *testing.T) {
 	t.Cleanup(job.Stop)
 
 	var (
-		jobReq = JobHttpRequest{
+		jobReq = JobHTTPRequest{
 			Epoch: TimeNow().Unix(),
 		}
 		epr = libhttp.EndpointRequest{
@@ -264,7 +264,7 @@ func TestJobExec_handleHttp(t *testing.T) {
 		exp []byte
 	)
 
-	got, err = job.handleHttp(&epr)
+	got, err = job.handleHTTP(&epr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -275,8 +275,8 @@ func TestJobExec_handleHttp(t *testing.T) {
 	}
 
 	got = buf.Bytes()
-	exp = tdata.Output[`handleHttp_response.json`]
-	test.Assert(t, `handleHttp_response`, string(exp), string(got))
+	exp = tdata.Output[`handleHTTP_response.json`]
+	test.Assert(t, `handleHTTP_response`, string(exp), string(got))
 
 	<-logq
 

@@ -3,9 +3,9 @@
 
 package karajo
 
-// JobHttpRequest define the base request for managing Job or JobHttp using
+// JobHTTPRequest define the base request for managing Job or JobHTTP using
 // HTTP POST with JSON body.
-type JobHttpRequest struct {
+type JobHTTPRequest struct {
 	ID    string `json:"id" form:"id"`
 	Epoch int64  `json:"_karajo_epoch" form:"_karajo_epoch"`
 }

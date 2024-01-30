@@ -15,10 +15,10 @@ import (
 	"github.com/shuLhan/share/lib/mlog"
 )
 
-// ConvertAdocToHtml convert adoc files to HTML files.
-func ConvertAdocToHtml() (err error) {
+// ConvertAdocToHTML convert adoc files to HTML files.
+func ConvertAdocToHTML() (err error) {
 	var (
-		logp        = `ConvertAdocToHtml`
+		logp        = `ConvertAdocToHTML`
 		convertOpts = ciigo.ConvertOptions{
 			Root: `_www/karajo/doc`,
 		}

@@ -33,7 +33,7 @@ func main() {
 
 	switch cmd {
 	case cmdEmbed:
-		err = internal.ConvertAdocToHtml()
+		err = internal.ConvertAdocToHTML()
 		if err != nil {
 			log.Fatalf(err.Error())
 		}

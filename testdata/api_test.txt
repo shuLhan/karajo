@@ -147,7 +147,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "counter": 1
 }
 
-<<< apiJobHttp_success.json
+<<< apiJobHTTP_success.json
 {
   "header_sign": "X-Karajo-Sign",
   "http_method": "POST",
@@ -166,14 +166,14 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "http_timeout": 300000000000
 }
 
-<<< apiJobHttp_notfound.json
+<<< apiJobHTTP_notfound.json
 {
   "message": "invalid or empty job id: test_notfound",
   "name": "ERR_INVALID_JOB_ID",
   "code": 400
 }
 
-<<< apiJobHttpLog.json
+<<< apiJobHTTPLog.json
 {
   "job_id": "test_success",
   "name": "test_success.1.started",
@@ -182,7 +182,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "counter": 1
 }
 
-<<< apiJobHttpPause.json
+<<< apiJobHTTPPause.json
 {
   "header_sign": "X-Karajo-Sign",
   "http_method": "POST",
@@ -210,7 +210,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "http_timeout": 300000000000
 }
 
-<<< apiJobHttpResume.json
+<<< apiJobHTTPResume.json
 {
   "header_sign": "X-Karajo-Sign",
   "http_method": "POST",

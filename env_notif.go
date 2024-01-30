@@ -17,21 +17,21 @@ const (
 type EnvNotif struct {
 	Name         string
 	Kind         string   `ini:"::kind"`
-	SmtpServer   string   `ini:"::smtp_server"`
-	SmtpUser     string   `ini:"::smtp_user"`
-	SmtpPassword string   `ini:"::smtp_password"`
+	SMTPServer   string   `ini:"::smtp_server"`
+	SMTPUser     string   `ini:"::smtp_user"`
+	SMTPPassword string   `ini:"::smtp_password"`
 	From         string   `ini:"::from"`
 	To           []string `ini:"::to"`
-	SmtpInsecure bool     `ini:"::smtp_insecure"`
+	SMTPInsecure bool     `ini:"::smtp_insecure"`
 }
 
 // init initialize the envNotif.
 func (envNotif *EnvNotif) init() {
-	if envNotif.SmtpUser[0] == '$' {
-		envNotif.SmtpUser = os.Getenv(envNotif.SmtpUser)
+	if envNotif.SMTPUser[0] == '$' {
+		envNotif.SMTPUser = os.Getenv(envNotif.SMTPUser)
 	}
-	if envNotif.SmtpPassword[0] == '$' {
-		envNotif.SmtpPassword = os.Getenv(envNotif.SmtpPassword)
+	if envNotif.SMTPPassword[0] == '$' {
+		envNotif.SMTPPassword = os.Getenv(envNotif.SMTPPassword)
 	}
 }
 
@@ -42,7 +42,7 @@ func (envNotif *EnvNotif) createClient() (cl notifClient, err error) {
 
 	switch envNotif.Kind {
 	case notifKindEmail:
-		cl, err = newClientSmtp(*envNotif)
+		cl, err = newClientSMTP(*envNotif)
 	default:
 		err = fmt.Errorf(`unknown kind %q`, envNotif.Kind)
 	}

@@ -163,14 +163,14 @@ func (job *JobBase) initDirsState(env *Env) (err error) {
 
 		return nil
 
-	case jobKindHttp:
-		job.dirWork = filepath.Join(env.dirLibJobHttp, job.ID)
+	case jobKindHTTP:
+		job.dirWork = filepath.Join(env.dirLibJobHTTP, job.ID)
 		err = os.MkdirAll(job.dirWork, 0700)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 
-		job.dirLog = filepath.Join(env.dirLogJobHttp, job.ID)
+		job.dirLog = filepath.Join(env.dirLogJobHTTP, job.ID)
 
 		// Remove previous log file.
 		_ = os.Remove(job.dirLog)
@@ -368,7 +368,7 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 // If the `(last_run + interval) < now` then it will return 0; otherwise it will
 // return `(last_run + interval) - now`
 func (job *JobBase) computeNextInterval(now time.Time) time.Duration {
-	var lastTime time.Time = job.LastRun.Add(job.Interval)
+	var lastTime = job.LastRun.Add(job.Interval)
 	if lastTime.Before(now) {
 		return 0
 	}
