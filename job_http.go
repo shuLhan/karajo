@@ -64,8 +64,7 @@ type JobHTTP struct {
 
 	params map[string]interface{}
 
-	startq chan struct{}
-	stopq  chan struct{}
+	stopq chan struct{}
 
 	// Secret define a string to sign the request query or body with
 	// HMAC+SHA-256.
@@ -137,19 +136,11 @@ func (job *JobHTTP) Start(jobq chan struct{}, logq chan<- *JobLog) {
 }
 
 func (job *JobHTTP) startScheduler() {
-	var (
-		err error
-	)
+	var err error
 
 	for {
 		select {
 		case <-job.scheduler.C:
-			select {
-			case job.startq <- struct{}{}:
-			default:
-			}
-
-		case <-job.startq:
 			err = job.run()
 			if err != nil {
 				mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
@@ -168,7 +159,6 @@ func (job *JobHTTP) startInterval() {
 		nextInterval time.Duration
 		timer        *time.Timer
 		err          error
-		ever         bool
 	)
 
 	for {
@@ -180,31 +170,23 @@ func (job *JobHTTP) startInterval() {
 
 		if timer == nil {
 			timer = time.NewTimer(nextInterval)
-			ever = true
 		} else {
-			ever = timer.Reset(nextInterval)
+			timer.Reset(nextInterval)
 		}
-		for ever {
-			select {
-			case <-timer.C:
-				select {
-				case job.startq <- struct{}{}:
-				default:
-				}
 
-			case <-job.startq:
-				err = job.run()
-				if err != nil {
-					mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
-				}
-				timer.Stop()
-				ever = false
+		select {
+		case <-timer.C:
 
-			case <-job.stopq:
-				timer.Stop()
-				return
-			}
+		case <-job.stopq:
+			timer.Stop()
+			return
 		}
+
+		err = job.run()
+		if err != nil {
+			mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
+		}
+		timer.Stop()
 	}
 }
 
@@ -252,7 +234,6 @@ func (job *JobHTTP) Stop() {
 func (job *JobHTTP) init(env *Env, name string) (err error) {
 	var logp = `init`
 
-	job.startq = make(chan struct{}, 1)
 	job.stopq = make(chan struct{}, 1)
 	job.JobBase.kind = jobKindHTTP
 
