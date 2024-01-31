@@ -142,7 +142,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "job_id": "test_job_success",
   "name": "test_job_success.1",
-  "status": "started",
+  "status": "running",
   "content": "MjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiA9PT0gQkVHSU4KMjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiAKMjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiAtLS0gRXhlY3V0ZSAgMDogZWNobyBUZXN0IGpvYiBzdWNjZXNzCjIwMjMtMDEtMDkgMDA6MDA6MDAgVVRDIGpvYjogdGVzdF9qb2Jfc3VjY2VzczogVGVzdCBqb2Igc3VjY2VzcwoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IAoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IC0tLSBFeGVjdXRlICAxOiBlY2hvIENvdW50ZXIgaXMgJEtBUkFKT19KT0JfQ09VTlRFUgo=",
   "counter": 1
 }
@@ -176,8 +176,8 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 <<< apiJobHTTPLog.json
 {
   "job_id": "test_success",
-  "name": "test_success.1.started",
-  "status": "started",
+  "name": "test_success.1.running",
+  "status": "running",
   "content": "MjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iX2h0dHA6IHRlc3Rfc3VjY2VzczogVGhlIGZpcnN0IGxvZwo=",
   "counter": 1
 }
@@ -200,8 +200,8 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "logs": [
     {
       "job_id": "test_success",
-      "name": "test_success.1.started",
-      "status": "started",
+      "name": "test_success.1.running",
+      "status": "running",
       "counter": 1
     }
   ],
@@ -228,8 +228,8 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "logs": [
     {
       "job_id": "test_success",
-      "name": "test_success.1.started",
-      "status": "started",
+      "name": "test_success.1.running",
+      "status": "running",
       "counter": 1
     }
   ],

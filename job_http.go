@@ -53,10 +53,6 @@ type JobHTTP struct {
 	// job running at the same time.
 	jobq chan struct{}
 
-	// logq is publish-only channel passed by Karajo instance to
-	// communicate job log.
-	logq chan<- *JobLog
-
 	headers http.Header
 
 	// httpc define the HTTP client that will execute the http_url.
@@ -124,7 +120,7 @@ type JobHTTP struct {
 // Start running the job.
 func (job *JobHTTP) Start(jobq chan struct{}, logq chan<- *JobLog) {
 	job.jobq = jobq
-	job.logq = logq
+	job.JobBase.logq = logq
 
 	if job.scheduler != nil {
 		job.startScheduler()
@@ -136,15 +132,10 @@ func (job *JobHTTP) Start(jobq chan struct{}, logq chan<- *JobLog) {
 }
 
 func (job *JobHTTP) startScheduler() {
-	var err error
-
 	for {
 		select {
 		case <-job.scheduler.C:
-			err = job.run()
-			if err != nil {
-				mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
-			}
+			job.run()
 
 		case <-job.stopq:
 			job.scheduler.Stop()
@@ -158,7 +149,6 @@ func (job *JobHTTP) startInterval() {
 		now          time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
-		err          error
 	)
 
 	for {
@@ -182,41 +172,19 @@ func (job *JobHTTP) startInterval() {
 			return
 		}
 
-		err = job.run()
-		if err != nil {
-			mlog.Errf(`!!! %s: %s: %s`, job.kind, job.ID, err)
-		}
 		timer.Stop()
+		job.run()
 	}
 }
 
-func (job *JobHTTP) run() (err error) {
+func (job *JobHTTP) run() {
 	var (
-		jlog     *JobLog
-		isPaused bool
+		jlog *JobLog
+		err  error
 	)
 
-	err = job.JobBase.start()
-	if err != nil {
-		// The only error returned here is when the job is paused.
-		jlog = newJobLog(&job.JobBase)
-		isPaused = true
-	} else {
-		jlog, err = job.execute()
-	}
-
+	jlog, err = job.execute()
 	job.finish(jlog, err)
-
-	if isPaused {
-		return nil
-	}
-
-	select {
-	case job.logq <- jlog:
-	default:
-	}
-
-	return err
 }
 
 // Stop the job.
@@ -382,6 +350,11 @@ func (job *JobHTTP) initHTTPHeaders() (err error) {
 }
 
 func (job *JobHTTP) execute() (jlog *JobLog, err error) {
+	jlog = job.JobBase.newLog()
+	if jlog.Status == JobStatusPaused {
+		return jlog, nil
+	}
+
 	var (
 		logp    = `execute`
 		now     = TimeNow().UTC().Round(time.Second)
@@ -392,12 +365,6 @@ func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 		httpRes *http.Response
 		rawb    []byte
 	)
-
-	job.setStatus(JobStatusRunning)
-	job.lastCounter++
-	jlog = newJobLog(&job.JobBase)
-	job.Logs = append(job.Logs, jlog)
-	job.logsPrune()
 
 	_, _ = jlog.Write([]byte("=== BEGIN\n"))
 

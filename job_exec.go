@@ -76,10 +76,6 @@ type JobExec struct {
 	// job running at the same time.
 	jobq chan struct{}
 
-	// logq is publish-only channel passed by Karajo instance to
-	// communicate job log.
-	logq chan<- *JobLog
-
 	startq chan struct{}
 	stopq  chan struct{}
 
@@ -246,7 +242,7 @@ func (job *JobExec) authHmacSha256(headers http.Header, reqbody []byte) (err err
 }
 
 func (job *JobExec) generateCmdEnvs() (env []string) {
-	env = append(env, fmt.Sprintf(`%s=%d`, jobEnvCounter, job.lastCounter))
+	env = append(env, fmt.Sprintf(`%s=%d`, jobEnvCounter, job.counter))
 	env = append(env, fmt.Sprintf(`%s=%s`, jobEnvPath, jobEnvPathValue))
 	return env
 }
@@ -340,7 +336,7 @@ func (job *JobExec) handleHTTP(epr *libhttp.EndpointRequest) (resbody []byte, er
 // request.
 func (job *JobExec) Start(jobq chan struct{}, logq chan<- *JobLog) {
 	job.jobq = jobq
-	job.logq = logq
+	job.JobBase.logq = logq
 
 	if job.scheduler != nil {
 		job.startScheduler()
@@ -355,15 +351,10 @@ func (job *JobExec) Start(jobq chan struct{}, logq chan<- *JobLog) {
 
 // startQueue start JobExec queue that triggered only by HTTP request.
 func (job *JobExec) startQueue() {
-	var err error
-
 	for {
 		select {
 		case <-job.startq:
-			err = job.run()
-			if err != nil {
-				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-			}
+			job.run()
 
 		case <-job.stopq:
 			return
@@ -372,8 +363,6 @@ func (job *JobExec) startQueue() {
 }
 
 func (job *JobExec) startScheduler() {
-	var err error
-
 	for {
 		select {
 		case <-job.scheduler.C:
@@ -386,10 +375,7 @@ func (job *JobExec) startScheduler() {
 			return
 		}
 
-		err = job.run()
-		if err != nil {
-			mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-		}
+		job.run()
 	}
 }
 
@@ -398,7 +384,6 @@ func (job *JobExec) startInterval() {
 		now          time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
-		err          error
 	)
 
 	for {
@@ -425,61 +410,30 @@ func (job *JobExec) startInterval() {
 			return
 		}
 
-		err = job.run()
-		if err != nil {
-			mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-		}
 		timer.Stop()
+		job.run()
 	}
 }
 
-func (job *JobExec) run() (err error) {
+func (job *JobExec) run() {
 	var (
-		jlog     *JobLog
-		isPaused bool
+		jlog *JobLog
+		err  error
 	)
 
-	err = job.JobBase.start()
-	if err != nil {
-		// The only error returned here is when the job is paused.
-		jlog = newJobLog(&job.JobBase)
-		isPaused = true
-	} else {
-		job.jobq <- struct{}{}
-		jlog, err = job.execute(nil)
-		<-job.jobq
-	}
+	job.jobq <- struct{}{}
+	jlog, err = job.execute(nil)
+	<-job.jobq
 
 	job.finish(jlog, err)
-
-	if isPaused {
-		return nil
-	}
-
-	switch jlog.Status {
-	case JobStatusSuccess:
-		jlog.listNotif = append(jlog.listNotif, job.NotifOnSuccess...)
-
-	case JobStatusFailed:
-		jlog.listNotif = append(jlog.listNotif, job.NotifOnFailed...)
-	}
-
-	select {
-	case job.logq <- jlog:
-	default:
-	}
-	return err
 }
 
 // execute the job Call or Commands.
 func (job *JobExec) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
-	job.Lock()
-	job.Status = JobStatusRunning
-	job.lastCounter++
-	jlog = newJobLog(&job.JobBase)
-	job.Logs = append(job.Logs, jlog)
-	job.logsPrune()
-	job.Unlock()
+	jlog = job.JobBase.newLog()
+	if jlog.Status == JobStatusPaused {
+		return jlog, nil
+	}
 
 	_, _ = jlog.Write([]byte("=== BEGIN\n"))
 

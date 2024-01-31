@@ -42,20 +42,6 @@ type JobLog struct {
 	sync.Mutex
 }
 
-func newJobLog(job *JobBase) (jlog *JobLog) {
-	jlog = &JobLog{
-		jobKind: job.kind,
-		JobID:   job.ID,
-		Name:    fmt.Sprintf(`%s.%d`, job.ID, job.lastCounter),
-		Status:  JobStatusStarted,
-		Counter: job.lastCounter,
-	}
-
-	jlog.path = filepath.Join(job.dirLog, jlog.Name)
-
-	return jlog
-}
-
 // parseJobLogName parse the log file name to unpack the name, counter, and
 // status.
 // If the name is not valid, the file is removed and it will return nil.

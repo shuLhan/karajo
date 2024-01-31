@@ -377,14 +377,12 @@ func testKarajoAPIJobHTTPLog(t *testing.T, tdata *test.Data) {
 		err     error
 	)
 
-	// Add dummy logs.
-	jobHTTP.lastCounter++
-	jlog = newJobLog(&jobHTTP.JobBase)
+	// Add dummy log.
+	jlog = jobHTTP.JobBase.newLog()
 	_, _ = jlog.Write([]byte("The first log\n"))
-	jobHTTP.Logs = append(jobHTTP.Logs, jlog)
 	_ = jlog.flush()
 
-	gotJlog, err = testClient.JobHTTPLog(id, int(jobHTTP.lastCounter))
+	gotJlog, err = testClient.JobHTTPLog(id, int(jobHTTP.counter))
 	if err != nil {
 		data = err
 	} else {

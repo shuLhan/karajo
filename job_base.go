@@ -4,7 +4,6 @@
 package karajo
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -45,6 +44,10 @@ type JobBase struct {
 	NextRun time.Time `ini:"-" json:"next_run,omitempty"`
 
 	scheduler *libtime.Scheduler
+
+	// logq is publish-only channel passed by Karajo instance to
+	// communicate job log for notification.
+	logq chan<- *JobLog
 
 	// ID of the job.
 	// It must be unique, otherwise when jobs loaded, the last job will
@@ -99,7 +102,7 @@ type JobBase struct {
 	// If both Schedule and Interval set, only Schedule will be processed.
 	Interval time.Duration `ini:"::interval" json:"interval,omitempty"`
 
-	lastCounter int64
+	counter int64
 
 	// LogRetention define the maximum number of logs to keep in storage.
 	// This field is optional, default to 5.
@@ -217,8 +220,8 @@ func (job *JobBase) initLogs() (err error) {
 
 		job.Logs = append(job.Logs, hlog)
 
-		if hlog.Counter > job.lastCounter {
-			job.lastCounter = hlog.Counter
+		if hlog.Counter > job.counter {
+			job.counter = hlog.Counter
 			job.Status = hlog.Status
 		}
 
@@ -305,6 +308,35 @@ func (job *JobBase) logsPrune() {
 	}
 }
 
+// newLog create new JobLog.
+func (job *JobBase) newLog() (jlog *JobLog) {
+	job.Lock()
+	defer job.Unlock()
+
+	job.counter++
+
+	jlog = &JobLog{
+		jobKind: job.kind,
+		JobID:   job.ID,
+		Name:    fmt.Sprintf(`%s.%d`, job.ID, job.counter),
+		Counter: job.counter,
+	}
+
+	jlog.path = filepath.Join(job.dirLog, jlog.Name)
+
+	if job.Status == JobStatusPaused {
+		jlog.Status = JobStatusPaused
+	} else {
+		job.Status = JobStatusRunning
+		jlog.Status = JobStatusRunning
+	}
+
+	job.Logs = append(job.Logs, jlog)
+	job.logsPrune()
+
+	return jlog
+}
+
 // canStart check if the job can be started or return an error if its paused
 // or reached maximum running.
 func (job *JobBase) canStart() (err error) {
@@ -316,40 +348,23 @@ func (job *JobBase) canStart() (err error) {
 	return err
 }
 
-// start try starting the job.
-// If its can run, the status changes to `started`.
-//
-// If the job is paused, it will return ErrJobPaused.
-func (job *JobBase) start() (err error) {
-	err = job.canStart()
-	if err != nil {
-		return err
-	}
-
-	job.Lock()
-	job.Status = JobStatusStarted
-	job.Unlock()
-
-	return nil
-}
-
 // finish mark the job as finished.
 // If job finish with error, it will set the status to failed; otherwise to
 // success.
 func (job *JobBase) finish(jlog *JobLog, err error) {
 	job.Lock()
+	defer job.Unlock()
 
 	if err != nil {
-		if errors.Is(err, ErrJobPaused) {
-			job.Status = JobStatusPaused
-			fmt.Fprintf(jlog, "--- %s: %s: %s\n", job.kind, job.ID, err)
-		} else {
-			job.Status = JobStatusFailed
-			fmt.Fprintf(jlog, "!!! %s: %s: failed: %s\n", job.kind, job.ID, err)
-		}
+		var logv = fmt.Sprintf("!!! %s: %s: %s\n", job.kind, job.ID, err)
+		jlog.Write([]byte(logv))
+		mlog.Errf(logv)
+		job.Status = JobStatusFailed
 	} else {
-		job.Status = JobStatusSuccess
-		fmt.Fprintf(jlog, "=== %s: %s: finished.\n", job.kind, job.ID)
+		if jlog.Status != JobStatusPaused {
+			job.Status = JobStatusSuccess
+			fmt.Fprintf(jlog, "=== %s: %s: finished.\n", job.kind, job.ID)
+		}
 	}
 
 	jlog.setStatus(job.Status)
@@ -365,7 +380,24 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 		job.NextRun = job.LastRun.Add(job.Interval)
 	}
 
-	job.Unlock()
+	if jlog.Status == JobStatusPaused {
+		return
+	}
+
+	if job.kind == jobKindExec {
+		switch jlog.Status {
+		case JobStatusSuccess:
+			jlog.listNotif = append(jlog.listNotif, job.NotifOnSuccess...)
+
+		case JobStatusFailed:
+			jlog.listNotif = append(jlog.listNotif, job.NotifOnFailed...)
+		}
+	}
+
+	select {
+	case job.logq <- jlog:
+	default:
+	}
 }
 
 // computeNextInterval compute the duration when the job will be running based
