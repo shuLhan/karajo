@@ -4,6 +4,7 @@
 package karajo
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -339,8 +340,13 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 	job.Lock()
 
 	if err != nil {
-		job.Status = JobStatusFailed
-		fmt.Fprintf(jlog, "!!! %s: %s: failed: %s\n", job.kind, job.ID, err)
+		if errors.Is(err, ErrJobPaused) {
+			job.Status = JobStatusPaused
+			fmt.Fprintf(jlog, "--- %s: %s: %s\n", job.kind, job.ID, err)
+		} else {
+			job.Status = JobStatusFailed
+			fmt.Fprintf(jlog, "!!! %s: %s: failed: %s\n", job.kind, job.ID, err)
+		}
 	} else {
 		job.Status = JobStatusSuccess
 		fmt.Fprintf(jlog, "=== %s: %s: finished.\n", job.kind, job.ID)

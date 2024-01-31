@@ -209,21 +209,32 @@ func (job *JobHTTP) startInterval() {
 }
 
 func (job *JobHTTP) run() (err error) {
+	var (
+		jlog     *JobLog
+		isPaused bool
+	)
+
 	err = job.JobBase.start()
 	if err != nil {
-		return err
+		// The only error returned here is when the job is paused.
+		jlog = newJobLog(&job.JobBase)
+		isPaused = true
+	} else {
+		jlog, err = job.execute()
 	}
 
-	var jlog *JobLog
-
-	jlog, err = job.execute()
 	job.finish(jlog, err)
+
+	if isPaused {
+		return nil
+	}
 
 	select {
 	case job.logq <- jlog:
 	default:
 	}
-	return nil
+
+	return err
 }
 
 // Stop the job.

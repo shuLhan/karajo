@@ -446,17 +446,27 @@ func (job *JobExec) startInterval() {
 }
 
 func (job *JobExec) run() (err error) {
+	var (
+		jlog     *JobLog
+		isPaused bool
+	)
+
 	err = job.JobBase.start()
 	if err != nil {
-		return err
+		// The only error returned here is when the job is paused.
+		jlog = newJobLog(&job.JobBase)
+		isPaused = true
+	} else {
+		job.jobq <- struct{}{}
+		jlog, err = job.execute(nil)
+		<-job.jobq
 	}
 
-	var jlog *JobLog
-
-	job.jobq <- struct{}{}
-	jlog, err = job.execute(nil)
-	<-job.jobq
 	job.finish(jlog, err)
+
+	if isPaused {
+		return nil
+	}
 
 	switch jlog.Status {
 	case JobStatusSuccess:
@@ -470,8 +480,7 @@ func (job *JobExec) run() (err error) {
 	case job.logq <- jlog:
 	default:
 	}
-
-	return nil
+	return err
 }
 
 // execute the job Call or Commands.
