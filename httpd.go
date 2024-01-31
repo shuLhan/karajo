@@ -413,7 +413,7 @@ func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err er
 		return nil, res
 	}
 
-	jlog = job.JobBase.log(counter)
+	jlog = job.JobBase.getLog(counter)
 	if jlog == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
@@ -597,7 +597,7 @@ func (k *Karajo) apiJobHTTPLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 		return nil, res
 	}
 
-	jlog = job.JobBase.log(counter)
+	jlog = job.JobBase.getLog(counter)
 	if jlog == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf(`log #%s not found`, counterStr)
