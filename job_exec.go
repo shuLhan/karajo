@@ -30,7 +30,7 @@ const (
 	jobEnvPathValue = `/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl`
 )
 
-// List of JobExec AuthKind for authorization.
+// List of [JobExec.AuthKind] for authorization.
 const (
 	JobAuthKindGithub     = `github`
 	JobAuthKindHmacSha256 = `hmac-sha256` // Default AuthKind if not set.
@@ -60,7 +60,7 @@ type JobExecHTTPHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
 // For job triggered by timer, the Interval or Schedule must not be empty.
 // See the [JobBase]'s Interval and Schedule fields for more information.
 //
-// Each JobExec contains a working directory, and a callback or list of
+// Each JobExec have its own working directory, a callback or list of
 // commands to be executed.
 //
 // The JobExec configuration in INI format,
@@ -76,8 +76,8 @@ type JobExec struct {
 	// job running at the same time.
 	jobq chan struct{}
 
-	startq chan struct{}
-	stopq  chan struct{}
+	httpq chan *libhttp.EndpointRequest
+	stopq chan struct{}
 
 	// Call define a function or method to be called, as an
 	// alternative to Commands.
@@ -267,7 +267,7 @@ func (job *JobExec) init(env *Env, name string) (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	job.startq = make(chan struct{}, 1)
+	job.httpq = make(chan *libhttp.EndpointRequest, 1)
 	job.stopq = make(chan struct{}, 1)
 
 	job.Path = strings.TrimSpace(job.Path)
@@ -317,7 +317,7 @@ func (job *JobExec) handleHTTP(epr *libhttp.EndpointRequest) (resbody []byte, er
 	var res libhttp.EndpointResponse
 
 	select {
-	case job.startq <- struct{}{}:
+	case job.httpq <- epr:
 		res.Code = http.StatusOK
 		res.Message = `OK`
 		res.Data = job
@@ -351,10 +351,12 @@ func (job *JobExec) Start(jobq chan struct{}, logq chan<- *JobLog) {
 
 // startQueue start JobExec queue that triggered only by HTTP request.
 func (job *JobExec) startQueue() {
+	var epr *libhttp.EndpointRequest
+
 	for {
 		select {
-		case <-job.startq:
-			job.run()
+		case epr = <-job.httpq:
+			job.run(epr)
 
 		case <-job.stopq:
 			return
@@ -363,11 +365,14 @@ func (job *JobExec) startQueue() {
 }
 
 func (job *JobExec) startScheduler() {
+	var epr *libhttp.EndpointRequest
+
 	for {
 		select {
 		case <-job.scheduler.C:
+			epr = nil
 
-		case <-job.startq:
+		case epr = <-job.httpq:
 			// Job triggered by HTTP request.
 
 		case <-job.stopq:
@@ -375,7 +380,7 @@ func (job *JobExec) startScheduler() {
 			return
 		}
 
-		job.run()
+		job.run(epr)
 	}
 }
 
@@ -384,6 +389,7 @@ func (job *JobExec) startInterval() {
 		now          time.Time
 		nextInterval time.Duration
 		timer        *time.Timer
+		epr          *libhttp.EndpointRequest
 	)
 
 	for {
@@ -401,28 +407,28 @@ func (job *JobExec) startInterval() {
 
 		select {
 		case <-timer.C:
+			epr = nil
 
-		case <-job.startq:
+		case epr = <-job.httpq:
 			// Job is triggered by HTTP request.
+			timer.Stop()
 
 		case <-job.stopq:
 			timer.Stop()
 			return
 		}
-
-		timer.Stop()
-		job.run()
+		job.run(epr)
 	}
 }
 
-func (job *JobExec) run() {
+func (job *JobExec) run(epr *libhttp.EndpointRequest) {
 	var (
 		jlog *JobLog
 		err  error
 	)
 
 	job.jobq <- struct{}{}
-	jlog, err = job.execute(nil)
+	jlog, err = job.execute(epr)
 	<-job.jobq
 
 	job.finish(jlog, err)
