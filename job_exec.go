@@ -355,9 +355,7 @@ func (job *JobExec) Start(jobq chan struct{}, logq chan<- *JobLog) {
 
 // startQueue start JobExec queue that triggered only by HTTP request.
 func (job *JobExec) startQueue() {
-	var (
-		err error
-	)
+	var err error
 
 	for {
 		select {
@@ -374,27 +372,23 @@ func (job *JobExec) startQueue() {
 }
 
 func (job *JobExec) startScheduler() {
-	var (
-		err error
-	)
+	var err error
 
 	for {
 		select {
 		case <-job.scheduler.C:
-			select {
-			case job.startq <- struct{}{}:
-			default:
-			}
 
 		case <-job.startq:
-			err = job.run()
-			if err != nil {
-				mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-			}
+			// Job triggered by HTTP request.
 
 		case <-job.stopq:
 			job.scheduler.Stop()
 			return
+		}
+
+		err = job.run()
+		if err != nil {
+			mlog.Errf(`!!! job: %s: %s`, job.ID, err)
 		}
 	}
 }
@@ -405,7 +399,6 @@ func (job *JobExec) startInterval() {
 		nextInterval time.Duration
 		timer        *time.Timer
 		err          error
-		ever         bool
 	)
 
 	for {
@@ -417,31 +410,26 @@ func (job *JobExec) startInterval() {
 
 		if timer == nil {
 			timer = time.NewTimer(nextInterval)
-			ever = true
 		} else {
-			ever = timer.Reset(nextInterval)
+			timer.Reset(nextInterval)
 		}
-		for ever {
-			select {
-			case <-timer.C:
-				select {
-				case job.startq <- struct{}{}:
-				default:
-				}
 
-			case <-job.startq:
-				err = job.run()
-				if err != nil {
-					mlog.Errf(`!!! job: %s: %s`, job.ID, err)
-				}
-				timer.Stop()
-				ever = false
+		select {
+		case <-timer.C:
 
-			case <-job.stopq:
-				timer.Stop()
-				return
-			}
+		case <-job.startq:
+			// Job is triggered by HTTP request.
+
+		case <-job.stopq:
+			timer.Stop()
+			return
 		}
+
+		err = job.run()
+		if err != nil {
+			mlog.Errf(`!!! job: %s: %s`, job.ID, err)
+		}
+		timer.Stop()
 	}
 }
 
