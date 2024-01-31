@@ -16,16 +16,21 @@ import (
 	libtime "github.com/shuLhan/share/lib/time"
 )
 
-// List of job status.
+// List of [JobBase.Status].
+// The job status have the following cycle,
+//
+//	started --> running -+-> success --+
+//	                     |             +--> paused --> started
+//		             +-> failed  --+
 const (
+	JobStatusFailed  = `failed`
+	JobStatusPaused  = `paused`
 	JobStatusRunning = `running`
 	JobStatusStarted = `started`
 	JobStatusSuccess = `success`
-	JobStatusFailed  = `failed`
-	JobStatusPaused  = `paused`
 )
 
-// JobBase define the base fields and commons methods for all Job types.
+// JobBase define the base fields and commons methods for all job types.
 //
 // The base configuration in INI format,
 //
@@ -117,6 +122,7 @@ func (job *JobBase) init(env *Env, name string) (err error) {
 
 	job.Name = name
 	job.ID = libhtml.NormalizeForID(name)
+	job.Status = JobStatusStarted
 
 	if job.LogRetention <= 0 {
 		job.LogRetention = defJobLogRetention

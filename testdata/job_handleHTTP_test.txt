@@ -10,6 +10,7 @@ Test running Job with handleHTTP.
     "next_run": "0001-01-01T00:00:00Z",
     "id": "test_job_handle_http",
     "name": "Test job handle HTTP",
+    "status": "started",
     "log_retention": 5
   },
   "message": "OK",

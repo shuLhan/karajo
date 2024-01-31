@@ -40,6 +40,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
       "next_run": "0001-01-01T00:00:00Z",
       "id": "test_job_success",
       "name": "Test job success",
+      "status": "started",
       "log_retention": 5
     }
   },
@@ -57,6 +58,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
       "id": "test_success",
       "name": "Test success",
       "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+      "status": "started",
       "interval": 60000000000,
       "log_retention": 5,
       "http_timeout": 300000000000
@@ -161,6 +163,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "id": "test_success",
   "name": "Test success",
   "description": "HTTP job to for a \u003ci\u003esuccess\u003c/i\u003e call.",
+  "status": "started",
   "interval": 60000000000,
   "log_retention": 5,
   "http_timeout": 300000000000
