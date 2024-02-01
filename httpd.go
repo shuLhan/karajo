@@ -33,10 +33,10 @@ const (
 	apiJobHTTPPause  = `/karajo/api/job_http/pause`
 	apiJobHTTPResume = `/karajo/api/job_http/resume`
 
-	apiJobLog    = `/karajo/api/job/log`
-	apiJobPause  = `/karajo/api/job/pause`
-	apiJobResume = `/karajo/api/job/resume`
-	apiJobRun    = `/karajo/api/job/run`
+	apiJobExecLog    = `/karajo/api/job_exec/log`
+	apiJobExecPause  = `/karajo/api/job_exec/pause`
+	apiJobExecResume = `/karajo/api/job_exec/resume`
+	apiJobExecRun    = `/karajo/api/job_exec/run`
 )
 
 // List of known pathes.
@@ -127,33 +127,33 @@ func (k *Karajo) registerAPIs() (err error) {
 
 	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         apiJobLog,
+		Path:         apiJobExecLog,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobLog,
+		Call:         k.apiJobExecLog,
 	})
 	if err != nil {
 		return err
 	}
 	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         apiJobPause,
+		Path:         apiJobExecPause,
 		RequestType:  libhttp.RequestTypeForm,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobPause,
+		Call:         k.apiJobExecPause,
 	})
 	if err != nil {
-		return fmt.Errorf(`%s: %s: %w`, logp, apiJobPause, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, apiJobExecPause, err)
 	}
 	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         apiJobResume,
+		Path:         apiJobExecResume,
 		RequestType:  libhttp.RequestTypeForm,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         k.apiJobResume,
+		Call:         k.apiJobExecResume,
 	})
 	if err != nil {
-		return fmt.Errorf(`%s: %s: %w`, logp, apiJobResume, err)
+		return fmt.Errorf(`%s: %s: %w`, logp, apiJobExecResume, err)
 	}
 
 	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
@@ -212,7 +212,7 @@ func (k *Karajo) registerJobsHook() (err error) {
 
 		err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 			Method:       libhttp.RequestMethodPost,
-			Path:         path.Join(apiJobRun, job.Path),
+			Path:         path.Join(apiJobExecRun, job.Path),
 			RequestType:  libhttp.RequestTypeJSON,
 			ResponseType: libhttp.ResponseTypeJSON,
 			Call:         job.handleHTTP,
@@ -374,20 +374,20 @@ func (k *Karajo) apiEnv(epr *libhttp.EndpointRequest) (resbody []byte, err error
 	return resbody, nil
 }
 
-// apiJobLog get the job log by its ID and counter.
+// apiJobExecLog get the JobExec log by its ID and counter.
 //
 // # Request
 //
 // Format,
 //
-//	GET /karajo/api/job/log?id=<jobID>&counter=<counter>
+//	GET /karajo/api/job_exec/log?id=<jobID>&counter=<counter>
 //
 // # Response
 //
 // If the jobID and counter exist it will return the JobLog object as JSON.
-func (k *Karajo) apiJobLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+func (k *Karajo) apiJobExecLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
-		logp       = `apiJobLog`
+		logp       = `apiJobExecLog`
 		res        = &libhttp.EndpointResponse{}
 		id         = epr.HttpRequest.Form.Get(paramNameID)
 		counterStr = epr.HttpRequest.Form.Get(paramNameCounter)
@@ -448,11 +448,11 @@ out:
 	return resbody, nil
 }
 
-// apiJobPause pause the JobExec.
+// apiJobExecPause pause the JobExec.
 //
 // Request format,
 //
-//	POST /karajo/api/job/pause
+//	POST /karajo/api/job_exec/pause
 //	Content-Type: application/x-www-form-urlencoded
 //
 //	_karajo_epoch=&id=
@@ -461,9 +461,9 @@ out:
 //
 //   - 200: OK, if job ID is valid.
 //   - 404: If job ID not found.
-func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+func (k *Karajo) apiJobExecPause(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
-		logp = `apiJobPause`
+		logp = `apiJobExecPause`
 
 		res *libhttp.EndpointResponse
 		job *JobExec
@@ -495,11 +495,11 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err err
 	return resb, err
 }
 
-// apiJobResume resume the paused JobExec.
+// apiJobExecResume resume the paused JobExec.
 //
 // # Request
 //
-//	POST /karajo/api/job/resume
+//	POST /karajo/api/job_exec/resume
 //	Content-Type: application/x-www-form-urlencoded
 //
 //	_karajo_epoch=&id=
@@ -508,9 +508,9 @@ func (k *Karajo) apiJobPause(epr *libhttp.EndpointRequest) (resb []byte, err err
 //
 //   - 200: OK, if job ID is valid.
 //   - 404: If job ID not found.
-func (k *Karajo) apiJobResume(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+func (k *Karajo) apiJobExecResume(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
-		logp = `apiJobResume`
+		logp = `apiJobExecResume`
 
 		res *libhttp.EndpointResponse
 		job *JobExec

@@ -132,7 +132,7 @@ Test LoadEnv.
   "http_jobs": {
     "Scheduler hourly 10m": {
       "http_method": "POST",
-      "http_url": "/karajo/api/job/run/test-manual-run",
+      "http_url": "/karajo/api/job_exec/run/test-manual-run",
       "http_request_type": "json",
       "last_run": "0001-01-01T00:00:00Z",
       "next_run": "0001-01-01T00:00:00Z",
@@ -144,7 +144,7 @@ Test LoadEnv.
     },
     "Test fail": {
       "http_method": "POST",
-      "http_url": "http://127.0.0.1:31937/karajo/api/job/run/test-fail",
+      "http_url": "http://127.0.0.1:31937/karajo/api/job_exec/run/test-fail",
       "http_request_type": "json",
       "http_headers": [
         "A: B",
@@ -160,7 +160,7 @@ Test LoadEnv.
     },
     "Test long running": {
       "http_method": "POST",
-      "http_url": "/karajo/api/job/run/test-long-running",
+      "http_url": "/karajo/api/job_exec/run/test-long-running",
       "http_request_type": "json",
       "last_run": "0001-01-01T00:00:00Z",
       "next_run": "0001-01-01T00:00:00Z",
@@ -172,7 +172,7 @@ Test LoadEnv.
     },
     "Test random": {
       "http_method": "POST",
-      "http_url": "/karajo/api/job/run/test-random",
+      "http_url": "/karajo/api/job_exec/run/test-random",
       "http_request_type": "json",
       "last_run": "0001-01-01T00:00:00Z",
       "next_run": "0001-01-01T00:00:00Z",
@@ -183,7 +183,7 @@ Test LoadEnv.
     },
     "Test success": {
       "http_method": "POST",
-      "http_url": "/karajo/api/job/run/test-success",
+      "http_url": "/karajo/api/job_exec/run/test-success",
       "http_request_type": "json",
       "http_headers": [
         "X: Y"

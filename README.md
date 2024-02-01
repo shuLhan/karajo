@@ -273,10 +273,10 @@ request.
 If both Schedule and Interval set, only Schedule will be processed.
 
 `path`:: HTTP path where Job can be triggered using HTTP.
-The `path` is automatically prefixed with "/karajo/api/job/run", it is not
-static.
+The `path` is automatically prefixed with "/karajo/api/job_exec/run", it is
+not static.
 For example, if it set to "/my", then the actual path would be
-"/karajo/api/job/run/my".
+"/karajo/api/job_exec/run/my".
 This field is optional and must unique between Job.
 
 `auth_kind`:: Define the kind of authorization to trigger Job.
@@ -545,11 +545,11 @@ Then we send the `$PAYLOAD` inside the body with signature inside the header,
 $ curl \
 	--header "X-Karajo-Sign:fef16cabebdcbdcc7fdbfb9bd5a01c00803af7568a05054e87b2239f84f38c54" \
 	--json '{"_karajo_epoch":1677350854}' \
-	http://127.0.0.1:31937/karajo/api/job/run/hello-world
+	http://127.0.0.1:31937/karajo/api/job_exec/run/hello-world
 {"code":200,"message":"OK","data":{"Logs":[{"JobID":"hello-world","Name":"hello-world.27.success","Status":"success",...
 ```
 
-(Change the path to /karajo/api/job/run/hello-world-code to trigger the
+(Change the path to /karajo/api/job_exec/run/hello-world-code to trigger the
 code one)
 
 
@@ -626,8 +626,8 @@ func webhookWithGithub(log io.Writer, epr *libhttp.EndpointRequest) error {
 Once the server running, you can register the following webhook path to
 Github,
 
-* `https://<YOUR_KARAJO_IP>/karajo/api/job/run/webhook-github`, or
-* `https://<YOUR_KARAJO_IP/karajo/api/job/run/webhook-github-code`
+* `https://<YOUR_KARAJO_IP>/karajo/api/job_exec/run/webhook-github`, or
+* `https://<YOUR_KARAJO_IP/karajo/api/job_exec/run/webhook-github-code`
 
 using the secret: `s3cret`.
 
@@ -647,7 +647,7 @@ secret = s3cret
 header_sign = X-Hub-Signature-256
 interval = 90s
 http_method = POST
-http_url = /karajo/api/job/run/webhook-github
+http_url = /karajo/api/job_exec/run/webhook-github
 http_request_type = json
 ```
 
@@ -663,7 +663,7 @@ The same configuration can be created using code as below,
 		Secret:          `s3cret`,
 		HeaderSign:      `X-Hub-Signature-256`,
 		HttpMethod:      `POST`,
-		HttpUrl:         `/karajo/api/job/run/webhook-github`,
+		HttpUrl:         `/karajo/api/job_exec/run/webhook-github`,
 		HttpRequestType: `json`,
 	}
 ...
@@ -683,7 +683,7 @@ secret = s3cret
 header_sign = X-Hub-Signature-256
 schedule = hourly@0,6,12,18,24,30,36,42,48,54
 http_method = POST
-http_url = /karajo/api/job/run/webhook-github-code
+http_url = /karajo/api/job_exec/run/webhook-github-code
 http_request_type = json
 ```
 
@@ -699,7 +699,7 @@ The same configuration can be created using code as below,
 		Secret:          `s3cret`,
 		HeaderSign:      `X-Hub-Signature-256`,
 		HttpMethod:      `POST`,
-		HttpUrl:         `/karajo/api/job/run/webhook-github-code`,
+		HttpUrl:         `/karajo/api/job_exec/run/webhook-github-code`,
 		HttpRequestType: `json`,
 	}
 ...

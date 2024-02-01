@@ -73,7 +73,7 @@ func main() {
 		Secret:          `s3cret`,
 		HeaderSign:      `X-Hub-Signature-256`,
 		HTTPMethod:      `POST`,
-		HTTPURL:         `/karajo/api/job/run/webhook-github`,
+		HTTPURL:         `/karajo/api/job_exec/run/webhook-github`,
 		HTTPRequestType: `json`,
 	}
 
@@ -85,7 +85,7 @@ func main() {
 		Secret:          `s3cret`,
 		HeaderSign:      `X-Hub-Signature-256`,
 		HTTPMethod:      `POST`,
-		HTTPURL:         `/karajo/api/job/run/webhook-github-code`,
+		HTTPURL:         `/karajo/api/job_exec/run/webhook-github-code`,
 		HTTPRequestType: `json`,
 	}
 

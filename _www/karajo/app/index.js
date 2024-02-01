@@ -83,7 +83,7 @@ async function jobRunNow(jobID, jobPath) {
     // TODO: CryptoJS does not support ed25519 so we cannot support sourcehut auth right now.
   }
 
-  let fres = await fetch(`/karajo/api/job/run${jobPath}`, {
+  let fres = await fetch(`/karajo/api/job_exec/run${jobPath}`, {
     method: "POST",
     headers: headers,
     body: body,
@@ -107,7 +107,7 @@ async function jobPause(id) {
   let hash = CryptoJS.HmacSHA256(body, secret);
   let sign = hash.toString(CryptoJS.enc.Hex);
 
-  let fres = await fetch("/karajo/api/job/pause", {
+  let fres = await fetch("/karajo/api/job_exec/pause", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -134,7 +134,7 @@ async function jobResume(id) {
   let hash = CryptoJS.HmacSHA256(body, secret);
   let sign = hash.toString(CryptoJS.enc.Hex);
 
-  let fres = await fetch("/karajo/api/job/resume", {
+  let fres = await fetch("/karajo/api/job_exec/resume", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -273,7 +273,7 @@ function renderJobAttributes(job) {
 
   job.logs.forEach(function (log, idx, list) {
     out += `<a
-      href="/karajo/job/log/?id=${job.id}&counter=${log.counter}"
+      href="/karajo/job_exec/log/?id=${job.id}&counter=${log.counter}"
       target="_blank"
       class="job-log ${log.status}"
     >

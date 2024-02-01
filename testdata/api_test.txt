@@ -13,7 +13,7 @@ description = HTTP job to for a <i>success</i> call.
 secret = s3cret
 interval = 1m
 http_method = POST
-http_url = /karajo/job/test-job-success
+http_url = /karajo/job_exec/test-job-success
 http_request_type = json
 http_header = X: Y
 
@@ -48,7 +48,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
     "Test success": {
       "header_sign": "X-Karajo-Sign",
       "http_method": "POST",
-      "http_url": "/karajo/job/test-job-success",
+      "http_url": "/karajo/job_exec/test-job-success",
       "http_request_type": "json",
       "http_headers": [
         "X: Y"
@@ -73,7 +73,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "is_development": false
 }
 
-<<< apiJobPause.json
+<<< apiJobExecPause.json
 {
   "path": "/test-job-success",
   "auth_kind": "hmac-sha256",
@@ -91,7 +91,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "log_retention": 5
 }
 
-<<< apiJobPause_run.json
+<<< apiJobExecPause_run.json
 {
   "data": null,
   "message": "job is paused",
@@ -99,7 +99,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "code": 412
 }
 
-<<< apiJobResume.json
+<<< apiJobExecResume.json
 {
   "path": "/test-job-success",
   "auth_kind": "hmac-sha256",
@@ -116,7 +116,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "log_retention": 5
 }
 
-<<< apiJobRun_success.json
+<<< apiJobExecRun_success.json
 {
   "path": "/test-job-success",
   "auth_kind": "hmac-sha256",
@@ -133,14 +133,14 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "log_retention": 5
 }
 
-<<< apiJobRun_notfound.json
+<<< apiJobExecRun_notfound.json
 {
   "message": "job not found: /test-job-notfound",
   "name": "ERR_JOB_NOT_FOUND",
   "code": 404
 }
 
-<<< apiJobLog.json
+<<< apiJobExecLog.json
 {
   "job_id": "test_job_success",
   "name": "test_job_success.1",
@@ -153,7 +153,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "header_sign": "X-Karajo-Sign",
   "http_method": "POST",
-  "http_url": "/karajo/job/test-job-success",
+  "http_url": "/karajo/job_exec/test-job-success",
   "http_request_type": "json",
   "http_headers": [
     "X: Y"
@@ -189,7 +189,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "header_sign": "X-Karajo-Sign",
   "http_method": "POST",
-  "http_url": "/karajo/job/test-job-success",
+  "http_url": "/karajo/job_exec/test-job-success",
   "http_request_type": "json",
   "http_headers": [
     "X: Y"
@@ -217,7 +217,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 {
   "header_sign": "X-Karajo-Sign",
   "http_method": "POST",
-  "http_url": "/karajo/job/test-job-success",
+  "http_url": "/karajo/job_exec/test-job-success",
   "http_request_type": "json",
   "http_headers": [
     "X: Y"

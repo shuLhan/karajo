@@ -147,7 +147,7 @@ func (job *JobBase) init(env *Env, name string) (err error) {
 
 // initDirsState initialize the job working and log directories.
 //
-// For job with type exec, the working directory should be at
+// For JobExec, the working directory should be at
 // "$BASE/var/lib/karajo/job/$JOB_ID" and the log should be at
 // "$BASE/var/log/karajo/job/$JOB_ID".
 //

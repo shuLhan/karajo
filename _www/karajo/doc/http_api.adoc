@@ -205,7 +205,7 @@ Precondition Failed.
 **Request**
 
 ----
-POST /karajo/api/job/pause
+POST /karajo/api/job_exec/pause
 Content-Type: application/x-www-form-urlencoded
 
 _karajo_epoch=&id=
@@ -227,7 +227,7 @@ Resume the Job execution.
 **Request**
 
 ----
-POST /karajo/api/job/resume
+POST /karajo/api/job_exec/resume
 Content-Type: application/x-www-form-urlencoded
 
 _karajo_epoch=&id=
@@ -249,7 +249,7 @@ HTTP API to get the Job log by its ID and counter.
 **Request**
 
 ----
-GET /karajo/api/job/log?id=<jobID>&counter=<logCounter>
+GET /karajo/api/job_exec/log?id=<jobID>&counter=<logCounter>
 ----
 
 Parameters,

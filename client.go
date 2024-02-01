@@ -58,10 +58,10 @@ func (cl *Client) Env() (env *Env, err error) {
 	return env, nil
 }
 
-// JobPause pause the JobExec by its ID.
-func (cl *Client) JobPause(id string) (job *JobExec, err error) {
+// JobExecPause pause the JobExec by its ID.
+func (cl *Client) JobExecPause(id string) (job *JobExec, err error) {
 	var (
-		logp   = `JobPause`
+		logp   = `JobExecPause`
 		now    = timeNow().Unix()
 		params = url.Values{}
 		header = http.Header{}
@@ -80,7 +80,7 @@ func (cl *Client) JobPause(id string) (job *JobExec, err error) {
 	sign = Sign([]byte(body), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Client.PostForm(apiJobPause, header, params)
+	_, resBody, err = cl.Client.PostForm(apiJobExecPause, header, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -102,10 +102,10 @@ func (cl *Client) JobPause(id string) (job *JobExec, err error) {
 	return job, nil
 }
 
-// JobResume resume the JobExec execution by its ID.
-func (cl *Client) JobResume(id string) (job *JobExec, err error) {
+// JobExecResume resume the JobExec execution by its ID.
+func (cl *Client) JobExecResume(id string) (job *JobExec, err error) {
 	var (
-		logp   = `JobResume`
+		logp   = `JobExecResume`
 		now    = timeNow().Unix()
 		params = url.Values{}
 		header = http.Header{}
@@ -124,7 +124,7 @@ func (cl *Client) JobResume(id string) (job *JobExec, err error) {
 	sign = Sign([]byte(body), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Client.PostForm(apiJobResume, header, params)
+	_, resBody, err = cl.Client.PostForm(apiJobExecResume, header, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -146,12 +146,12 @@ func (cl *Client) JobResume(id string) (job *JobExec, err error) {
 	return job, nil
 }
 
-// JobRun trigger the JobExec by its path.
-func (cl *Client) JobRun(jobPath string) (job *JobExec, err error) {
+// JobExecRun trigger the JobExec by its path.
+func (cl *Client) JobExecRun(jobPath string) (job *JobExec, err error) {
 	var (
 		logp       = `JobExec`
 		timeNow    = timeNow()
-		apiJobPath = path.Join(apiJobRun, jobPath)
+		apiJobPath = path.Join(apiJobExecRun, jobPath)
 		header     = http.Header{}
 
 		req = JobHTTPRequest{
@@ -194,10 +194,10 @@ func (cl *Client) JobRun(jobPath string) (job *JobExec, err error) {
 	return job, nil
 }
 
-// JobLog get the JobExec log by its ID and counter.
-func (cl *Client) JobLog(jobID string, counter int) (joblog *JobLog, err error) {
+// JobExecLog get the JobExec log by its ID and counter.
+func (cl *Client) JobExecLog(jobID string, counter int) (joblog *JobLog, err error) {
 	var (
-		logp   = `JobLog`
+		logp   = `JobExecLog`
 		params = url.Values{}
 
 		res     *libhttp.EndpointResponse
@@ -207,7 +207,7 @@ func (cl *Client) JobLog(jobID string, counter int) (joblog *JobLog, err error) 
 	params.Set(paramNameID, jobID)
 	params.Set(paramNameCounter, strconv.Itoa(counter))
 
-	_, resBody, err = cl.Client.Get(apiJobLog, nil, params)
+	_, resBody, err = cl.Client.Get(apiJobExecLog, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}

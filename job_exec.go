@@ -86,10 +86,10 @@ type JobExec struct {
 	Call JobExecHTTPHandler `ini:"-" json:"-"`
 
 	// HTTP path where JobExec can be triggered using HTTP.
-	// The Path is automatically prefixed with "/karajo/api/job/run", it
+	// The Path is automatically prefixed with "/karajo/api/job_exec/run", it
 	// is not static.
 	// For example, if it set to "/my", then the actual path would be
-	// "/karajo/api/job/run/my".
+	// "/karajo/api/job_exec/run/my".
 	// This field is optional and unique between JobExec.
 	Path string `ini:"::path" json:"path,omitempty"`
 
