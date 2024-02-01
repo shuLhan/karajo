@@ -9,29 +9,37 @@ import (
 	liberrors "github.com/shuLhan/share/lib/errors"
 )
 
-// List of errors.
-var (
-	ErrJobAlreadyRun = liberrors.E{
-		Code:    http.StatusTooManyRequests,
-		Name:    `ERR_JOB_ALREADY_RUN`,
-		Message: `job already run`,
-	}
-	ErrJobEmptyCommandsOrCall error = &liberrors.E{
-		Code:    http.StatusBadRequest,
-		Name:    `ERR_JOB_EMPTY_COMMANDS_OR_CALL`,
-		Message: `empty commands or call handle`,
-	}
-	ErrJobForbidden error = &liberrors.E{
-		Code:    http.StatusForbidden,
-		Name:    `ERR_JOB_FORBIDDEN`,
-		Message: `forbidden`,
-	}
-	ErrJobPaused error = &liberrors.E{
-		Code:    http.StatusPreconditionFailed,
-		Name:    `ERR_JOB_PAUSED`,
-		Message: `job is paused`,
-	}
-)
+// errAuthLogin error for failed authentication due to invalid user or
+// password.
+var errAuthLogin = liberrors.E{
+	Code:    http.StatusBadRequest,
+	Name:    `ERR_AUTH_LOGIN`,
+	Message: `invalid user name and/or password`,
+}
+
+var errJobAlreadyRun = liberrors.E{
+	Code:    http.StatusTooManyRequests,
+	Name:    `ERR_JOB_ALREADY_RUN`,
+	Message: `job already run`,
+}
+
+var errJobEmptyCommandsOrCall = liberrors.E{
+	Code:    http.StatusBadRequest,
+	Name:    `ERR_JOB_EMPTY_COMMANDS_OR_CALL`,
+	Message: `empty commands or call handle`,
+}
+
+var errJobForbidden = liberrors.E{
+	Code:    http.StatusForbidden,
+	Name:    `ERR_JOB_FORBIDDEN`,
+	Message: `forbidden`,
+}
+
+var errJobPaused = liberrors.E{
+	Code:    http.StatusPreconditionFailed,
+	Name:    `ERR_JOB_PAUSED`,
+	Message: `job is paused`,
+}
 
 func errInvalidJobID(id string) error {
 	return &liberrors.E{

@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	liberrors "github.com/shuLhan/share/lib/errors"
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 )
@@ -52,15 +51,6 @@ const (
 	paramNameKarajoEpoch = `_karajo_epoch`
 	paramNameName        = `name`
 	paramNamePassword    = `password`
-)
-
-// List of errors related to HTTP APIs.
-var (
-	errAuthLogin = liberrors.E{
-		Code:    http.StatusBadRequest,
-		Name:    `ERR_AUTH_LOGIN`,
-		Message: `invalid user name and/or password`,
-	}
 )
 
 // initHTTPd initialize the HTTP server, including registering its endpoints

@@ -55,7 +55,7 @@ func TestJobExec_authGithub(t *testing.T) {
 			githubHeaderSign256: []string{`sha256=` + sign256},
 		},
 		reqbody:  []byte(`_karajo_sign=1234`),
-		expError: fmt.Sprintf(`authGithub: %s`, ErrJobForbidden),
+		expError: fmt.Sprintf(`authGithub: %s`, errJobForbidden.Error()),
 	}}
 
 	var (
@@ -123,7 +123,7 @@ func TestJobExec_authSourcehut(t *testing.T) {
 			sourcehutHeaderNonce: []string{nonce},
 		},
 		reqbody:  []byte(`_karajo_sign=1234`),
-		expError: fmt.Sprintf(`authSourcehut: %s`, ErrJobForbidden),
+		expError: fmt.Sprintf(`authSourcehut: %s`, errJobForbidden.Error()),
 	}}
 
 	var (
@@ -173,7 +173,7 @@ func TestJobExec_authHmacSha256(t *testing.T) {
 			HeaderNameXKarajoSign: []string{sign256},
 		},
 		reqbody:  []byte(`_karajo_sign=1234`),
-		expError: fmt.Sprintf(`authHmacSha256: %s`, ErrJobForbidden),
+		expError: fmt.Sprintf(`authHmacSha256: %s`, errJobForbidden.Error()),
 	}}
 
 	var (

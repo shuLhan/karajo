@@ -348,7 +348,7 @@ func (job *JobBase) newLog() (jlog *JobLog) {
 func (job *JobBase) canStart() (err error) {
 	job.Lock()
 	if job.Status == JobStatusPaused {
-		err = ErrJobPaused
+		err = &errJobPaused
 	}
 	job.Unlock()
 	return err

@@ -136,7 +136,6 @@ func TestKarajo_handleFSAuth(t *testing.T) {
 	t.Run(`WithoutUser`, func(tt *testing.T) {
 		testHandleFSAuthWithoutUser(tt, k)
 	})
-
 }
 
 func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
@@ -287,5 +286,4 @@ func testHandleFSAuthWithoutUser(t *testing.T, k *Karajo) {
 		got = k.handleFSAuth(nil, recordWriter, httpReq)
 		test.Assert(t, c.desc, c.exp, got)
 	}
-
 }

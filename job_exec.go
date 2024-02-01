@@ -176,7 +176,7 @@ func (job *JobExec) authGithub(headers http.Header, reqbody []byte) (err error) 
 		expSign = signHmacSha1(reqbody, secret)
 	}
 	if expSign != gotSign {
-		return fmt.Errorf(`%s: %w`, logp, ErrJobForbidden)
+		return fmt.Errorf(`%s: %w`, logp, &errJobForbidden)
 	}
 
 	return nil
@@ -190,7 +190,7 @@ func (job *JobExec) authSourcehut(headers http.Header, reqbody []byte, pubkey ed
 	)
 
 	if len(signb64) == 0 {
-		return fmt.Errorf(`%s: empty header sign: %w`, logp, ErrJobForbidden)
+		return fmt.Errorf(`%s: empty header sign: %w`, logp, &errJobForbidden)
 	}
 
 	var sign []byte
@@ -210,7 +210,7 @@ func (job *JobExec) authSourcehut(headers http.Header, reqbody []byte, pubkey ed
 	msg.WriteString(nonce)
 
 	if !ed25519.Verify(pubkey, msg.Bytes(), sign) {
-		return fmt.Errorf(`%s: %w`, logp, ErrJobForbidden)
+		return fmt.Errorf(`%s: %w`, logp, &errJobForbidden)
 	}
 
 	return nil
@@ -227,7 +227,7 @@ func (job *JobExec) authHmacSha256(headers http.Header, reqbody []byte) (err err
 	)
 	if len(gotSign) == 0 {
 		return fmt.Errorf(`%s: empty header sign: %s: %w`, logp,
-			job.HeaderSign, ErrJobForbidden)
+			job.HeaderSign, &errJobForbidden)
 	}
 
 	var (
@@ -235,7 +235,7 @@ func (job *JobExec) authHmacSha256(headers http.Header, reqbody []byte) (err err
 		expSign = Sign(reqbody, secret)
 	)
 	if gotSign != expSign {
-		return fmt.Errorf(`%s: %w`, logp, ErrJobForbidden)
+		return fmt.Errorf(`%s: %w`, logp, &errJobForbidden)
 	}
 
 	return nil
@@ -253,7 +253,7 @@ func (job *JobExec) generateCmdEnvs() (env []string) {
 // _must_ not be empty.
 // If Secret is not set then it will default to Env's Secret.
 //
-// It will return an error ErrJobEmptyCommandsOrCall if one of the Call or
+// It will return an error errJobEmptyCommandsOrCall if one of the Call or
 // Commands is not set.
 func (job *JobExec) init(env *Env, name string) (err error) {
 	var (
@@ -277,7 +277,7 @@ func (job *JobExec) init(env *Env, name string) (err error) {
 	}
 
 	if len(job.Commands) == 0 && job.Call == nil {
-		return ErrJobEmptyCommandsOrCall
+		return &errJobEmptyCommandsOrCall
 	}
 
 	if len(job.HeaderSign) == 0 {
@@ -322,7 +322,7 @@ func (job *JobExec) handleHTTP(epr *libhttp.EndpointRequest) (resbody []byte, er
 		res.Message = `OK`
 		res.Data = job
 	default:
-		return nil, &ErrJobAlreadyRun
+		return nil, &errJobAlreadyRun
 	}
 
 	job.Lock()
