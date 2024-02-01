@@ -13,6 +13,7 @@ import (
 
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/mlog"
+	libnet "github.com/shuLhan/share/lib/net"
 	"github.com/shuLhan/share/lib/test"
 )
 
@@ -65,16 +66,21 @@ func TestKarajoAPIs(t *testing.T) {
 	}
 
 	go func() {
-		var err = karajo.Start()
-		if err != nil {
-			log.Fatal(err)
+		var errStart = karajo.Start()
+		if errStart != nil {
+			log.Fatal(errStart)
 		}
 	}()
 
+	err = libnet.WaitAlive(`tcp`, testEnv.ListenAddress, 1*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	t.Cleanup(func() {
-		var err = karajo.Stop()
-		if err != nil {
-			log.Fatal(err)
+		var errStop = karajo.Stop()
+		if errStop != nil {
+			log.Fatal(errStop)
 		}
 	})
 
@@ -85,7 +91,6 @@ func TestKarajoAPIs(t *testing.T) {
 		Secret: `s3cret`,
 	}
 	testClient = NewClient(clientOpts)
-	waitServerAlive(t, testClient)
 
 	t.Run(`apiEnv`, func(tt *testing.T) {
 		testKarajoAPIEnv(tt, tdata)
@@ -124,21 +129,6 @@ func TestKarajoAPIs(t *testing.T) {
 	t.Run(`apiJobHTTPResume`, func(tt *testing.T) {
 		testKarajoAPIJobHTTPResume(tt, tdata)
 	})
-}
-
-func waitServerAlive(t *testing.T, cl *Client) {
-	var (
-		err error
-	)
-
-	for {
-		_, _, err = cl.Client.Get(`/`, nil, nil)
-		if err != nil {
-			t.Logf(`waitServerAlive: %s`, err)
-			continue
-		}
-		return
-	}
 }
 
 func testKarajoAPIEnv(t *testing.T, tdata *test.Data) {
