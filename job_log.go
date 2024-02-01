@@ -125,7 +125,7 @@ func (jlog *JobLog) Write(b []byte) (n int, err error) {
 	jlog.Lock()
 	n = len(jlog.content)
 	if n == 0 || n > 0 && jlog.content[n-1] == '\n' {
-		var timestamp = TimeNow().UTC().Format(defTimeLayout)
+		var timestamp = timeNow().Format(defTimeLayout)
 		jlog.content = append(jlog.content, []byte(timestamp)...)
 		jlog.content = append(jlog.content, ' ')
 		jlog.content = append(jlog.content, []byte(jlog.jobKind)...)

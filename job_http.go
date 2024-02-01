@@ -153,7 +153,7 @@ func (job *JobHTTP) startInterval() {
 
 	for {
 		job.Lock()
-		now = TimeNow().UTC().Round(time.Second)
+		now = timeNow()
 		nextInterval = job.computeNextInterval(now)
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
@@ -357,7 +357,7 @@ func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 
 	var (
 		logp    = `execute`
-		now     = TimeNow().UTC().Round(time.Second)
+		now     = timeNow()
 		headers = http.Header{}
 
 		params  interface{}

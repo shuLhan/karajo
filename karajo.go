@@ -30,10 +30,11 @@ import (
 // Version of this library and program.
 const Version = `0.8.0`
 
-// TimeNow return the current time.
-// It can be used in testing to provide static, predictable time.
-var TimeNow = func() time.Time {
-	return time.Now()
+// timeNow return the current time in UTC rounded to second.
+// During testing the variable will be replaced to provide static,
+// predictable time.
+var timeNow = func() time.Time {
+	return time.Now().Round(time.Second).UTC()
 }
 
 var (

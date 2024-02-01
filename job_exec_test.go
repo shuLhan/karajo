@@ -240,7 +240,7 @@ func TestJobExec_handleHTTP(t *testing.T) {
 
 	var (
 		jobReq = JobHTTPRequest{
-			Epoch: TimeNow().Unix(),
+			Epoch: timeNow().Unix(),
 		}
 		epr = libhttp.EndpointRequest{
 			HttpRequest: &http.Request{

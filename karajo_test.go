@@ -17,8 +17,6 @@ import (
 )
 
 var (
-	testTimeNow = time.Date(2023, time.January, 9, 0, 0, 0, 0, time.UTC)
-
 	testEnv    *Env
 	testClient *Client
 )
@@ -27,8 +25,8 @@ func TestMain(m *testing.M) {
 	mlog.SetPrefix(``)
 	mlog.SetTimeFormat(``)
 
-	TimeNow = func() time.Time {
-		return testTimeNow
+	timeNow = func() time.Time {
+		return time.Date(2023, time.January, 9, 0, 0, 0, 0, time.UTC).Round(time.Second).UTC()
 	}
 
 	os.Exit(m.Run())
@@ -63,7 +61,7 @@ func TestKarajoAPIs(t *testing.T) {
 	// Set the job LastRun to the current time so it will not run when
 	// server started.
 	for _, httpJob = range testEnv.HTTPJobs {
-		httpJob.LastRun = testTimeNow
+		httpJob.LastRun = timeNow()
 	}
 
 	go func() {

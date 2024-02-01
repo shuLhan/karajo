@@ -270,7 +270,7 @@ func (job *JobBase) initTimer() (err error) {
 		}
 
 		var (
-			now          = TimeNow().UTC().Round(time.Second)
+			now          = timeNow()
 			nextInterval = job.computeNextInterval(now)
 		)
 		job.NextRun = now.Add(nextInterval)
@@ -379,7 +379,7 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 		mlog.Errf(`job: %s: %s`, job.ID, err)
 	}
 
-	job.LastRun = TimeNow().UTC().Round(time.Second)
+	job.LastRun = timeNow()
 	if job.scheduler != nil {
 		job.NextRun = job.scheduler.Next()
 	} else if job.Interval > 0 {

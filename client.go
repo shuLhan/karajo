@@ -62,7 +62,7 @@ func (cl *Client) Env() (env *Env, err error) {
 func (cl *Client) JobPause(id string) (job *JobExec, err error) {
 	var (
 		logp   = `JobPause`
-		now    = TimeNow().UTC().Unix()
+		now    = timeNow().Unix()
 		params = url.Values{}
 		header = http.Header{}
 
@@ -106,7 +106,7 @@ func (cl *Client) JobPause(id string) (job *JobExec, err error) {
 func (cl *Client) JobResume(id string) (job *JobExec, err error) {
 	var (
 		logp   = `JobResume`
-		now    = TimeNow().UTC().Unix()
+		now    = timeNow().Unix()
 		params = url.Values{}
 		header = http.Header{}
 
@@ -150,7 +150,7 @@ func (cl *Client) JobResume(id string) (job *JobExec, err error) {
 func (cl *Client) JobRun(jobPath string) (job *JobExec, err error) {
 	var (
 		logp       = `JobExec`
-		timeNow    = TimeNow()
+		timeNow    = timeNow()
 		apiJobPath = path.Join(apiJobRun, jobPath)
 		header     = http.Header{}
 

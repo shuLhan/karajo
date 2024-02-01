@@ -394,7 +394,7 @@ func (job *JobExec) startInterval() {
 
 	for {
 		job.Lock()
-		now = TimeNow().UTC().Round(time.Second)
+		now = timeNow()
 		nextInterval = job.computeNextInterval(now)
 		job.NextRun = now.Add(nextInterval)
 		job.Unlock()
