@@ -251,6 +251,19 @@ func testKarajoAPIJobExecRunNotfound(t *testing.T, tdata *test.Data) {
 }
 
 func testKarajoAPIJobExecLog(t *testing.T, tdata *test.Data) {
+	// Wait until the job completed so the JobLog content is complete.
+	var job *JobExec
+	for {
+		time.Sleep(100 * time.Millisecond)
+		job = testEnv.jobExec(`test_job_success`)
+		job.Lock()
+		if job.Status == JobStatusSuccess {
+			job.Unlock()
+			break
+		}
+		job.Unlock()
+	}
+
 	var (
 		exp = tdata.Output[`apiJobExecLog.json`]
 

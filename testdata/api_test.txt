@@ -22,7 +22,7 @@ path = /test-job-success
 secret = s3cret
 command = echo "Test job success"
 command = echo "Counter is $KARAJO_JOB_COUNTER"
-command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
+command = x=$((2+2)) && echo "sleep in ${x}s" && sleep $x
 
 <<< apiEnv.json
 {
@@ -34,7 +34,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
       "commands": [
         "echo Test job success",
         "echo Counter is $KARAJO_JOB_COUNTER",
-        "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
+        "x=$((2+2)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
       ],
       "last_run": "0001-01-01T00:00:00Z",
       "next_run": "0001-01-01T00:00:00Z",
@@ -81,7 +81,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "commands": [
     "echo Test job success",
     "echo Counter is $KARAJO_JOB_COUNTER",
-    "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
+    "x=$((2+2)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
   "last_run": "0001-01-01T00:00:00Z",
   "next_run": "0001-01-01T00:00:00Z",
@@ -107,7 +107,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "commands": [
     "echo Test job success",
     "echo Counter is $KARAJO_JOB_COUNTER",
-    "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
+    "x=$((2+2)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
   "last_run": "0001-01-01T00:00:00Z",
   "next_run": "0001-01-01T00:00:00Z",
@@ -124,7 +124,7 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
   "commands": [
     "echo Test job success",
     "echo Counter is $KARAJO_JOB_COUNTER",
-    "x=$(($RANDOM%10)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
+    "x=$((2+2)) \u0026\u0026 echo sleep in ${x}s \u0026\u0026 sleep $x"
   ],
   "last_run": "0001-01-01T00:00:00Z",
   "next_run": "0001-01-01T00:00:00Z",
@@ -143,9 +143,9 @@ command = x=$(($RANDOM%10)) && echo "sleep in ${x}s" && sleep $x
 <<< apiJobExecLog.json
 {
   "job_id": "test_job_success",
-  "name": "test_job_success.1",
-  "status": "running",
-  "content": "MjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiA9PT0gQkVHSU4KMjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiAKMjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiAtLS0gRXhlY3V0ZSAgMDogZWNobyBUZXN0IGpvYiBzdWNjZXNzCjIwMjMtMDEtMDkgMDA6MDA6MDAgVVRDIGpvYjogdGVzdF9qb2Jfc3VjY2VzczogVGVzdCBqb2Igc3VjY2VzcwoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IAoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IC0tLSBFeGVjdXRlICAxOiBlY2hvIENvdW50ZXIgaXMgJEtBUkFKT19KT0JfQ09VTlRFUgo=",
+  "name": "test_job_success.1.success",
+  "status": "success",
+  "content": "MjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiA9PT0gQkVHSU4KMjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiAKMjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiAtLS0gRXhlY3V0ZSAgMDogZWNobyBUZXN0IGpvYiBzdWNjZXNzCjIwMjMtMDEtMDkgMDA6MDA6MDAgVVRDIGpvYjogdGVzdF9qb2Jfc3VjY2VzczogVGVzdCBqb2Igc3VjY2VzcwoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IAoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IC0tLSBFeGVjdXRlICAxOiBlY2hvIENvdW50ZXIgaXMgJEtBUkFKT19KT0JfQ09VTlRFUgoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IENvdW50ZXIgaXMgMQoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IAoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6IC0tLSBFeGVjdXRlICAyOiB4PSQoKDIrMikpICYmIGVjaG8gc2xlZXAgaW4gJHt4fXMgJiYgc2xlZXAgJHgKMjAyMy0wMS0wOSAwMDowMDowMCBVVEMgam9iOiB0ZXN0X2pvYl9zdWNjZXNzOiBzbGVlcCBpbiA0cwoyMDIzLTAxLTA5IDAwOjAwOjAwIFVUQyBqb2I6IHRlc3Rfam9iX3N1Y2Nlc3M6ID09PSBET05FCjIwMjMtMDEtMDkgMDA6MDA6MDAgVVRDIGpvYjogdGVzdF9qb2Jfc3VjY2VzczogPT09IGpvYjogdGVzdF9qb2Jfc3VjY2VzczogZmluaXNoZWQuCg==",
   "counter": 1
 }
 
