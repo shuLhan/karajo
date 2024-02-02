@@ -12,7 +12,6 @@ import (
 	"io"
 	"net/http"
 	"testing"
-	"time"
 
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/test"
@@ -292,8 +291,7 @@ func TestJobExec_handleHTTP(t *testing.T) {
 	test.Assert(t, `job_after`, string(exp), string(got))
 }
 
-// TestJobExec_startInterval_Call test JobExec Call with Interval.
-func TestJobExec_startInterval_Call(t *testing.T) {
+func TestJobExecCall(t *testing.T) {
 	var (
 		testBaseDir = t.TempDir()
 		env         = Env{
@@ -302,8 +300,7 @@ func TestJobExec_startInterval_Call(t *testing.T) {
 		}
 		job = JobExec{
 			JobBase: JobBase{
-				Name:     `Test job timer`,
-				Interval: time.Minute,
+				Name: `Test job timer`,
 			},
 			Path:   `/test-job-timer`,
 			Secret: `s3cret`,
@@ -312,7 +309,6 @@ func TestJobExec_startInterval_Call(t *testing.T) {
 				return nil
 			},
 		}
-		logq = make(chan *JobLog)
 
 		tdata *test.Data
 		got   []byte
@@ -320,7 +316,7 @@ func TestJobExec_startInterval_Call(t *testing.T) {
 		err   error
 	)
 
-	tdata, err = test.LoadData(`testdata/job_Start_test.txt`)
+	tdata, err = test.LoadData(`testdata/job_exec_call_test.txt`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -335,12 +331,10 @@ func TestJobExec_startInterval_Call(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var jobq = make(chan struct{}, env.MaxJobRunning)
+	job.jobq = make(chan struct{}, env.MaxJobRunning)
+	job.logq = make(chan *JobLog)
 
-	go job.Start(jobq, logq)
-	t.Cleanup(job.Stop)
-
-	<-logq
+	job.run(nil)
 
 	job.Lock()
 	got, err = json.MarshalIndent(&job, ``, `  `)
@@ -351,5 +345,5 @@ func TestJobExec_startInterval_Call(t *testing.T) {
 	job.Unlock()
 
 	exp = tdata.Output[`job_after.json`]
-	test.Assert(t, `TestJobExec_Call`, string(exp), string(got))
+	test.Assert(t, `TestJobExecCall`, string(exp), string(got))
 }
