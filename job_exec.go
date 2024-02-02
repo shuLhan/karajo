@@ -5,12 +5,14 @@ package karajo
 
 import (
 	"bytes"
+	"context"
 	"crypto/ed25519"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -50,7 +52,7 @@ const (
 //
 // The log parameter is used to log all output and error.
 // The epr parameter contains HTTP request, body, and response writer.
-type JobExecHTTPHandler func(log io.Writer, epr *libhttp.EndpointRequest) error
+type JobExecHTTPHandler func(ctx context.Context, log io.Writer, epr *libhttp.EndpointRequest) error
 
 // JobExec define a job to execute Go code or list of commands.
 // A JobExec can be triggered manually by sending HTTP POST request or
@@ -439,58 +441,71 @@ func (job *JobExec) run(epr *libhttp.EndpointRequest) {
 
 // execute the job Call or Commands.
 func (job *JobExec) execute(epr *libhttp.EndpointRequest) (jlog *JobLog, err error) {
-	jlog = job.JobBase.newLog()
+	var (
+		ctx context.Context
+		cmd string
+		x   int
+	)
+
+	ctx, jlog = job.JobBase.newLog()
 	if jlog.Status == JobStatusPaused {
 		return jlog, nil
 	}
+	defer job.JobBase.ctxCancel()
 
-	_, _ = jlog.Write([]byte("=== BEGIN\n"))
+	jlog.Write([]byte("=== BEGIN\n"))
 
 	// Call the job.
 	if job.Call != nil {
-		err = job.Call(jlog, epr)
-		return jlog, err
+		err = job.Call(ctx, jlog, epr)
+		if err != nil {
+			goto onerror
+		}
+		return jlog, nil
 	}
-
-	var (
-		execCmd exec.Cmd
-		cmd     string
-		x       int
-	)
 
 	// Run commands.
 	for x, cmd = range job.Commands {
-		_, _ = jlog.Write([]byte("\n"))
+		jlog.Write([]byte("\n"))
 		fmt.Fprintf(jlog, "--- Execute %2d: %s\n", x, cmd)
 
-		execCmd = exec.Cmd{
-			Path:   `/bin/sh`,
-			Dir:    job.dirWork,
-			Args:   []string{`/bin/sh`, `-c`, cmd},
-			Env:    job.generateCmdEnvs(),
-			Stdout: jlog,
-			Stderr: jlog,
-		}
+		var execCmd = exec.CommandContext(ctx, `/bin/sh`, `-c`, cmd)
+
+		execCmd.Dir = job.dirWork
+		execCmd.Env = job.generateCmdEnvs()
+		execCmd.Stdout = jlog
+		execCmd.Stderr = jlog
 
 		err = execCmd.Run()
 		if err != nil {
-			return jlog, err
+			goto onerror
 		}
 	}
 
-	_, _ = jlog.Write([]byte("=== DONE\n"))
+	jlog.Write([]byte("=== DONE\n"))
 
 	return jlog, nil
+
+onerror:
+	var ctxErr = ctx.Err()
+	if ctxErr != nil && errors.Is(ctxErr, context.Canceled) {
+		return jlog, &errJobCanceled
+	}
+	return jlog, err
 }
 
 // Stop the JobExec queue.
 func (job *JobExec) Stop() {
 	mlog.Outf(`job: %s: stopping ...`, job.ID)
 
+	job.JobBase.Cancel()
+
 	select {
 	case job.stopq <- struct{}{}:
 	default:
 	}
+
+	mlog.Flush()
 }
 
 func decodeSourcehutPublicKey() (pubkey ed25519.PublicKey, err error) {

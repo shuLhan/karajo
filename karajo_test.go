@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -96,17 +97,18 @@ func TestKarajoAPIs(t *testing.T) {
 		testKarajoAPIEnv(tt, tdata)
 	})
 
+	t.Run(`apiJobExecCancel`, func(tt *testing.T) {
+		testKarajoAPIJobExecCancel(tt, tdata)
+	})
 	t.Run(`apiJobExecPause`, func(tt *testing.T) {
 		testKarajoAPIJobExecPause(tt, tdata)
 	})
 	t.Run(`apiJobExecResume`, func(tt *testing.T) {
 		testKarajoAPIJobExecResume(tt, tdata)
 	})
-
 	t.Run(`apiJobExecRunSuccess`, func(tt *testing.T) {
 		testKarajoAPIJobExecRunSuccess(tt, tdata)
 	})
-
 	t.Run(`apiJobExecRunNotfound`, func(tt *testing.T) {
 		testKarajoAPIJobExecRunNotfound(tt, tdata)
 	})
@@ -156,6 +158,41 @@ func testKarajoAPIEnv(t *testing.T, tdata *test.Data) {
 		t.Fatal(err)
 	}
 	test.Assert(t, `apiEnv`, string(exp), string(got))
+}
+
+func testKarajoAPIJobExecCancel(t *testing.T, tdata *test.Data) {
+	var (
+		ajob = testEnv.jobExec(`test_job_canceled`)
+		wg   sync.WaitGroup
+	)
+
+	wg.Add(1)
+	go func() {
+		ajob.run(nil)
+		wg.Done()
+	}()
+
+	var (
+		canceledJob *JobExec
+		err         error
+	)
+
+	canceledJob, err = testClient.JobExecCancel(ajob.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wg.Wait()
+
+	var got []byte
+
+	got, err = json.MarshalIndent(canceledJob, ``, `  `)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var exp = string(tdata.Output[`test_job_canceled.json`])
+	test.Assert(t, `job after cancel`, exp, string(got))
 }
 
 func testKarajoAPIJobExecPause(t *testing.T, tdata *test.Data) {
@@ -379,7 +416,7 @@ func testKarajoAPIJobHTTPLog(t *testing.T, tdata *test.Data) {
 	)
 
 	// Add dummy log.
-	jlog = jobHTTP.JobBase.newLog()
+	_, jlog = jobHTTP.JobBase.newLog()
 	_, _ = jlog.Write([]byte("The first log\n"))
 	_ = jlog.flush()
 

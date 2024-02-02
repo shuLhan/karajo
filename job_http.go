@@ -4,7 +4,9 @@
 package karajo
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -193,6 +195,9 @@ func (job *JobHTTP) run() {
 // Stop the job.
 func (job *JobHTTP) Stop() {
 	mlog.Outf(`%s: %s: stopping ...`, job.kind, job.ID)
+
+	job.JobBase.Cancel()
+
 	select {
 	case job.stopq <- struct{}{}:
 	default:
@@ -353,10 +358,13 @@ func (job *JobHTTP) initHTTPHeaders() (err error) {
 }
 
 func (job *JobHTTP) execute() (jlog *JobLog, err error) {
-	jlog = job.JobBase.newLog()
+	var ctx context.Context
+
+	ctx, jlog = job.JobBase.newLog()
 	if jlog.Status == JobStatusPaused {
 		return jlog, nil
 	}
+	defer job.JobBase.ctxCancel()
 
 	var (
 		logp    = `execute`
@@ -394,6 +402,8 @@ func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 		return jlog, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
+	httpReq = httpReq.WithContext(ctx)
+
 	rawb, err = httputil.DumpRequestOut(httpReq, true)
 	if err != nil {
 		return jlog, fmt.Errorf(`%s: %w`, logp, err)
@@ -403,6 +413,10 @@ func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 
 	httpRes, _, err = job.httpc.Do(httpReq)
 	if err != nil {
+		var errCtx = ctx.Err()
+		if errCtx != nil && errors.Is(errCtx, context.Canceled) {
+			return jlog, fmt.Errorf(`%s: %w`, logp, &errJobCanceled)
+		}
 		return jlog, fmt.Errorf(`%s: %w`, logp, err)
 	}
 

@@ -5,6 +5,7 @@ package karajo
 
 import (
 	"bytes"
+	"context"
 	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
@@ -206,7 +207,7 @@ func TestJobExec_handleHTTP(t *testing.T) {
 			},
 			Path:   `/test-job-handle-http`,
 			Secret: `s3cret`,
-			Call: func(hlog io.Writer, _ *libhttp.EndpointRequest) error {
+			Call: func(_ context.Context, hlog io.Writer, _ *libhttp.EndpointRequest) error {
 				fmt.Fprintf(hlog, `Output from Call`)
 				return nil
 			},
@@ -305,7 +306,7 @@ func TestJobExecCall(t *testing.T) {
 			},
 			Path:   `/test-job-timer`,
 			Secret: `s3cret`,
-			Call: func(hlog io.Writer, _ *libhttp.EndpointRequest) error {
+			Call: func(_ context.Context, hlog io.Writer, _ *libhttp.EndpointRequest) error {
 				fmt.Fprintf(hlog, `Output from Call`)
 				return nil
 			},

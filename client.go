@@ -58,6 +58,45 @@ func (cl *Client) Env() (env *Env, err error) {
 	return env, nil
 }
 
+// JobExecCancel cancel the running JobExec by its ID.
+func (cl *Client) JobExecCancel(id string) (job *JobExec, err error) {
+	var (
+		logp   = `JobExecCancel`
+		now    = timeNow().Unix()
+		params = url.Values{}
+		header = http.Header{}
+	)
+
+	params.Set(paramNameKarajoEpoch, strconv.FormatInt(now, 10))
+	params.Set(paramNameID, id)
+
+	var body = params.Encode()
+	var sign = Sign([]byte(body), []byte(cl.opts.Secret))
+	header.Set(HeaderNameXKarajoSign, sign)
+
+	var resBody []byte
+	_, resBody, err = cl.Client.PostForm(apiJobExecCancel, header, params)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	job = &JobExec{}
+	var res = &libhttp.EndpointResponse{
+		Data: job,
+	}
+
+	err = json.Unmarshal(resBody, &res)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+	if res.Code != http.StatusOK {
+		res.Data = nil
+		return nil, res
+	}
+
+	return job, nil
+}
+
 // JobExecPause pause the JobExec by its ID.
 func (cl *Client) JobExecPause(id string) (job *JobExec, err error) {
 	var (

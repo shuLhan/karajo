@@ -46,6 +46,33 @@ function runTimer() {
   }, 1000);
 }
 
+async function jobCancel(id) {
+  let secret = document.getElementById("_secret").value;
+  let epoch = parseInt(new Date().valueOf() / 1000);
+  let body = `_karajo_epoch=${epoch}&id=${id}`;
+
+  let hash = CryptoJS.HmacSHA256(body, secret);
+  let sign = hash.toString(CryptoJS.enc.Hex);
+
+  let fres = await fetch("/karajo/api/job_exec/cancel", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      "x-karajo-sign": sign,
+    },
+    body: body,
+  });
+
+  let res = await fres.json();
+  if (res.code !== 200) {
+    console.error(res.message);
+    return;
+  }
+
+  let job = res.data;
+  renderJobs([job]);
+}
+
 async function jobInfo(jobID) {
   let job = _jobs[jobID];
   let el = document.getElementById(job._idInfo);
@@ -282,6 +309,7 @@ function renderJobAttributes(job) {
   });
 
   out += `&nbsp;<button onclick="jobRunNow('${job.id}', '${job.path}')">Run now</button>`;
+  out += `&nbsp;<button onclick="jobCancel('${job.id}')">Cancel</button>`;
   out += `&nbsp;<button onclick="jobPause('${job.id}')">Pause</button>`;
   out += `&nbsp;<button onclick="jobResume('${job.id}')">Resume</button>`;
 

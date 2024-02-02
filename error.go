@@ -23,6 +23,12 @@ var errJobAlreadyRun = liberrors.E{
 	Message: `job already run`,
 }
 
+var errJobCanceled = liberrors.E{
+	Code:    http.StatusGone,
+	Name:    `ERR_JOB_CANCELED`,
+	Message: `job is canceled`,
+}
+
 var errJobEmptyCommandsOrCall = liberrors.E{
 	Code:    http.StatusBadRequest,
 	Name:    `ERR_JOB_EMPTY_COMMANDS_OR_CALL`,

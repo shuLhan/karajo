@@ -4,6 +4,8 @@
 package karajo
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,15 +21,18 @@ import (
 // List of [JobBase.Status].
 // The job status have the following cycle,
 //
-//	started --> running -+-> success --+
-//	                     |             +--> paused --> started
-//		             +-> failed  --+
+//	started --> running -+-> success ---+  +--> paused --> started
+//	                     |              |  |
+//	                     +-> canceled --+--+
+//	                     |              |  |
+//	                     +-> failed  ---+  +--> running
 const (
-	JobStatusFailed  = `failed`
-	JobStatusPaused  = `paused`
-	JobStatusRunning = `running`
-	JobStatusStarted = `started`
-	JobStatusSuccess = `success`
+	JobStatusCanceled = `canceled`
+	JobStatusFailed   = `failed`
+	JobStatusPaused   = `paused`
+	JobStatusRunning  = `running`
+	JobStatusStarted  = `started`
+	JobStatusSuccess  = `success`
 )
 
 // JobBase define the base fields and commons methods for all job types.
@@ -49,6 +54,10 @@ type JobBase struct {
 	NextRun time.Time `ini:"-" json:"next_run,omitempty"`
 
 	scheduler *libtime.Scheduler
+
+	// ctxCancel define the function to cancel job execution with
+	// context.
+	ctxCancel context.CancelFunc
 
 	// logq is publish-only channel passed by Karajo instance to
 	// communicate job log for notification.
@@ -114,6 +123,19 @@ type JobBase struct {
 	LogRetention int `ini:"::log_retention" json:"log_retention,omitempty"`
 
 	sync.Mutex
+}
+
+// Cancel the current running job.
+// If job is not running it will do nothing.
+func (job *JobBase) Cancel() {
+	job.Lock()
+	defer job.Unlock()
+
+	if job.Status == JobStatusRunning {
+		if job.ctxCancel != nil {
+			job.ctxCancel()
+		}
+	}
 }
 
 // init initialize the job ID, log retention, directories, logs, and timer.
@@ -315,7 +337,7 @@ func (job *JobBase) logsPrune() {
 }
 
 // newLog create new JobLog.
-func (job *JobBase) newLog() (jlog *JobLog) {
+func (job *JobBase) newLog() (ctx context.Context, jlog *JobLog) {
 	job.Lock()
 	defer job.Unlock()
 
@@ -335,12 +357,14 @@ func (job *JobBase) newLog() (jlog *JobLog) {
 	} else {
 		job.Status = JobStatusRunning
 		jlog.Status = JobStatusRunning
+
+		ctx, job.ctxCancel = context.WithCancel(context.Background())
 	}
 
 	job.Logs = append(job.Logs, jlog)
 	job.logsPrune()
 
-	return jlog
+	return ctx, jlog
 }
 
 // canStart check if the job can be started or return an error if its paused
@@ -361,11 +385,18 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 	job.Lock()
 	defer job.Unlock()
 
+	job.ctxCancel = nil
+
 	if err != nil {
-		var logv = fmt.Sprintf("!!! %s: %s: %s\n", job.kind, job.ID, err)
-		jlog.Write([]byte(logv))
-		mlog.Errf(logv)
-		job.Status = JobStatusFailed
+		if errors.Is(err, &errJobCanceled) {
+			jlog.Write([]byte("??? CANCELED\n"))
+			job.Status = JobStatusCanceled
+		} else {
+			var logv = fmt.Sprintf("!!! %s: %s: %s\n", job.kind, job.ID, err)
+			jlog.Write([]byte(logv))
+			mlog.Errf(logv)
+			job.Status = JobStatusFailed
+		}
 	} else {
 		if jlog.Status != JobStatusPaused {
 			job.Status = JobStatusSuccess
@@ -384,10 +415,6 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 		job.NextRun = job.scheduler.Next()
 	} else if job.Interval > 0 {
 		job.NextRun = job.LastRun.Add(job.Interval)
-	}
-
-	if jlog.Status == JobStatusPaused {
-		return
 	}
 
 	if job.kind == jobKindExec {

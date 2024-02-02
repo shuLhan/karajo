@@ -5,6 +5,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -50,6 +52,14 @@ func main() {
 		},
 		Path: `/schedule-hourly-5m-code-code`,
 		Call: helloWorldFromSchedule,
+	}
+
+	env.ExecJobs[`call-sleep-30m`] = &karajo.JobExec{
+		JobBase: karajo.JobBase{
+			Description: `Job that run sleep for 30 minutes.`,
+		},
+		Path: `/call-sleep-30m`,
+		Call: callSleep30m,
 	}
 
 	env.ExecJobs[`webhook-github-code`] = &karajo.JobExec{
@@ -102,18 +112,30 @@ func main() {
 	}
 }
 
-func helloWorldFromInterval(log io.Writer, _ *libhttp.EndpointRequest) error {
+func helloWorldFromInterval(_ context.Context, log io.Writer, _ *libhttp.EndpointRequest) error {
 	fmt.Fprintln(log, `Hello world from interval with code`)
 	return nil
 }
 
-func helloWorldFromSchedule(log io.Writer, _ *libhttp.EndpointRequest) error {
+func helloWorldFromSchedule(_ context.Context, log io.Writer, _ *libhttp.EndpointRequest) error {
 	fmt.Fprintln(log, `Hello world from schedule`)
 	return nil
 }
 
-func webhookWithGithub(log io.Writer, _ *libhttp.EndpointRequest) error {
+func webhookWithGithub(_ context.Context, log io.Writer, _ *libhttp.EndpointRequest) error {
 	fmt.Fprintln(log, `Hello world from Webhook github`)
+	return nil
+}
+
+func callSleep30m(ctx context.Context, log io.Writer, _ *libhttp.EndpointRequest) error {
+	fmt.Fprintln(log, `Sleeping for 30 minutes...`)
+	var timer = time.NewTimer(30 * time.Minute)
+	select {
+	case <-timer.C:
+		fmt.Fprintln(log, `Waking up...`)
+	case <-ctx.Done():
+		return errors.New(`job cancelled by context`)
+	}
 	return nil
 }
 

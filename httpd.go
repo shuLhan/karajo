@@ -32,6 +32,7 @@ const (
 	apiJobHTTPPause  = `/karajo/api/job_http/pause`
 	apiJobHTTPResume = `/karajo/api/job_http/resume`
 
+	apiJobExecCancel = `/karajo/api/job_exec/cancel`
 	apiJobExecLog    = `/karajo/api/job_exec/log`
 	apiJobExecPause  = `/karajo/api/job_exec/pause`
 	apiJobExecResume = `/karajo/api/job_exec/resume`
@@ -115,6 +116,16 @@ func (k *Karajo) registerAPIs() (err error) {
 		return err
 	}
 
+	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         apiJobExecCancel,
+		RequestType:  libhttp.RequestTypeForm,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         k.apiJobExecCancel,
+	})
+	if err != nil {
+		return err
+	}
 	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobExecLog,
@@ -360,6 +371,55 @@ func (k *Karajo) apiEnv(epr *libhttp.EndpointRequest) (resbody []byte, err error
 	}
 
 	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+
+	return resbody, nil
+}
+
+// apiJobExecCancel cancel the JobExec execution.
+//
+// Request format,
+//
+//	POST /karajo/api/job_exec/cancel
+//	Content-Type: application/x-www-form-urlencoded
+//	X-Karajo-Sign: <signature>
+//
+//	_karajo_epoch=&id=
+//
+// Response format,
+//
+//	Content-Type: application/json
+//	{
+//		"data": <JobExec>
+//	}
+func (k *Karajo) apiJobExecCancel(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
+	var logp = `apiJobExecCancel`
+
+	err = k.httpAuthorize(epr, epr.RequestBody)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	var id = epr.HttpRequest.Form.Get(paramNameID)
+
+	var job = k.env.jobExec(id)
+	if job == nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, errJobNotFound(id))
+	}
+
+	job.JobBase.Cancel()
+
+	var res = &libhttp.EndpointResponse{}
+
+	res.Code = http.StatusOK
+	res.Data = job
+
+	job.Lock()
+	resbody, err = json.Marshal(res)
+	job.Unlock()
+
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
 
 	return resbody, nil
 }

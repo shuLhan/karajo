@@ -24,9 +24,27 @@ command = echo "Test job success"
 command = echo "Counter is $KARAJO_JOB_COUNTER"
 command = x=$((2+2)) && echo "sleep in ${x}s" && sleep $x
 
+[job "Test job canceled"]
+path = /test-job-canceled
+command = sleep 10m
+
 <<< apiEnv.json
 {
   "jobs": {
+    "Test job canceled": {
+      "path": "/test-job-canceled",
+      "auth_kind": "hmac-sha256",
+      "header_sign": "X-Karajo-Sign",
+      "commands": [
+        "sleep 10m"
+      ],
+      "last_run": "0001-01-01T00:00:00Z",
+      "next_run": "0001-01-01T00:00:00Z",
+      "id": "test_job_canceled",
+      "name": "Test job canceled",
+      "status": "started",
+      "log_retention": 5
+    },
     "Test job success": {
       "path": "/test-job-success",
       "auth_kind": "hmac-sha256",
@@ -239,4 +257,28 @@ command = x=$((2+2)) && echo "sleep in ${x}s" && sleep $x
   "interval": 60000000000,
   "log_retention": 5,
   "http_timeout": 300000000000
+}
+
+<<< test_job_canceled.json
+{
+  "path": "/test-job-canceled",
+  "auth_kind": "hmac-sha256",
+  "header_sign": "X-Karajo-Sign",
+  "commands": [
+    "sleep 10m"
+  ],
+  "last_run": "0001-01-01T00:00:00Z",
+  "next_run": "0001-01-01T00:00:00Z",
+  "id": "test_job_canceled",
+  "name": "Test job canceled",
+  "status": "running",
+  "logs": [
+    {
+      "job_id": "test_job_canceled",
+      "name": "test_job_canceled.1",
+      "status": "running",
+      "counter": 1
+    }
+  ],
+  "log_retention": 5
 }
