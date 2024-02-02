@@ -122,6 +122,9 @@ func (job *JobHTTP) Start(jobq chan struct{}, logq chan<- *JobLog) {
 	job.jobq = jobq
 	job.JobBase.logq = logq
 
+	// Signal to the caller that job has started.
+	jobq <- struct{}{}
+
 	if job.scheduler != nil {
 		job.startScheduler()
 		return

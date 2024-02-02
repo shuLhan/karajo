@@ -235,6 +235,7 @@ func TestJobExec_handleHTTP(t *testing.T) {
 	var jobq = make(chan struct{}, env.MaxJobRunning)
 
 	go job.Start(jobq, logq)
+	<-jobq
 	t.Cleanup(job.Stop)
 
 	var (

@@ -155,9 +155,11 @@ func (k *Karajo) Start() (err error) {
 
 	for _, job = range k.env.ExecJobs {
 		go job.Start(k.jobq, k.logq)
+		<-k.jobq
 	}
 	for _, jobHTTP = range k.env.HTTPJobs {
 		go jobHTTP.Start(k.jobq, k.logq)
+		<-k.jobq
 	}
 
 	return k.HTTPd.Start()
