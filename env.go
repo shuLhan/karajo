@@ -196,8 +196,8 @@ func ParseEnv(content []byte) (env *Env, err error) {
 	return env, nil
 }
 
-// job get the JobExec by its ID.
-func (env *Env) job(id string) (job *JobExec) {
+// jobExec get the JobExec by its ID.
+func (env *Env) jobExec(id string) (job *JobExec) {
 	for _, job = range env.ExecJobs {
 		if job.ID == id {
 			return job

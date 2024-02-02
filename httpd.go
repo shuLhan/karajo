@@ -389,7 +389,7 @@ func (k *Karajo) apiJobExecLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 	)
 
 	id = strings.ToLower(id)
-	job = k.env.job(id)
+	job = k.env.jobExec(id)
 	if job == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf(`job ID %s not found`, id)
@@ -467,7 +467,7 @@ func (k *Karajo) apiJobExecPause(epr *libhttp.EndpointRequest) (resb []byte, err
 
 	id = epr.HttpRequest.Form.Get(paramNameID)
 
-	job = k.env.job(id)
+	job = k.env.jobExec(id)
 	if job == nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, errJobNotFound(id))
 	}
@@ -514,7 +514,7 @@ func (k *Karajo) apiJobExecResume(epr *libhttp.EndpointRequest) (resb []byte, er
 
 	id = epr.HttpRequest.Form.Get(paramNameID)
 
-	job = k.env.job(id)
+	job = k.env.jobExec(id)
 	if job == nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, errJobNotFound(id))
 	}
