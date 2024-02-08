@@ -3,6 +3,76 @@
 :sectanchors:
 :sectlinks:
 
+[#v0_9_0]
+== karajo v0.9.0 (2024-02-08)
+
+[#v0_9_0__breaking_changes]
+=== Breaking changes
+
+all: refactoring JobExec APIs to have "_exec" suffix::
++
+In JobHttp, we have "_http" suffix for its HTTP APIs.
+To make it consistent we changes the HTTP API path to have "_exec" suffix.
+
+
+all: apply default revive suggestions::
++
+--
+I prefer zero configuration rather that creating exclusions, like
+"revive.toml" file that we have earlier, even thought it will cause
+breaking changes to our APIs.
+
+Breaking changes,
+
+* [Env.HttpJobs] become [Env.HTTPJobs]
+* [Env.HttpTimeout] become [Env.HTTPTimeout]
+* [Env.HttpJobs] become [Env.HTTPJobs]
+* and many more.
+--
+
+[#v0_9_0__new_features]
+=== New features
+
+all: implement API to cancel running job::
++
+--
+In the JobBase we add method Cancel to cancel running JobExec or JobHTTP.
+
+In the HTTP server, we add endpoint "POST /karajo/api/job_exec/cancel"
+to cancel JobExec by its ID.
+
+Implements: https://todo.sr.ht/~shulhan/karajo/1
+--
+
+
+[#v0_9_0__enhancements]
+=== Enhancements
+
+all: export the HTTP server field in Karajo::
++
+By exporting the HTTP server field, user of Karajo can register additional
+HTTP endpoints without creating new HTTP server instance.
+
+
+[#v0_9_0__bug_fixes]
+=== Bug fixes
+
+all: always call finish even if the job is paused::
++
+--
+This is to make the [JobBase.NextRun] always set to next interval or
+schedule.
+
+Fixes: https://todo.sr.ht/~shulhan/karajo/2
+--
+
+
+_sys: set systemd unit to start after network.target::
++
+This is to fix karajo failed to start because the DNS has not working
+yet when initializing email notification.
+
+
 [#v0_8_0]
 == karajo v0.8.0 (2023-11-10)
 
