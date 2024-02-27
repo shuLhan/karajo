@@ -426,13 +426,17 @@ func (k *Karajo) apiJobExecCancel(epr *libhttp.EndpointRequest) (resbody []byte,
 
 // apiJobExecLog get the JobExec log by its ID and counter.
 //
-// # Request
-//
-// Format,
+// Request format,
 //
 //	GET /karajo/api/job_exec/log?id=<jobID>&counter=<counter>
 //
-// # Response
+// Response format,
+//
+//	content-encoding: gzip
+//	content-type: application/json
+//	{
+//		"data": <JobLog>
+//	}
 //
 // If the jobID and counter exist it will return the JobLog object as JSON.
 func (k *Karajo) apiJobExecLog(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
