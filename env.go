@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -241,7 +240,6 @@ func (env *Env) init() (err error) {
 	}
 
 	if len(env.Secret) == 0 {
-		rand.Seed(time.Now().Unix())
 		var secret = ascii.Random([]byte(ascii.LettersNumber), 32)
 		env.Secret = string(secret)
 
