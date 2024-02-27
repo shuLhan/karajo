@@ -457,9 +457,3 @@ func (job *JobHTTP) paramsToURLValues() (url.Values, []byte) {
 	}
 	return urlValues, []byte(urlValues.Encode())
 }
-
-func (job *JobHTTP) setStatus(status string) {
-	job.Lock()
-	job.Status = status
-	job.Unlock()
-}
