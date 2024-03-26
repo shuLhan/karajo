@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/mlog"
-	libnet "github.com/shuLhan/share/lib/net"
-	"github.com/shuLhan/share/lib/test"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
+	libnet "git.sr.ht/~shulhan/pakakeh.go/lib/net"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/test"
 )
 
 var (
@@ -87,7 +87,7 @@ func TestKarajoAPIs(t *testing.T) {
 
 	var clientOpts = ClientOptions{
 		ClientOptions: libhttp.ClientOptions{
-			ServerUrl: fmt.Sprintf(`http://%s`, testEnv.ListenAddress),
+			ServerURL: fmt.Sprintf(`http://%s`, testEnv.ListenAddress),
 		},
 		Secret: `s3cret`,
 	}

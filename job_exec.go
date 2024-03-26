@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/mlog"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 )
 
 const (
@@ -306,7 +306,7 @@ func (job *JobExec) handleHTTP(epr *libhttp.EndpointRequest) (resbody []byte, er
 	var logp = `handleHTTP`
 
 	// Authenticated request by checking the request body.
-	err = job.authorize(epr.HttpRequest.Header, epr.RequestBody)
+	err = job.authorize(epr.HTTPRequest.Header, epr.RequestBody)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %s: %w`, logp, job.ID, err)
 	}

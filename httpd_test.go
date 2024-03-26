@@ -11,8 +11,9 @@ import (
 	"regexp"
 	"testing"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/test"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/test"
 )
 
 func TestKarajo_apiAuthLogin(t *testing.T) {
@@ -78,8 +79,8 @@ func TestKarajo_apiAuthLogin(t *testing.T) {
 	var (
 		testRecorder = httptest.NewRecorder()
 		epr          = &libhttp.EndpointRequest{
-			HttpWriter: testRecorder,
-			HttpRequest: &http.Request{
+			HTTPWriter: testRecorder,
+			HTTPRequest: &http.Request{
 				Form: url.Values{},
 			},
 		}
@@ -92,8 +93,8 @@ func TestKarajo_apiAuthLogin(t *testing.T) {
 	)
 
 	for _, c = range cases {
-		epr.HttpRequest.Form.Set(`name`, c.name)
-		epr.HttpRequest.Form.Set(`password`, c.pass)
+		epr.HTTPRequest.Form.Set(`name`, c.name)
+		epr.HTTPRequest.Form.Set(`password`, c.pass)
 
 		respBody, err = k.apiAuthLogin(epr)
 		if err != nil {
@@ -207,9 +208,11 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 			URL:    &url.URL{},
 			Header: http.Header{},
 		}
+		node = &memfs.Node{}
 
-		c   testCase
-		got bool
+		c       testCase
+		gotNode *memfs.Node
+		got     bool
 	)
 	for _, c = range cases {
 		httpReq.URL.Path = c.path
@@ -218,7 +221,8 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 			httpReq.AddCookie(c.cookie)
 		}
 
-		got = k.handleFSAuth(nil, recordWriter, httpReq)
+		gotNode = k.handleFSAuth(node, recordWriter, httpReq)
+		got = gotNode != nil
 		test.Assert(t, c.desc, c.exp, got)
 	}
 }
@@ -272,9 +276,11 @@ func testHandleFSAuthWithoutUser(t *testing.T, k *Karajo) {
 			URL:    &url.URL{},
 			Header: http.Header{},
 		}
+		node = &memfs.Node{}
 
-		c   testCase
-		got bool
+		c       testCase
+		gotNode *memfs.Node
+		got     bool
 	)
 	for _, c = range cases {
 		httpReq.URL.Path = c.path
@@ -283,7 +289,8 @@ func testHandleFSAuthWithoutUser(t *testing.T, k *Karajo) {
 			httpReq.AddCookie(c.cookie)
 		}
 
-		got = k.handleFSAuth(nil, recordWriter, httpReq)
+		gotNode = k.handleFSAuth(node, recordWriter, httpReq)
+		got = gotNode != nil
 		test.Assert(t, c.desc, c.exp, got)
 	}
 }

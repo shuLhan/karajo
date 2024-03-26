@@ -262,7 +262,7 @@ Example of schedules,
 * hourly@0,15,30,45 = on minutes 0, 15, 30, 45 every hour.
 
 See
-[time.Schedule](https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler)
+[time.Schedule](https://pkg.go.dev/git.sr.ht/~shulhan/pakakeh.go/lib/time#Scheduler)
 for format of schedule.
 If both Schedule and Interval set, only Schedule will be processed.
 
@@ -379,7 +379,7 @@ Example of schedules,
 * hourly@0,15,30,45 = on minutes 0, 15, 30, 45 every hour.
 
 See
-[time.Schedule](https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler)
+[time.Schedule](https://pkg.go.dev/git.sr.ht/~shulhan/pakakeh.go/lib/time#Scheduler)
 for format of schedule.
 If both Schedule and Interval set, only Schedule will be processed.
 

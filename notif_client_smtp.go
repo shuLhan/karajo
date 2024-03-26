@@ -6,9 +6,9 @@ package karajo
 import (
 	"fmt"
 
-	"github.com/shuLhan/share/lib/email"
-	"github.com/shuLhan/share/lib/mlog"
-	"github.com/shuLhan/share/lib/smtp"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/email"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/smtp"
 )
 
 // clientSMTP client for SMTP.
@@ -25,7 +25,7 @@ func newClientSMTP(envNotif EnvNotif) (cl *clientSMTP, err error) {
 	cl = &clientSMTP{
 		env: envNotif,
 		opts: smtp.ClientOptions{
-			ServerUrl:     envNotif.SMTPServer,
+			ServerURL:     envNotif.SMTPServer,
 			AuthUser:      envNotif.SMTPUser,
 			AuthPass:      envNotif.SMTPPassword,
 			AuthMechanism: smtp.SaslMechanismPlain,
@@ -36,7 +36,7 @@ func newClientSMTP(envNotif EnvNotif) (cl *clientSMTP, err error) {
 	// Test connecting and authenticated with the server.
 	cl.conn, err = smtp.NewClient(cl.opts)
 	if err != nil {
-		return nil, fmt.Errorf(`%s: %s: %w`, logp, cl.opts.ServerUrl, err)
+		return nil, fmt.Errorf(`%s: %s: %w`, logp, cl.opts.ServerURL, err)
 	}
 
 	_, _ = cl.conn.Quit()
@@ -87,7 +87,7 @@ func (cl *clientSMTP) Send(jlog *JobLog) {
 
 	cl.conn, err = smtp.NewClient(cl.opts)
 	if err != nil {
-		mlog.Errf(`%s: %s: %s`, logp, cl.opts.ServerUrl, err)
+		mlog.Errf(`%s: %s: %s`, logp, cl.opts.ServerURL, err)
 		return
 	}
 

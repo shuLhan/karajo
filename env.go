@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shuLhan/share/lib/ascii"
-	"github.com/shuLhan/share/lib/ini"
-	"github.com/shuLhan/share/lib/mlog"
-	libhtml "github.com/shuLhan/share/lib/net/html"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/ascii"
+	libhtml "git.sr.ht/~shulhan/pakakeh.go/lib/html"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/ini"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 )
 
 const (

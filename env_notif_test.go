@@ -6,8 +6,8 @@ package karajo
 import (
 	"testing"
 
-	"github.com/shuLhan/share/lib/ini"
-	"github.com/shuLhan/share/lib/test"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/ini"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/test"
 )
 
 func TestEnvNotif_ParseEnv(t *testing.T) {

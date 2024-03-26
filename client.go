@@ -11,7 +11,7 @@ import (
 	"path"
 	"strconv"
 
-	libhttp "github.com/shuLhan/share/lib/http"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
 )
 
 // Client HTTP client for Karajo server.
@@ -24,7 +24,7 @@ type Client struct {
 func NewClient(opts ClientOptions) (cl *Client) {
 	cl = &Client{
 		opts:   opts,
-		Client: libhttp.NewClient(&opts.ClientOptions),
+		Client: libhttp.NewClient(opts.ClientOptions),
 	}
 	return cl
 }
@@ -32,22 +32,23 @@ func NewClient(opts ClientOptions) (cl *Client) {
 // Env get the server environment.
 func (cl *Client) Env() (env *Env, err error) {
 	var (
-		logp = `Env`
-
-		res     *libhttp.EndpointResponse
-		resBody []byte
+		logp      = `Env`
+		clientReq = libhttp.ClientRequest{
+			Path: apiEnv,
+		}
+		clientResp *libhttp.ClientResponse
 	)
 
-	_, resBody, err = cl.Client.Get(apiEnv, nil, nil)
+	clientResp, err = cl.Client.Get(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	env = &Env{}
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: env,
 	}
-	err = json.Unmarshal(resBody, res)
+	err = json.Unmarshal(clientResp.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -72,10 +73,19 @@ func (cl *Client) JobExecCancel(id string) (job *JobExec, err error) {
 
 	var body = params.Encode()
 	var sign = Sign([]byte(body), []byte(cl.opts.Secret))
+
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	var resBody []byte
-	_, resBody, err = cl.Client.PostForm(apiJobExecCancel, header, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobExecCancel,
+			Header: header,
+			Params: params,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.PostForm(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -85,7 +95,7 @@ func (cl *Client) JobExecCancel(id string) (job *JobExec, err error) {
 		Data: job,
 	}
 
-	err = json.Unmarshal(resBody, &res)
+	err = json.Unmarshal(clientResp.Body, &res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -105,10 +115,8 @@ func (cl *Client) JobExecPause(id string) (job *JobExec, err error) {
 		params = url.Values{}
 		header = http.Header{}
 
-		res     *libhttp.EndpointResponse
-		body    string
-		sign    string
-		resBody []byte
+		body string
+		sign string
 	)
 
 	params.Set(paramNameKarajoEpoch, strconv.FormatInt(now, 10))
@@ -119,17 +127,26 @@ func (cl *Client) JobExecPause(id string) (job *JobExec, err error) {
 	sign = Sign([]byte(body), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Client.PostForm(apiJobExecPause, header, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobExecPause,
+			Header: header,
+			Params: params,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.PostForm(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	job = &JobExec{}
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: job,
 	}
 
-	err = json.Unmarshal(resBody, &res)
+	err = json.Unmarshal(clientResp.Body, &res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -148,32 +165,35 @@ func (cl *Client) JobExecResume(id string) (job *JobExec, err error) {
 		now    = timeNow().Unix()
 		params = url.Values{}
 		header = http.Header{}
-
-		res     *libhttp.EndpointResponse
-		body    string
-		sign    string
-		resBody []byte
 	)
 
 	params.Set(paramNameKarajoEpoch, strconv.FormatInt(now, 10))
 	params.Set(paramNameID, id)
 
-	body = params.Encode()
-
-	sign = Sign([]byte(body), []byte(cl.opts.Secret))
+	var body = params.Encode()
+	var sign = Sign([]byte(body), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Client.PostForm(apiJobExecResume, header, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobExecResume,
+			Header: header,
+			Params: params,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.PostForm(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	job = &JobExec{}
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: job,
 	}
 
-	err = json.Unmarshal(resBody, &res)
+	err = json.Unmarshal(clientResp.Body, &res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -197,11 +217,7 @@ func (cl *Client) JobExecRun(jobPath string) (job *JobExec, err error) {
 			Epoch: timeNow.Unix(),
 		}
 
-		httpRes *http.Response
-		res     *libhttp.EndpointResponse
-		sign    string
 		reqBody []byte
-		resBody []byte
 	)
 
 	reqBody, err = json.Marshal(&req)
@@ -209,21 +225,30 @@ func (cl *Client) JobExecRun(jobPath string) (job *JobExec, err error) {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	sign = Sign(reqBody, []byte(cl.opts.Secret))
+	var sign = Sign(reqBody, []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	httpRes, resBody, err = cl.Client.PostJSON(apiJobPath, header, &req)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobPath,
+			Header: header,
+			Params: &req,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.PostJSON(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
-	if httpRes.StatusCode == http.StatusNotFound {
+	if clientResp.HTTPResponse.StatusCode == http.StatusNotFound {
 		return nil, errJobNotFound(jobPath)
 	}
 
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: &job,
 	}
-	err = json.Unmarshal(resBody, res)
+	err = json.Unmarshal(clientResp.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -238,23 +263,28 @@ func (cl *Client) JobExecLog(jobID string, counter int) (joblog *JobLog, err err
 	var (
 		logp   = `JobExecLog`
 		params = url.Values{}
-
-		res     *libhttp.EndpointResponse
-		resBody []byte
 	)
 
 	params.Set(paramNameID, jobID)
 	params.Set(paramNameCounter, strconv.Itoa(counter))
 
-	_, resBody, err = cl.Client.Get(apiJobExecLog, nil, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobExecLog,
+			Params: params,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.Get(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: &joblog,
 	}
-	err = json.Unmarshal(resBody, res)
+	err = json.Unmarshal(clientResp.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -270,23 +300,28 @@ func (cl *Client) JobHTTP(id string) (httpJob *JobHTTP, err error) {
 	var (
 		logp   = `JobHTTP`
 		params = url.Values{}
-
-		res     *libhttp.EndpointResponse
-		resBody []byte
 	)
 
 	params.Set(`id`, id)
 
-	_, resBody, err = cl.Client.Get(apiJobHTTP, nil, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobHTTP,
+			Params: params,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.Get(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	httpJob = &JobHTTP{}
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: httpJob,
 	}
-	err = json.Unmarshal(resBody, res)
+	err = json.Unmarshal(clientResp.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -302,23 +337,28 @@ func (cl *Client) JobHTTPLog(id string, counter int) (jlog *JobLog, err error) {
 	var (
 		logp   = `JobHTTPLog`
 		params = url.Values{}
-
-		res     *libhttp.EndpointResponse
-		resBody []byte
 	)
 
 	params.Set(paramNameID, id)
 	params.Set(paramNameCounter, strconv.Itoa(counter))
 
-	_, resBody, err = cl.Client.Get(apiJobHTTPLog, nil, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobHTTPLog,
+			Params: params,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.Get(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: &jlog,
 	}
-	err = json.Unmarshal(resBody, res)
+	err = json.Unmarshal(clientResp.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -335,27 +375,32 @@ func (cl *Client) JobHTTPPause(id string) (jobHTTP *JobHTTP, err error) {
 		logp   = `JobHTTPPause`
 		params = url.Values{}
 		header = http.Header{}
-
-		sign    string
-		res     *libhttp.EndpointResponse
-		resBody []byte
 	)
 
 	params.Set(`id`, id)
 
-	sign = Sign([]byte(params.Encode()), []byte(cl.opts.Secret))
+	var sign = Sign([]byte(params.Encode()), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Client.Post(apiJobHTTPPause, header, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobHTTPPause,
+			Header: header,
+			Params: params,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.Post(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: &jobHTTP,
 	}
 
-	err = json.Unmarshal(resBody, res)
+	err = json.Unmarshal(clientResp.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -372,27 +417,32 @@ func (cl *Client) JobHTTPResume(id string) (jobHTTP *JobHTTP, err error) {
 		logp   = `JobHTTPResume`
 		params = url.Values{}
 		header = http.Header{}
-
-		sign    string
-		res     *libhttp.EndpointResponse
-		resBody []byte
 	)
 
 	params.Set(`id`, id)
 
-	sign = Sign([]byte(params.Encode()), []byte(cl.opts.Secret))
+	var sign = Sign([]byte(params.Encode()), []byte(cl.opts.Secret))
 	header.Set(HeaderNameXKarajoSign, sign)
 
-	_, resBody, err = cl.Client.Post(apiJobHTTPResume, header, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Path:   apiJobHTTPResume,
+			Header: header,
+			Params: params,
+		}
+		clientResp *libhttp.ClientResponse
+	)
+
+	clientResp, err = cl.Client.Post(clientReq)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	res = &libhttp.EndpointResponse{
+	var res = &libhttp.EndpointResponse{
 		Data: &jobHTTP,
 	}
 
-	err = json.Unmarshal(resBody, res)
+	err = json.Unmarshal(clientResp.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}

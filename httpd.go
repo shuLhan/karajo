@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/memfs"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
 )
 
 // HeaderNameXKarajoSign the header key for the signature of body.
@@ -68,11 +68,11 @@ func (k *Karajo) initHTTPd() (err error) {
 			},
 			HandleFS:        k.handleFSAuth,
 			Memfs:           memfsWww,
-			EnableIndexHtml: true,
+			EnableIndexHTML: true,
 		}
 	)
 
-	k.HTTPd, err = libhttp.NewServer(&serverOpts)
+	k.HTTPd, err = libhttp.NewServer(serverOpts)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -94,7 +94,7 @@ func (k *Karajo) initHTTPd() (err error) {
 func (k *Karajo) registerAPIs() (err error) {
 	var logp = `registerAPIs`
 
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiAuthLogin,
 		RequestType:  libhttp.RequestTypeForm,
@@ -105,7 +105,7 @@ func (k *Karajo) registerAPIs() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiEnv,
 		RequestType:  libhttp.RequestTypeNone,
@@ -116,7 +116,7 @@ func (k *Karajo) registerAPIs() (err error) {
 		return err
 	}
 
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobExecCancel,
 		RequestType:  libhttp.RequestTypeForm,
@@ -126,7 +126,7 @@ func (k *Karajo) registerAPIs() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobExecLog,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -136,7 +136,7 @@ func (k *Karajo) registerAPIs() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobExecPause,
 		RequestType:  libhttp.RequestTypeForm,
@@ -146,7 +146,7 @@ func (k *Karajo) registerAPIs() (err error) {
 	if err != nil {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobExecPause, err)
 	}
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobExecResume,
 		RequestType:  libhttp.RequestTypeForm,
@@ -157,7 +157,7 @@ func (k *Karajo) registerAPIs() (err error) {
 		return fmt.Errorf(`%s: %s: %w`, logp, apiJobExecResume, err)
 	}
 
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobHTTP,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -167,7 +167,7 @@ func (k *Karajo) registerAPIs() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         apiJobHTTPLog,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -177,7 +177,7 @@ func (k *Karajo) registerAPIs() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobHTTPPause,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -187,7 +187,7 @@ func (k *Karajo) registerAPIs() (err error) {
 	if err != nil {
 		return err
 	}
-	err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+	err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         apiJobHTTPResume,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -211,7 +211,7 @@ func (k *Karajo) registerJobsHook() (err error) {
 			continue
 		}
 
-		err = k.HTTPd.RegisterEndpoint(&libhttp.Endpoint{
+		err = k.HTTPd.RegisterEndpoint(libhttp.Endpoint{
 			Method:       libhttp.RequestMethodPost,
 			Path:         path.Join(apiJobExecRun, job.Path),
 			RequestType:  libhttp.RequestTypeJSON,
@@ -229,7 +229,7 @@ func (k *Karajo) registerJobsHook() (err error) {
 // handleFSAuth authorize access to resource based on the request path and
 // cookie.
 // If env.Users is empty, all request are accepted.
-func (k *Karajo) handleFSAuth(_ *memfs.Node, w http.ResponseWriter, req *http.Request) bool {
+func (k *Karajo) handleFSAuth(node *memfs.Node, w http.ResponseWriter, req *http.Request) *memfs.Node {
 	var path = req.URL.Path
 
 	if k.isAuthorized(req) {
@@ -237,15 +237,16 @@ func (k *Karajo) handleFSAuth(_ *memfs.Node, w http.ResponseWriter, req *http.Re
 			// Redirect user to app page if cookie is valid and
 			// user in login page.
 			http.Redirect(w, req, pathKarajoApp, http.StatusFound)
-			return false
+			return nil
 		}
-		return true
+		return node
 	}
 	if isRequireAuth(path) {
-		return k.unauthorized(w, req)
+		k.unauthorized(w, req)
+		return nil
 	}
 
-	return true
+	return node
 }
 
 // isAuthorized return true env.Users is empty OR if the cookie exist and
@@ -283,10 +284,9 @@ func isLoginPage(path string) bool {
 }
 
 // unauthorized write HTTP status 401 Unauthorized and return false.
-func (k *Karajo) unauthorized(w http.ResponseWriter, _ *http.Request) bool {
+func (k *Karajo) unauthorized(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusUnauthorized)
 	fmt.Fprintf(w, `Unauthorized`)
-	return false
 }
 
 // apiAuthLogin authenticate user using name and password.
@@ -309,8 +309,8 @@ func (k *Karajo) unauthorized(w http.ResponseWriter, _ *http.Request) bool {
 func (k *Karajo) apiAuthLogin(epr *libhttp.EndpointRequest) (respBody []byte, err error) {
 	var (
 		logp = `apiAuthLogin`
-		name = epr.HttpRequest.Form.Get(paramNameName)
-		pass = epr.HttpRequest.Form.Get(paramNamePassword)
+		name = epr.HTTPRequest.Form.Get(paramNameName)
+		pass = epr.HTTPRequest.Form.Get(paramNamePassword)
 	)
 
 	name = strings.TrimSpace(name)
@@ -332,7 +332,7 @@ func (k *Karajo) apiAuthLogin(epr *libhttp.EndpointRequest) (respBody []byte, er
 		return nil, &errAuthLogin
 	}
 
-	err = k.sessionNew(epr.HttpWriter, user)
+	err = k.sessionNew(epr.HTTPWriter, user)
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -370,7 +370,7 @@ func (k *Karajo) apiEnv(epr *libhttp.EndpointRequest) (resbody []byte, err error
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+	epr.HTTPWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
 
 	return resbody, nil
 }
@@ -399,7 +399,7 @@ func (k *Karajo) apiJobExecCancel(epr *libhttp.EndpointRequest) (resbody []byte,
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	var id = epr.HttpRequest.Form.Get(paramNameID)
+	var id = epr.HTTPRequest.Form.Get(paramNameID)
 
 	var job = k.env.jobExec(id)
 	if job == nil {
@@ -443,8 +443,8 @@ func (k *Karajo) apiJobExecLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 	var (
 		logp       = `apiJobExecLog`
 		res        = &libhttp.EndpointResponse{}
-		id         = epr.HttpRequest.Form.Get(paramNameID)
-		counterStr = epr.HttpRequest.Form.Get(paramNameCounter)
+		id         = epr.HTTPRequest.Form.Get(paramNameID)
+		counterStr = epr.HTTPRequest.Form.Get(paramNameCounter)
 
 		buf     bytes.Buffer
 		job     *JobExec
@@ -491,7 +491,7 @@ func (k *Karajo) apiJobExecLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+	epr.HTTPWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
 	return resbody, nil
 
 out:
@@ -529,7 +529,7 @@ func (k *Karajo) apiJobExecPause(epr *libhttp.EndpointRequest) (resb []byte, err
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	id = epr.HttpRequest.Form.Get(paramNameID)
+	id = epr.HTTPRequest.Form.Get(paramNameID)
 
 	job = k.env.jobExec(id)
 	if job == nil {
@@ -576,7 +576,7 @@ func (k *Karajo) apiJobExecResume(epr *libhttp.EndpointRequest) (resb []byte, er
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	id = epr.HttpRequest.Form.Get(paramNameID)
+	id = epr.HTTPRequest.Form.Get(paramNameID)
 
 	job = k.env.jobExec(id)
 	if job == nil {
@@ -600,7 +600,7 @@ func (k *Karajo) apiJobExecResume(epr *libhttp.EndpointRequest) (resb []byte, er
 func (k *Karajo) apiJobHTTP(epr *libhttp.EndpointRequest) (resbody []byte, err error) {
 	var (
 		res     = &libhttp.EndpointResponse{}
-		id      = epr.HttpRequest.Form.Get(paramNameID)
+		id      = epr.HTTPRequest.Form.Get(paramNameID)
 		jobHTTP = k.env.jobHTTP(id)
 	)
 
@@ -629,8 +629,8 @@ func (k *Karajo) apiJobHTTPLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 	var (
 		logp       = `apiJobHTTPLog`
 		res        = &libhttp.EndpointResponse{}
-		id         = epr.HttpRequest.Form.Get(paramNameID)
-		counterStr = epr.HttpRequest.Form.Get(paramNameCounter)
+		id         = epr.HTTPRequest.Form.Get(paramNameID)
+		counterStr = epr.HTTPRequest.Form.Get(paramNameCounter)
 
 		buf     bytes.Buffer
 		job     *JobHTTP
@@ -675,7 +675,7 @@ func (k *Karajo) apiJobHTTPLog(epr *libhttp.EndpointRequest) (resbody []byte, er
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	epr.HttpWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
+	epr.HTTPWriter.Header().Set(libhttp.HeaderContentEncoding, libhttp.ContentEncodingGzip)
 	return resbody, nil
 
 out:
@@ -695,12 +695,12 @@ func (k *Karajo) apiJobHTTPPause(epr *libhttp.EndpointRequest) (resb []byte, err
 		jobHTTP *JobHTTP
 	)
 
-	err = k.httpAuthorize(epr, []byte(epr.HttpRequest.URL.RawQuery))
+	err = k.httpAuthorize(epr, []byte(epr.HTTPRequest.URL.RawQuery))
 	if err != nil {
 		return nil, err
 	}
 
-	id = epr.HttpRequest.Form.Get(paramNameID)
+	id = epr.HTTPRequest.Form.Get(paramNameID)
 	jobHTTP = k.env.jobHTTP(id)
 	if jobHTTP == nil {
 		return nil, errInvalidJobID(id)
@@ -723,12 +723,12 @@ func (k *Karajo) apiJobHTTPResume(epr *libhttp.EndpointRequest) (resb []byte, er
 		jobHTTP *JobHTTP
 	)
 
-	err = k.httpAuthorize(epr, []byte(epr.HttpRequest.URL.RawQuery))
+	err = k.httpAuthorize(epr, []byte(epr.HTTPRequest.URL.RawQuery))
 	if err != nil {
 		return nil, err
 	}
 
-	id = epr.HttpRequest.Form.Get(paramNameID)
+	id = epr.HTTPRequest.Form.Get(paramNameID)
 	jobHTTP = k.env.jobHTTP(id)
 	if jobHTTP == nil {
 		return nil, errInvalidJobID(id)
@@ -749,7 +749,7 @@ func (k *Karajo) httpAuthorize(epr *libhttp.EndpointRequest, payload []byte) (er
 		expSign string
 	)
 
-	gotSign = epr.HttpRequest.Header.Get(HeaderNameXKarajoSign)
+	gotSign = epr.HTTPRequest.Header.Get(HeaderNameXKarajoSign)
 	if len(gotSign) == 0 {
 		return &errUnauthorized
 	}

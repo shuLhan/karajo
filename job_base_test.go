@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shuLhan/share/lib/test"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/test"
 )
 
 func TestJobBase_computeNextInterval(t *testing.T) {

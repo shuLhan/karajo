@@ -52,7 +52,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shuLhan/share/lib/mlog"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 
 	"git.sr.ht/~shulhan/karajo"
 )

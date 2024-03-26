@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/mlog"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 )
 
 const (
@@ -100,6 +100,9 @@ type JobHTTP struct {
 	// This field is optional, default to query.
 	HTTPRequestType string `ini:"::http_request_type" json:"http_request_type"`
 
+	requestMethod libhttp.RequestMethod
+	requestType   libhttp.RequestType
+
 	// Optional HTTP headers for HTTPURL, in the format of "K: V".
 	HTTPHeaders []string `ini:"::http_header" json:"http_headers,omitempty"`
 
@@ -110,9 +113,6 @@ type JobHTTP struct {
 	// Env.HTTPTimeout.
 	// To make job run without timeout, set the value to negative.
 	HTTPTimeout time.Duration `ini:"::http_timeout" json:"http_timeout"`
-
-	requestMethod libhttp.RequestMethod
-	requestType   libhttp.RequestType
 
 	// HTTPInsecure can be set to true if the http_url is HTTPS with
 	// unknown Certificate Authority.
@@ -240,8 +240,8 @@ func (job *JobHTTP) init(env *Env, name string) (err error) {
 
 	job.params = make(map[string]interface{})
 
-	var httpClientOpts = &libhttp.ClientOptions{
-		ServerUrl:     job.baseURI,
+	var httpClientOpts = libhttp.ClientOptions{
+		ServerURL:     job.baseURI,
 		Headers:       job.headers,
 		AllowInsecure: job.HTTPInsecure,
 	}
@@ -371,10 +371,8 @@ func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 		now     = timeNow()
 		headers = http.Header{}
 
-		params  interface{}
-		httpReq *http.Request
-		httpRes *http.Response
-		rawb    []byte
+		params interface{}
+		rawb   []byte
 	)
 
 	_, _ = jlog.Write([]byte("=== BEGIN\n"))
@@ -397,7 +395,18 @@ func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 		headers.Set(job.HeaderSign, sign)
 	}
 
-	httpReq, err = job.httpc.GenerateHttpRequest(job.requestMethod, job.requestURI, job.requestType, headers, params)
+	var (
+		clientReq = libhttp.ClientRequest{
+			Method: job.requestMethod,
+			Path:   job.requestURI,
+			Type:   job.requestType,
+			Header: headers,
+			Params: params,
+		}
+		httpReq *http.Request
+	)
+
+	httpReq, err = job.httpc.GenerateHTTPRequest(clientReq)
 	if err != nil {
 		return jlog, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -411,7 +420,9 @@ func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 
 	fmt.Fprintf(jlog, "--- HTTP request:\n%s\n\n", rawb)
 
-	httpRes, _, err = job.httpc.Do(httpReq)
+	var clientResp *libhttp.ClientResponse
+
+	clientResp, err = job.httpc.Do(httpReq)
 	if err != nil {
 		var errCtx = ctx.Err()
 		if errCtx != nil && errors.Is(errCtx, context.Canceled) {
@@ -420,15 +431,15 @@ func (job *JobHTTP) execute() (jlog *JobLog, err error) {
 		return jlog, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	rawb, err = httputil.DumpResponse(httpRes, true)
+	rawb, err = httputil.DumpResponse(clientResp.HTTPResponse, true)
 	if err != nil {
 		return jlog, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	fmt.Fprintf(jlog, "--- HTTP response:\n%s\n\n", rawb)
 
-	if httpRes.StatusCode != http.StatusOK {
-		return jlog, fmt.Errorf(`%s: %s`, logp, httpRes.Status)
+	if clientResp.HTTPResponse.StatusCode != http.StatusOK {
+		return jlog, fmt.Errorf(`%s: %s`, logp, clientResp.HTTPResponse.Status)
 	}
 
 	_, _ = jlog.Write([]byte("=== DONE\n"))

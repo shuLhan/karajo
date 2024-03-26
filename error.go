@@ -6,7 +6,7 @@ package karajo
 import (
 	"net/http"
 
-	liberrors "github.com/shuLhan/share/lib/errors"
+	liberrors "git.sr.ht/~shulhan/pakakeh.go/lib/errors"
 )
 
 // errAuthLogin error for failed authentication due to invalid user or

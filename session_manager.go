@@ -3,7 +3,7 @@
 
 package karajo
 
-import "github.com/shuLhan/share/lib/ascii"
+import "git.sr.ht/~shulhan/pakakeh.go/lib/ascii"
 
 // sessionManager manage the active session that map to authenticated user.
 type sessionManager struct {

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"git.sr.ht/~shulhan/ciigo"
-	"github.com/shuLhan/share/lib/memfs"
-	"github.com/shuLhan/share/lib/mlog"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 )
 
 // ConvertAdocToHTML convert adoc files to HTML files.

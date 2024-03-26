@@ -21,10 +21,10 @@ import (
 	"net/http"
 	"time"
 
-	liberrors "github.com/shuLhan/share/lib/errors"
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/memfs"
-	"github.com/shuLhan/share/lib/mlog"
+	liberrors "git.sr.ht/~shulhan/pakakeh.go/lib/errors"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 )
 
 // Version of this library and program.
@@ -133,9 +133,7 @@ func (k *Karajo) initMemfs() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	memfsWww = memfs.Merge(memfsWww, memfsPublic)
-	memfsWww.Root.SysPath = k.env.DirPublic
-	memfsWww.Opts.TryDirect = true
+	memfsWww.Merge(memfsPublic)
 
 	return nil
 }

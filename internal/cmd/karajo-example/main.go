@@ -15,8 +15,8 @@ import (
 	"syscall"
 	"time"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/mlog"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 
 	"git.sr.ht/~shulhan/karajo"
 	"git.sr.ht/~shulhan/karajo/internal"

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shuLhan/share/lib/ini"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/ini"
 	"golang.org/x/crypto/bcrypt"
 )
 

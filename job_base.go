@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shuLhan/share/lib/mlog"
-	libhtml "github.com/shuLhan/share/lib/net/html"
-	libtime "github.com/shuLhan/share/lib/time"
+	libhtml "git.sr.ht/~shulhan/pakakeh.go/lib/html"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
+	libtime "git.sr.ht/~shulhan/pakakeh.go/lib/time"
 )
 
 // List of [JobBase.Status].
@@ -88,7 +88,7 @@ type JobBase struct {
 	//
 	// If both Schedule and Interval set, only Schedule will be processed.
 	//
-	// [time.Scheduler]: https://pkg.go.dev/github.com/shuLhan/share/lib/time#Scheduler
+	// [time.Scheduler]: https://pkg.go.dev/git.sr.ht/~shulhan/pakakeh.go/lib/time#Scheduler
 	Schedule string `ini:"::schedule" json:"schedule,omitempty"`
 
 	// dirWork define the directory on the system where all commands

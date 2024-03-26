@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"testing"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/test"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/test"
 )
 
 func TestJobExec_authGithub(t *testing.T) {
@@ -244,7 +244,7 @@ func TestJobExec_handleHTTP(t *testing.T) {
 			Epoch: timeNow().Unix(),
 		}
 		epr = libhttp.EndpointRequest{
-			HttpRequest: &http.Request{
+			HTTPRequest: &http.Request{
 				Header: http.Header{},
 			},
 		}
@@ -257,7 +257,7 @@ func TestJobExec_handleHTTP(t *testing.T) {
 	}
 
 	sign = Sign(epr.RequestBody, []byte(job.Secret))
-	epr.HttpRequest.Header.Set(job.HeaderSign, sign)
+	epr.HTTPRequest.Header.Set(job.HeaderSign, sign)
 
 	var (
 		buf bytes.Buffer

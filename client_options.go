@@ -3,7 +3,7 @@
 
 package karajo
 
-import libhttp "github.com/shuLhan/share/lib/http"
+import libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
 
 // ClientOptions define the options for Karajo HTTP client.
 type ClientOptions struct {
