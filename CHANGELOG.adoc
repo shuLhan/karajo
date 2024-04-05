@@ -3,6 +3,22 @@
 :sectanchors:
 :sectlinks:
 
+[#v0_9_1]
+== karajo v0.9.1 (2024-04-06)
+
+This release mostly contains chores.
+
+env: remove [rand.Seed] usage::
++
+The [ascii.Random] generate random using "crypto/rand", so no need to
+seed it anymore.
+
+all: replace module "share" with "pakakeh.go"::
++
+The "share" module repository has been moved to SourceHut, with new name
+"pakakeh.go".
+
+
 [#v0_9_0]
 == karajo v0.9.0 (2024-02-08)
 
