@@ -44,7 +44,7 @@ install:
 	install -Dm0644 COPYING  $(PREFIX)/usr/share/licenses/karajo/COPYING
 
 	install -Dm0640 _sys/etc/karajo/karajo.conf  $(PREFIX)/etc/karajo/karajo.conf
-	install -Dm0640 _sys/srv/karajo/index.html   $(PREFIX)/srv/karajo/index.html
+	install -Dm0644 _sys/srv/karajo/index.html   $(PREFIX)/srv/karajo/index.html
 
 	install -Dm0644 _sys/usr/lib/systemd/system/karajo.path                       $(PREFIX)/usr/lib/systemd/system/karajo.path
 	install -Dm0644 _sys/usr/lib/systemd/system/karajo.service                    $(PREFIX)/usr/lib/systemd/system/karajo.service
