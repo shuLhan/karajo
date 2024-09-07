@@ -35,19 +35,19 @@ func main() {
 	case cmdEmbed:
 		err = internal.ConvertAdocToHTML()
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatal(err.Error())
 		}
 
 		var mfs *memfs.MemFS
 
 		mfs, err = internal.GenerateMemfs()
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatal(err.Error())
 		}
 
 		err = mfs.GoEmbed()
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatal(err.Error())
 		}
 		return
 	default:
