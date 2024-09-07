@@ -70,3 +70,7 @@ deploy-kilabit: build
 	rsync --progress karajo build.kilabit.info:/tmp/karajo
 	ssh build.kilabit.info "sudo mv /tmp/karajo /usr/bin/karajo"
 	ssh build.kilabit.info "systemctl status karajo"
+
+.PHONY: serve.doc
+serve.doc:
+	ciigo serve _www/karajo/doc/
