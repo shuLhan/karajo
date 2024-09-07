@@ -1,0 +1,28 @@
+## SPDX-FileCopyrightText: 2024 M. Shulhan <ms@kilabit.info>
+##
+## SPDX-License-Identifier: GPL-3.0-or-later
+
+version = 1
+
+[[annotations]]
+path = ["CHANGELOG.adoc", "README.md", "_www/karajo/favicon.png"
+  , "go.mod", "go.sum"]
+SPDX-FileCopyrightText = "2021 Shulhan <ms@kilabit.info>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["_www/karajo/doc/**", "testdata/**"
+  , "internal/cmd/karajo-example/testdata/**"]
+SPDX-FileCopyrightText = "2022 Shulhan <ms@kilabit.info>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["_AUR/**"]
+SPDX-FileCopyrightText = "2023 Shulhan <ms@kilabit.info>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["_www/karajo/app/crypto-js.min.js"]
+SPDX-FileCopyrightText = ["2009-2013 Jeff Mott"
+  , "2013-2016 Evan Vosberg"]
+SPDX-License-Identifier = "MIT"
