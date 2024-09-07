@@ -3,6 +3,19 @@
 :sectanchors:
 :sectlinks:
 
+
+[#v0_9_2]
+== karajo v0.9.2 (2024-09-08)
+
+[#v0_9_2__bug_fix]
+=== Bug fix
+
+make: fix file permissions when installing public index.html::
++
+Using 0640 (where user and group owner set to root) cause karajo
+service--that run as karajo user--unable to read the file.
+
+
 [#v0_9_1]
 == karajo v0.9.1 (2024-04-06)
 
