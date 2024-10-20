@@ -111,6 +111,8 @@ type Env struct {
 	// "karajo".
 	DirPublic string `ini:"karajo::dir_public" json:"dir_public"`
 
+	Version string `json:"version"`
+
 	// Secret define the default secret to authorize the incoming HTTP
 	// request.
 	// The signature is generated from HTTP payload (query or body) with
@@ -151,7 +153,8 @@ func LoadEnv(file string) (env *Env, err error) {
 	}
 
 	env = &Env{
-		file: file,
+		file:    file,
+		Version: Version,
 	}
 
 	err = cfg.Unmarshal(env)
@@ -173,6 +176,7 @@ func NewEnv() (env *Env) {
 		Users:         make(map[string]*User),
 		ListenAddress: defListenAddress,
 		DirBase:       defDirBase,
+		Version:       Version,
 		HTTPTimeout:   defHTTPTimeout,
 		MaxJobRunning: defMaxJobRunning,
 	}
@@ -185,7 +189,9 @@ func ParseEnv(content []byte) (env *Env, err error) {
 		logp = `ParseEnv`
 	)
 
-	env = &Env{}
+	env = &Env{
+		Version: Version,
+	}
 
 	err = ini.Unmarshal(content, env)
 	if err != nil {

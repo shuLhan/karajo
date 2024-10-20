@@ -86,6 +86,7 @@ command = sleep 10m
   "listen_address": "127.0.0.1:32000",
   "dir_base": "\u003cREDACTED\u003e",
   "dir_public": "",
+  "version": "0.987",
   "http_timeout": 300000000000,
   "max_job_running": 1,
   "is_development": false

@@ -28,7 +28,7 @@ import (
 )
 
 // Version of this library and program.
-const Version = `0.9.2`
+var Version = `0.9.2`
 
 // timeNow return the current time in UTC rounded to second.
 // During testing the variable will be replaced to provide static,

@@ -201,6 +201,7 @@ Test LoadEnv.
   "listen_address": "127.0.0.1:31937",
   "dir_base": "testdata",
   "dir_public": "testdata",
+  "version": "0.987",
   "http_timeout": 300000000000,
   "max_job_running": 2,
   "is_development": false

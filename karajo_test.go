@@ -27,6 +27,8 @@ func TestMain(m *testing.M) {
 	mlog.SetPrefix(``)
 	mlog.SetTimeFormat(``)
 
+	Version = `0.987`
+
 	timeNow = func() time.Time {
 		return time.Date(2023, time.January, 9, 0, 0, 0, 0, time.UTC).Round(time.Second).UTC()
 	}

@@ -9,10 +9,8 @@ async function main() {
   runTimer();
 
   let wout = document.getElementById("out");
-  let werr = document.getElementById("err");
-  let delay = 10000;
-
   wout.innerHTML = "";
+  let werr = document.getElementById("err");
   werr.innerHTML = "";
 
   doRefresh();
@@ -28,6 +26,7 @@ async function doRefresh() {
 
   _env = res.data;
   setTitle();
+  document.getElementById("version").innerText = _env.version;
 
   renderJobs(_env.jobs);
   renderHttpJobs(_env.http_jobs);
