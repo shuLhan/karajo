@@ -24,7 +24,7 @@ func ConvertAdocToHTML() (err error) {
 		}
 	)
 
-	err = ciigo.Convert(&convertOpts)
+	err = ciigo.Convert(convertOpts)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -137,7 +137,7 @@ func WatchWwwDoc() {
 		err error
 	)
 
-	err = ciigo.Watch(&convertOpts)
+	err = ciigo.Watch(convertOpts)
 	if err != nil {
 		mlog.Fatalf(`%s: %s`, logp, err)
 	}
