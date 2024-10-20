@@ -27,3 +27,4 @@ dir_public =
 secret =
 http_timeout = 0s
 max_job_running = 0
+is_development = false

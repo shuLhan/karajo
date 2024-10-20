@@ -135,7 +135,7 @@ type Env struct {
 
 	// IsDevelopment if its true, the files in DirPublic will be loaded
 	// directly from disk instead from embedded memfs.
-	IsDevelopment bool `json:"is_development"`
+	IsDevelopment bool `ini:"karajo::is_development" json:"is_development"`
 }
 
 // LoadEnv load the configuration from the ini file format.
