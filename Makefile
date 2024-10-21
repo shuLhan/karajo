@@ -1,26 +1,41 @@
 ## SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 ## SPDX-License-Identifier: GPL-3.0-or-later
 
-.PHONY: all lint build test run-example
+VERSION := $(shell git describe --tags)
+
 .FORCE:
 
+.PHONY: all
 all: test build lint
 
-memfs_www.go: .FORCE
-	go run ./internal/cmd/karajo-build embed
-
+.PHONY: lint
 lint:
 	-revive ./...
 	-fieldalignment ./...
 	-shadow ./...
 
-build: memfs_www.go
-	go build ./cmd/karajo
 
+memfs_www.go: .FORCE
+	go run ./internal/cmd/karajo-build embed
+
+.PHONY: build
+build: BUILD_FLAGS=-ldflags "-s -w -X 'git.sr.ht/~shulhan/karajo.Version=$(VERSION)'"
+build: memfs_www.go
+	go build \
+		-trimpath \
+		-buildmode=pie \
+		-mod=readonly \
+		-modcacherw \
+		$(BUILD_FLAGS) ./cmd/karajo
+
+
+.PHONY: test
 test:
 	CGO_ENABLED=1 go test -race -timeout 10s -coverprofile cover.out ./...
 	go tool cover -html=cover.out -o cover.html
 
+
+.PHONY: run-example
 run-example:
 	CGO_ENABLED=1 go run -race ./internal/cmd/karajo-example
 
