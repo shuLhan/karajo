@@ -50,7 +50,7 @@ run-example:
 install:
 	install -dm0750 $(PREFIX)/etc/karajo
 	install -dm0750 $(PREFIX)/etc/karajo/job.d
-	install -dm0750 $(PREFIX)/srv/karajo
+	install -dm0755 $(PREFIX)/srv/karajo
 	install -dm0750 $(PREFIX)/var/lib/karajo
 	install -dm0750 $(PREFIX)/var/log/karajo
 	install -dm0750 $(PREFIX)/run/karajo
