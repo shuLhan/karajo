@@ -4,6 +4,31 @@
 :sectlinks:
 
 
+[#v0_9_3]
+== karajo v0.9.3 (2024-12-08)
+
+[#v0_9_3__bug_fixes]
+=== Bug fixes
+
+env: fix missing ini tag on IsDevelopment field::
+
+all: fix permission of "/srv/karajo"::
++
+The content of directory "/srv/karajo" may contains files served to public
+even internal, so it should be accesible by other user or group.
+
+[#v0_9_3__enhancements]
+=== Enhancements
+
+all: return and show the current version in API environment and main page::
+
+all: set the module Version during build::
++
+The Version information is derived from latest tag and commit hash.
+This allow command "karajo version" and user interface show on which
+version its currently run.
+
+
 [#v0_9_2]
 == karajo v0.9.2 (2024-09-08)
 
