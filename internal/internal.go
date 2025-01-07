@@ -8,7 +8,6 @@ package internal
 
 import (
 	"fmt"
-	"time"
 
 	"git.sr.ht/~shulhan/ciigo"
 	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
@@ -63,11 +62,9 @@ func GenerateMemfs() (mfs *memfs.MemFS, err error) {
 // Go code.
 func WatchWww(running chan bool) {
 	var (
-		tick = time.NewTicker(3 * time.Second)
-
-		mfsWww *memfs.MemFS
-		dw     *memfs.DirWatcher
-		err    error
+		mfsWww  *memfs.MemFS
+		changes <-chan []*memfs.Node
+		err     error
 	)
 
 	mfsWww, err = GenerateMemfs()
@@ -75,7 +72,7 @@ func WatchWww(running chan bool) {
 		mlog.Fatalf(err.Error())
 	}
 
-	dw, err = mfsWww.Watch(memfs.WatchOptions{})
+	changes, err = mfsWww.Watch(memfs.WatchOptions{})
 	if err != nil {
 		mlog.Fatalf(err.Error())
 	}
@@ -86,27 +83,14 @@ func WatchWww(running chan bool) {
 		mlog.Fatalf(err.Error())
 	}
 
-	var (
-		isRunning = true
-		nChanges  int
-	)
-
+	var isRunning = true
 	for isRunning {
 		select {
-		case <-dw.C:
-			nChanges++
-
-		case <-tick.C:
-			if nChanges == 0 {
-				continue
-			}
-
-			mlog.Outf(`--- %d changes`, nChanges)
+		case <-changes:
 			err = mfsWww.GoEmbed()
 			if err != nil {
 				mlog.Errf(err.Error())
 			}
-			nChanges = 0
 
 		case <-running:
 			isRunning = false
@@ -114,14 +98,10 @@ func WatchWww(running chan bool) {
 	}
 
 	// Run GoEmbed for the last time.
-	if nChanges > 0 {
-		mlog.Outf(`--- %d changes`, nChanges)
-		err = mfsWww.GoEmbed()
-		if err != nil {
-			mlog.Errf(err.Error())
-		}
+	err = mfsWww.GoEmbed()
+	if err != nil {
+		mlog.Errf(err.Error())
 	}
-	dw.Stop()
 	running <- false
 }
 
