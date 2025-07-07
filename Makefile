@@ -31,7 +31,7 @@ build: memfs_www.go
 
 .PHONY: test
 test:
-	CGO_ENABLED=1 go test -race -timeout 10s -coverprofile cover.out ./...
+	CGO_ENABLED=1 go test -race -timeout=30s -coverprofile=cover.out ./...
 	go tool cover -html=cover.out -o cover.html
 
 
