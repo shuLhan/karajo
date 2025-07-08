@@ -27,7 +27,9 @@ Test LoadEnv.
     },
     "Test auth_kind github": {
       "path": "/github",
-      "auth_kind": "github",
+      "auth_kind": [
+        "github"
+      ],
       "commands": [
         "echo auth_kind is github"
       ],
@@ -90,7 +92,9 @@ Test LoadEnv.
     },
     "test fail": {
       "path": "/test-fail",
-      "auth_kind": "hmac-sha256",
+      "auth_kind": [
+        "hmac-sha256"
+      ],
       "commands": [
         "echo Test job fail",
         "echo Counter is $KARAJO_JOB_COUNTER",

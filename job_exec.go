@@ -110,7 +110,7 @@ type JobExec struct {
 	//   - sourcehut: See https://man.sr.ht/api-conventions.md#webhooks
 	//
 	// If this field is empty or invalid it will be set to hmac-sha256.
-	AuthKind string `ini:"::auth_kind" json:"auth_kind,omitempty"`
+	AuthKind []string `ini:"::auth_kind" json:"auth_kind,omitempty"`
 
 	// HeaderSign define the HTTP header where the signature is read.
 	// Default to "X-Karajo-Sign" if its empty.
@@ -131,33 +131,31 @@ type JobExec struct {
 	JobBase
 }
 
-// authorize the hook based on the AuthKind.
+// authorize the hook based on list of AuthKind.
 func (job *JobExec) authorize(headers http.Header, reqbody []byte) (err error) {
-	var (
-		logp = `authorize`
-	)
+	var logp = `authorize`
 
-	switch job.AuthKind {
-	case JobAuthKindGithub:
-		err = job.authGithub(headers, reqbody)
+	for _, authKind := range job.AuthKind {
+		switch authKind {
+		case JobAuthKindGithub:
+			err = job.authGithub(headers, reqbody)
 
-	case JobAuthKindSourcehut:
-		var (
-			pub ed25519.PublicKey
-		)
-		pub, err = decodeSourcehutPublicKey()
-		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
+		case JobAuthKindSourcehut:
+			var pub ed25519.PublicKey
+			pub, err = decodeSourcehutPublicKey()
+			if err != nil {
+				return fmt.Errorf(`%s: %w`, logp, err)
+			}
+			err = job.authSourcehut(headers, reqbody, pub)
+
+		case JobAuthKindHmacSha256:
+			err = job.authHmacSha256(headers, reqbody)
 		}
-		err = job.authSourcehut(headers, reqbody, pub)
-
-	default:
-		err = job.authHmacSha256(headers, reqbody)
+		if err == nil {
+			return nil
+		}
 	}
-	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
-	}
-	return nil
+	return fmt.Errorf(`%s: %w`, logp, err)
 }
 
 // authGithub authorize the Github Webhook request.
@@ -184,8 +182,10 @@ func (job *JobExec) authGithub(headers http.Header, reqbody []byte) (err error) 
 	return nil
 }
 
-// authGithub authorize the Sourcehut Webhook request.
-func (job *JobExec) authSourcehut(headers http.Header, reqbody []byte, pubkey ed25519.PublicKey) (err error) {
+// authSourcehut authorize the Sourcehut Webhook request.
+func (job *JobExec) authSourcehut(
+	headers http.Header, reqbody []byte, pubkey ed25519.PublicKey,
+) (err error) {
 	var (
 		logp    = `authSourcehut`
 		signb64 = headers.Get(sourcehutHeaderSign)
@@ -286,13 +286,19 @@ func (job *JobExec) init(env *Env, name string) (err error) {
 		job.HeaderSign = HeaderNameXKarajoSign
 	}
 
-	job.AuthKind = strings.ToLower(job.AuthKind)
+	if len(job.AuthKind) == 0 {
+		job.AuthKind = append(job.AuthKind, JobAuthKindHmacSha256)
+		return nil
+	}
+	for x, authKind := range job.AuthKind {
+		authKind = strings.ToLower(authKind)
 
-	switch job.AuthKind {
-	case JobAuthKindGithub, JobAuthKindSourcehut, JobAuthKindHmacSha256:
-		// OK.
-	default:
-		job.AuthKind = JobAuthKindHmacSha256
+		switch authKind {
+		case JobAuthKindGithub, JobAuthKindSourcehut, JobAuthKindHmacSha256:
+			job.AuthKind[x] = authKind
+		default:
+			job.AuthKind[x] = JobAuthKindHmacSha256
+		}
 	}
 
 	return nil

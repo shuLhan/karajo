@@ -29,7 +29,7 @@ func TestJobExec_authGithub(t *testing.T) {
 	var (
 		jhook = JobExec{
 			Secret:   `s3cret`,
-			AuthKind: JobAuthKindGithub,
+			AuthKind: []string{JobAuthKindGithub},
 		}
 
 		payload = []byte(`_karajo_sign=123`)
@@ -85,7 +85,7 @@ func TestJobExec_authSourcehut(t *testing.T) {
 
 	var (
 		jhook = JobExec{
-			AuthKind: JobAuthKindSourcehut,
+			AuthKind: []string{JobAuthKindSourcehut},
 		}
 		payload = []byte(`_karajo_sign=123`)
 		nonce   = `4`
@@ -152,7 +152,7 @@ func TestJobExec_authHmacSha256(t *testing.T) {
 
 	var (
 		jhook = JobExec{
-			AuthKind:   JobAuthKindHmacSha256,
+			AuthKind:   []string{JobAuthKindHmacSha256},
 			Secret:     `s3cret`,
 			HeaderSign: HeaderNameXKarajoSign,
 		}

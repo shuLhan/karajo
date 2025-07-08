@@ -66,7 +66,7 @@ func main() {
 		JobBase: karajo.JobBase{
 			Description: `Webhook using github authentication.`,
 		},
-		AuthKind: `github`,
+		AuthKind: []string{`github`},
 		Secret:   `s3cret`,
 		Path:     `/webhook-github-code`,
 		Call:     webhookWithGithub,

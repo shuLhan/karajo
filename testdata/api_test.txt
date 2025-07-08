@@ -33,7 +33,9 @@ command = sleep 10m
   "jobs": {
     "Test job canceled": {
       "path": "/test-job-canceled",
-      "auth_kind": "hmac-sha256",
+      "auth_kind": [
+        "hmac-sha256"
+      ],
       "header_sign": "X-Karajo-Sign",
       "commands": [
         "sleep 10m"
@@ -47,7 +49,9 @@ command = sleep 10m
     },
     "Test job success": {
       "path": "/test-job-success",
-      "auth_kind": "hmac-sha256",
+      "auth_kind": [
+        "hmac-sha256"
+      ],
       "header_sign": "X-Karajo-Sign",
       "commands": [
         "echo Test job success",
@@ -95,7 +99,9 @@ command = sleep 10m
 <<< apiJobExecPause.json
 {
   "path": "/test-job-success",
-  "auth_kind": "hmac-sha256",
+  "auth_kind": [
+    "hmac-sha256"
+  ],
   "header_sign": "X-Karajo-Sign",
   "commands": [
     "echo Test job success",
@@ -121,7 +127,9 @@ command = sleep 10m
 <<< apiJobExecResume.json
 {
   "path": "/test-job-success",
-  "auth_kind": "hmac-sha256",
+  "auth_kind": [
+    "hmac-sha256"
+  ],
   "header_sign": "X-Karajo-Sign",
   "commands": [
     "echo Test job success",
@@ -138,7 +146,9 @@ command = sleep 10m
 <<< apiJobExecRun_success.json
 {
   "path": "/test-job-success",
-  "auth_kind": "hmac-sha256",
+  "auth_kind": [
+    "hmac-sha256"
+  ],
   "header_sign": "X-Karajo-Sign",
   "commands": [
     "echo Test job success",
@@ -263,7 +273,9 @@ command = sleep 10m
 <<< test_job_canceled.json
 {
   "path": "/test-job-canceled",
-  "auth_kind": "hmac-sha256",
+  "auth_kind": [
+    "hmac-sha256"
+  ],
   "header_sign": "X-Karajo-Sign",
   "commands": [
     "sleep 10m"

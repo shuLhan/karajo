@@ -81,7 +81,7 @@ func TestEnv_loadJobs(t *testing.T) {
 				},
 			},
 			`Test auth_kind github`: &JobExec{
-				AuthKind: `github`,
+				AuthKind: []string{`github`},
 				Path:     `/github`,
 				Secret:   `s3cret`,
 				Commands: []string{
