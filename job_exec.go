@@ -109,7 +109,8 @@ type JobExec struct {
 	//
 	//   - sourcehut: See https://man.sr.ht/api-conventions.md#webhooks
 	//
-	// If this field is empty or invalid it will be set to hmac-sha256.
+	// The hmac-sha256 is the default and always set to allow triggering
+	// from the web user interface.
 	AuthKind []string `ini:"::auth_kind" json:"auth_kind,omitempty"`
 
 	// HeaderSign define the HTTP header where the signature is read.
@@ -286,19 +287,22 @@ func (job *JobExec) init(env *Env, name string) (err error) {
 		job.HeaderSign = HeaderNameXKarajoSign
 	}
 
-	if len(job.AuthKind) == 0 {
-		job.AuthKind = append(job.AuthKind, JobAuthKindHmacSha256)
-		return nil
-	}
+	var withHmacSha256 bool
 	for x, authKind := range job.AuthKind {
 		authKind = strings.ToLower(authKind)
 
 		switch authKind {
-		case JobAuthKindGithub, JobAuthKindSourcehut, JobAuthKindHmacSha256:
+		case JobAuthKindGithub, JobAuthKindSourcehut:
 			job.AuthKind[x] = authKind
-		default:
+		case JobAuthKindHmacSha256:
 			job.AuthKind[x] = JobAuthKindHmacSha256
+			withHmacSha256 = true
+		default:
+			// Ignore unknown auth.
 		}
+	}
+	if !withHmacSha256 {
+		job.AuthKind = append(job.AuthKind, JobAuthKindHmacSha256)
 	}
 
 	return nil
