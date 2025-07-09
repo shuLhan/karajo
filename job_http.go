@@ -26,7 +26,7 @@ const (
 	defTimeLayout = "2006-01-02 15:04:05 MST"
 )
 
-// JobHTTP A JobHTTP is a periodic job that send HTTP request to external HTTP
+// JobHTTP is a periodic job that send HTTP request to external HTTP
 // server (or to karajo Job itself).
 //
 // See the [JobBase]'s Interval and Schedule fields for more information on

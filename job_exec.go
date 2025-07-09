@@ -308,7 +308,7 @@ func (job *JobExec) init(env *Env, name string) (err error) {
 	return nil
 }
 
-// handleHTTP trigger running the JobExec by HTTP request.
+// handleHTTP handle running the job from HTTP request.
 //
 // Once the signature is verified it will response immediately and run the
 // actual process in the new goroutine.
@@ -344,8 +344,7 @@ func (job *JobExec) handleHTTP(epr *libhttp.EndpointRequest) (resbody []byte, er
 	return resbody, err
 }
 
-// Start the job queue, either by scheduler, interval, or waiting for
-// request.
+// Start the job queue, either by scheduler, interval, or HTTP request.
 func (job *JobExec) Start(jobq chan struct{}, logq chan<- *JobLog) {
 	job.jobq = jobq
 	job.JobBase.logq = logq
@@ -361,11 +360,11 @@ func (job *JobExec) Start(jobq chan struct{}, logq chan<- *JobLog) {
 		job.startInterval()
 		return
 	}
-	job.startQueue()
+	job.queueByHTTP()
 }
 
-// startQueue start JobExec queue that triggered only by HTTP request.
-func (job *JobExec) startQueue() {
+// queueByHTTP start job queue that triggered only by HTTP request.
+func (job *JobExec) queueByHTTP() {
 	var epr *libhttp.EndpointRequest
 
 	for {
@@ -379,6 +378,8 @@ func (job *JobExec) startQueue() {
 	}
 }
 
+// startScheduler start job queue that triggered mainly by schedule and
+// optionally by HTTP request.
 func (job *JobExec) startScheduler() {
 	var epr *libhttp.EndpointRequest
 
@@ -399,6 +400,8 @@ func (job *JobExec) startScheduler() {
 	}
 }
 
+// startInterval start job queue that triggered mainly by interval and
+// optionally by HTTP request.
 func (job *JobExec) startInterval() {
 	var (
 		now          time.Time
