@@ -72,11 +72,16 @@ async function jobCancel(id) {
   renderJobs([job]);
 }
 
-async function jobInfo(jobID) {
+function expandOrCollapse(jobID) {
   let job = _jobs[jobID];
-  let el = document.getElementById(job._idInfo);
-  let delay = 10000;
+  if (!job) {
+    job = _httpJobs[jobID];
+    if (!job) {
+      return;
+    }
+  }
 
+  let el = document.getElementById(job._idInfo);
   if (el.style.display === "block") {
     el.style.display = "none";
     job._display = "none";
@@ -168,20 +173,6 @@ async function jobResume(id) {
 
   let job = res.data;
   renderJobs([job]);
-}
-
-async function jobHttpInfo(jobID) {
-  let job = _httpJobs[jobID];
-  let el = document.getElementById(job._idInfo);
-  let delay = 10000;
-
-  if (el.style.display === "block") {
-    el.style.display = "none";
-    job._display = "none";
-  } else {
-    el.style.display = "block";
-    job._display = "block";
-  }
 }
 
 async function jobHttpPause(id) {
@@ -366,7 +357,7 @@ function renderJobs(jobs) {
     let out = `
       <div id="${job._id}" class="job">
         <div id="${job._idStatus}" class="name ${job.status}">
-          <a href="#${job._id}" onclick='jobInfo("${job.id}")'>
+          <a href="#${job._id}" onclick='expandOrCollapse("${job.id}")'>
             ${job.name}
           </a>
           <span id="${job._idStatusRight}" class="status_right"></span>
@@ -507,7 +498,7 @@ function renderHttpJobs(httpJobs) {
     out = `
       <div id="${httpJob._id}" class="jobhttp">
         <div id="${httpJob._idStatus}" class="name ${httpJob.status}">
-          <a href="#${httpJob._id}" onclick='jobHttpInfo("${httpJob.id}")'>
+          <a href="#${httpJob._id}" onclick='expandOrCollapse("${httpJob.id}")'>
             ${httpJob.name}
           </a>
           <span id="${httpJob._idStatusRight}" class="status_right"></span>
