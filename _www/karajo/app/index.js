@@ -30,6 +30,8 @@ async function doRefresh() {
 
   renderJobs(_env.jobs);
   renderHttpJobs(_env.http_jobs);
+
+  handleFragment(_env.jobs, _env.http_jobs);
 }
 
 function setTitle() {
@@ -89,6 +91,7 @@ function expandOrCollapse(jobID) {
     el.style.display = "block";
     job._display = "block";
   }
+  return el;
 }
 
 async function jobRunNow(jobID, jobPath) {
@@ -513,4 +516,46 @@ function renderHttpJobs(httpJobs) {
     elHttpJobs.innerHTML += out;
     renderJobHttp(httpJob);
   }
+}
+
+// handleFragment wait for all jobs has been rendered and expand the job
+// information based on the job ID in the URL fragment.
+function handleFragment(jobs, http_jobs) {
+  const wait = setInterval(function () {
+    // Wait for all jobs has been rendered first.
+    for (let name in jobs) {
+      const job = jobs[name];
+      const id = `job_${job.id}`;
+      let el = document.getElementById(id);
+      if (!el) {
+        return;
+      }
+    }
+    for (let name in http_jobs) {
+      const job = http_jobs[name];
+      const id = `jobhttp_${job.id}`;
+      let el = document.getElementById(id);
+      if (!el) {
+        return;
+      }
+    }
+
+    clearInterval(wait);
+
+    const currentUrl = new URL(window.location.href);
+    let job_id = currentUrl.hash;
+    if (!job_id) {
+      return;
+    }
+    job_id = job_id.slice(1);
+    if (job_id.startsWith("job_")) {
+      job_id = job_id.slice(4);
+    } else if (job_id.startsWith("jobhttp_")) {
+      job_id = job_id.slice(8);
+    } else {
+      return;
+    }
+    const el = expandOrCollapse(job_id);
+    el.scrollIntoView();
+  }, 500);
 }
