@@ -3,6 +3,69 @@
 :sectanchors:
 :sectlinks:
 
+Change log of each release of the karajo software.
+The latest release log is put on the top.
+
+Legend,
+
+* 🪵: Breaking changes
+* 🌱: New feature
+* 🌼: Enhancement
+* 💧: Chores
+
+[#karajo_v0_10_0]
+== karajo v0.10.0 (2025-12-27)
+
+**💧 all: replace linter revive with go vet**
+
+**💧 make: increase the test timeout to 30 seconds**
+
+In one of my machine, Lenovo Yoga, running with 10 seconds timeout
+result in panic
+
+----
+  panic: test timed out after 10s
+  running tests:
+    TestUser_authenticate (2s)
+
+  goroutine 86 [running]:
+  testing.(*M).startAlarm.func1()
+    /home/ms/local/share/go/src/testing/testing.go:2686 +0x605
+  created by time.goFunc
+    /home/ms/local/share/go/src/time/sleep.go:215 +0x45
+----
+
+**🌼 all: accept multiple AuthKind**
+
+A job, as webhook, can be triggered from multiple sources, not only one.
+For example, webhook from GitHub, webhook from Sourcehut, or manually
+from web user interface.
+
+**🌼 all: always add hmac-sha256 for auth**
+
+The hmac-sha256 is already the default auth kind if its empty.
+We add it to allow triggering job from the web user interface.
+
+**🌼 _www/karajo/app: authenticate job using hmac-sha256**
+
+If a job use sourcehut auth, we cannot trigger it from the web because
+CryptoJS does not support ed25519.
+Since hmac-sha256 is always added to the job, we can trigger it now.
+
+**💧 internal/cmd/gocheck: add internal static analyzers**
+
+Instead of using binary fieldalignment and shadow, run them by creating
+command that call the same Analyzer internally.
+
+**🌼 _www: auto expand job information based on the URL fragment**
+
+When URL contains the job ID, as in "#job_id", expand the job information
+after all jobs has been rendered and scroll into it.
+
+This allow user share the link to the job.
+
+**💧 go.mod: set minimum Go to 1.24.0 and update all dependencies**
+
 
 [#v0_9_3]
 == karajo v0.9.3 (2024-12-08)
