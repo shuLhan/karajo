@@ -1,23 +1,24 @@
 module git.sr.ht/~shulhan/karajo
 
-go 1.23.4
+go 1.24.0
 
 require (
-	git.sr.ht/~shulhan/ciigo v0.15.2
-	git.sr.ht/~shulhan/pakakeh.go v0.60.1
-	golang.org/x/crypto v0.39.0
+	git.sr.ht/~shulhan/ciigo v0.15.3
+	git.sr.ht/~shulhan/pakakeh.go v0.60.2
+	golang.org/x/crypto v0.46.0
 )
 
 require (
-	git.sr.ht/~shulhan/asciidoctor-go v0.7.1 // indirect
-	github.com/yuin/goldmark v1.7.12 // indirect
+	git.sr.ht/~shulhan/asciidoctor-go v0.7.2 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/yuin/goldmark v1.7.13 // indirect
 	github.com/yuin/goldmark-meta v1.1.0 // indirect
-	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
-	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/tools v0.34.0 // indirect
+	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
+	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/tools v0.40.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
