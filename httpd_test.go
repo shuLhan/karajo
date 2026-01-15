@@ -155,10 +155,11 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 	k.sm.value[cookie.Value] = user
 
 	type testCase struct {
-		cookie *http.Cookie
-		desc   string
-		path   string
-		exp    bool
+		cookie        *http.Cookie
+		desc          string
+		path          string
+		expStatusCode int
+		exp           bool
 	}
 
 	var cases = []testCase{{
@@ -170,18 +171,21 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 		path: `/karajo/`,
 		exp:  true,
 	}, {
-		desc:   `to login with cookie`,
-		path:   `/karajo/`,
-		exp:    false, // Request redirect to app.
-		cookie: cookie,
+		desc:          `to login with cookie`,
+		path:          `/karajo/`,
+		exp:           false, // Request redirect to app.
+		expStatusCode: http.StatusFound,
+		cookie:        cookie,
 	}, {
-		desc: `to app without cookie`,
-		path: `/karajo/app/index.html`,
-		exp:  false,
+		desc:          `to app without cookie`,
+		path:          `/karajo/app/index.html`,
+		exp:           false,
+		expStatusCode: http.StatusUnauthorized,
 	}, {
-		desc: `to app with cookie not exist`,
-		path: `/karajo/app/index.html`,
-		exp:  false,
+		desc:          `to app with cookie not exist`,
+		path:          `/karajo/app/index.html`,
+		exp:           false,
+		expStatusCode: http.StatusUnauthorized,
 		cookie: &http.Cookie{
 			Name:  cookieName,
 			Value: `notexist`,
@@ -192,9 +196,10 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 		exp:    true,
 		cookie: cookie,
 	}, {
-		desc: `to api without cookie`,
-		path: `/karajo/api/environment`,
-		exp:  false,
+		desc:          `to api without cookie`,
+		path:          `/karajo/api/environment`,
+		exp:           false,
+		expStatusCode: http.StatusUnauthorized,
 	}, {
 		desc:   `to api with cookie`,
 		path:   `/karajo/api/environment`,
@@ -210,9 +215,10 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 		}
 		node = &memfs.Node{}
 
-		c       testCase
-		gotNode *memfs.Node
-		got     bool
+		c          testCase
+		gotNode    *memfs.Node
+		statusCode int
+		got        bool
 	)
 	for _, c = range cases {
 		httpReq.URL.Path = c.path
@@ -221,9 +227,10 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 			httpReq.AddCookie(c.cookie)
 		}
 
-		gotNode = k.handleFSAuth(node, recordWriter, httpReq)
+		gotNode, statusCode = k.handleFSAuth(node, recordWriter, httpReq)
 		got = gotNode != nil
-		test.Assert(t, c.desc, c.exp, got)
+		test.Assert(t, c.desc+`: gotNode != nil`, c.exp, got)
+		test.Assert(t, c.desc+`: statusCode`, c.expStatusCode, statusCode)
 	}
 }
 
@@ -236,10 +243,11 @@ func testHandleFSAuthWithoutUser(t *testing.T, k *Karajo) {
 	k.env.Users = map[string]*User{}
 
 	type testCase struct {
-		cookie *http.Cookie
-		desc   string
-		path   string
-		exp    bool
+		cookie        *http.Cookie
+		desc          string
+		path          string
+		expStatusCode int
+		exp           bool
 	}
 
 	var cases = []testCase{{
@@ -247,14 +255,16 @@ func testHandleFSAuthWithoutUser(t *testing.T, k *Karajo) {
 		path: `/`,
 		exp:  true,
 	}, {
-		desc: `to login without cookie`,
-		path: `/karajo/`,
-		exp:  false, // Redirected to app.
+		desc:          `to login without cookie`,
+		path:          `/karajo/`,
+		exp:           false, // Redirected to app.
+		expStatusCode: http.StatusFound,
 	}, {
-		desc:   `to login with cookie`,
-		path:   `/karajo/`,
-		exp:    false, // Redirected to app.
-		cookie: cookie,
+		desc:          `to login with cookie`,
+		path:          `/karajo/`,
+		exp:           false, // Redirected to app.
+		expStatusCode: http.StatusFound,
+		cookie:        cookie,
 	}, {
 		desc: `to app without cookie`,
 		path: `/karajo/app/index.html`,
@@ -278,9 +288,10 @@ func testHandleFSAuthWithoutUser(t *testing.T, k *Karajo) {
 		}
 		node = &memfs.Node{}
 
-		c       testCase
-		gotNode *memfs.Node
-		got     bool
+		c          testCase
+		gotNode    *memfs.Node
+		statusCode int
+		got        bool
 	)
 	for _, c = range cases {
 		httpReq.URL.Path = c.path
@@ -289,8 +300,9 @@ func testHandleFSAuthWithoutUser(t *testing.T, k *Karajo) {
 			httpReq.AddCookie(c.cookie)
 		}
 
-		gotNode = k.handleFSAuth(node, recordWriter, httpReq)
+		gotNode, statusCode = k.handleFSAuth(node, recordWriter, httpReq)
 		got = gotNode != nil
-		test.Assert(t, c.desc, c.exp, got)
+		test.Assert(t, c.desc+`: gotNode != nil`, c.exp, got)
+		test.Assert(t, c.desc+`: statusCode`, c.expStatusCode, statusCode)
 	}
 }

@@ -229,24 +229,31 @@ func (k *Karajo) registerJobsHook() (err error) {
 // handleFSAuth authorize access to resource based on the request path and
 // cookie.
 // If env.Users is empty, all request are accepted.
-func (k *Karajo) handleFSAuth(node *memfs.Node, w http.ResponseWriter, req *http.Request) *memfs.Node {
+func (k *Karajo) handleFSAuth(
+	node *memfs.Node, w http.ResponseWriter, req *http.Request,
+) (
+	out *memfs.Node, statusCode int,
+) {
 	var path = req.URL.Path
 
 	if k.isAuthorized(req) {
 		if isLoginPage(path) {
 			// Redirect user to app page if cookie is valid and
 			// user in login page.
-			http.Redirect(w, req, pathKarajoApp, http.StatusFound)
-			return nil
+			statusCode = http.StatusFound
+			http.Redirect(w, req, pathKarajoApp, statusCode)
+			return nil, statusCode
 		}
-		return node
+		return node, 0
 	}
 	if isRequireAuth(path) {
-		k.unauthorized(w, req)
-		return nil
+		statusCode = http.StatusUnauthorized
+		w.WriteHeader(statusCode)
+		fmt.Fprintf(w, `Unauthorized`)
+		return nil, statusCode
 	}
-
-	return node
+	// Return the node as-is.
+	return node, 0
 }
 
 // isAuthorized return true env.Users is empty OR if the cookie exist and
@@ -281,12 +288,6 @@ func isRequireAuth(path string) bool {
 
 func isLoginPage(path string) bool {
 	return path == `/karajo` || path == `/karajo/` || path == `/karajo/index.html`
-}
-
-// unauthorized write HTTP status 401 Unauthorized and return false.
-func (k *Karajo) unauthorized(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusUnauthorized)
-	fmt.Fprintf(w, `Unauthorized`)
 }
 
 // apiAuthLogin authenticate user using name and password.

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
+
 = karajo changelog
 :toc:
 :sectanchors:
@@ -13,6 +16,19 @@ Legend,
 * 🌼: Enhancement
 * 💧: Chores
 
+[#karajo_v0_10_1]
+== karajo v0.10.1 (2026-xx-xx)
+//{{{
+
+**🌼 httpd: return 404 when page not found**
+
+Previously, if client request to non-existent page it will return 200
+with empty body.
+
+This changes fix it by returning 404, handled by updating to the
+latest FSHandler from [lib/http].
+
+//}}}
 [#karajo_v0_10_0]
 == karajo v0.10.0 (2025-12-27)
 

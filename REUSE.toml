@@ -5,8 +5,12 @@
 version = 1
 
 [[annotations]]
-path = ["CHANGELOG.adoc", "README.md", "_www/karajo/favicon.png"
-  , "go.mod", "go.sum"]
+path = [
+	"README.md",
+	"_www/karajo/favicon.png",
+	"go.mod",
+	"go.sum",
+]
 SPDX-FileCopyrightText = "2021 Shulhan <ms@kilabit.info>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
