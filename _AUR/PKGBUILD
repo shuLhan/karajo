@@ -1,7 +1,7 @@
 # Maintainer: shulhan <ms@kilabit.info>
 
 pkgname=karajo-git
-pkgver=0.7.0.r42.gef379d6
+pkgver=0.10.0.r1.ge3e68f4
 pkgrel=1
 
 pkgdesc="Worker, scheduler, and WebHook with HTTP."

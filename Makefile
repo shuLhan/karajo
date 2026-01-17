@@ -60,11 +60,12 @@ install:
 	install -Dm0640 _sys/etc/karajo/karajo.conf  $(PREFIX)/etc/karajo/karajo.conf
 	install -Dm0644 _sys/srv/karajo/index.html   $(PREFIX)/srv/karajo/index.html
 
-	install -Dm0644 _sys/usr/lib/systemd/system/karajo.path                       $(PREFIX)/usr/lib/systemd/system/karajo.path
-	install -Dm0644 _sys/usr/lib/systemd/system/karajo.service                    $(PREFIX)/usr/lib/systemd/system/karajo.service
-	install -Dm0644 _sys/usr/lib/systemd/system/systemctl-restart-karajo@.service $(PREFIX)/usr/lib/systemd/system/systemctl-restart-karajo@.service
-	install -Dm0644 _sys/usr/lib/tmpfiles.d/karajo.conf                           $(PREFIX)/usr/lib/tmpfiles.d/karajo.conf
-	install -Dm0644 _sys/usr/lib/sysusers.d/karajo.conf                           $(PREFIX)/usr/lib/sysusers.d/karajo.conf
+	install -Dm0644 _sys/usr/lib/systemd/system/karajo.service \
+	           $(PREFIX)/usr/lib/systemd/system/karajo.service
+	install -Dm0644 _sys/usr/lib/tmpfiles.d/karajo.conf \
+	           $(PREFIX)/usr/lib/tmpfiles.d/karajo.conf
+	install -Dm0644 _sys/usr/lib/sysusers.d/karajo.conf \
+	           $(PREFIX)/usr/lib/sysusers.d/karajo.conf
 
 .PHONY: uninstall
 uninstall:
