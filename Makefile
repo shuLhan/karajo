@@ -18,6 +18,7 @@ memfs_www.go: .FORCE
 	go run ./internal/cmd/karajo-build embed
 
 .PHONY: build
+build: CGO_ENABLED=0
 build: BUILD_FLAGS=-ldflags "-s -w -X 'git.sr.ht/~shulhan/karajo.Version=$(VERSION)'"
 build: memfs_www.go
 	go build \
@@ -84,7 +85,7 @@ uninstall:
 deploy-kilabit: build
 	rsync --progress karajo build.kilabit.info:/tmp/karajo
 	ssh build.kilabit.info "sudo mv /tmp/karajo /usr/bin/karajo"
-	ssh build.kilabit.info "systemctl status karajo"
+	ssh build.kilabit.info "sudo systemctl restart karajo.service"
 
 .PHONY: serve.doc
 serve.doc:
