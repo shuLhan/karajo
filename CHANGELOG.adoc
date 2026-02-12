@@ -916,7 +916,7 @@ immediately, we changes the interval to 10 seconds.
 [v0_2_0_chores]
 ===  Chores
 
-*  all: add prefix "http://" to address when logging at Start
+*  all: add prefix `\http://` to address when logging at Start
 
 
 [#v0_1_0]

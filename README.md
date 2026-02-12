@@ -16,15 +16,15 @@ INI file format.
 
 Features,
 
-* Running job on specific interval.
-* Running job on specific schedule.
-* Trigger HTTP request to external server on specific interval.
-* Preserve the job states on restart.
-* Able to pause and resume specific job.
-* Trigger job using HTTP request (webhook). Supported webhook are `github`,
+- Running job on specific interval.
+- Running job on specific schedule.
+- Trigger HTTP request to external server on specific interval.
+- Preserve the job states on restart.
+- Able to pause and resume specific job.
+- Trigger job using HTTP request (webhook). Supported webhook are `github`,
   `sourcehut`, or custom `hmac-sha256` (default).
-* HTTP APIs to programmatically interact with server
-* User authentication
+- HTTP APIs to programmatically interact with server
+- User authentication
 
 Workflow on karajo,
 
@@ -46,7 +46,6 @@ Workflow on karajo,
                         +-----------------+
 ```
 
-
 ## Configuration
 
 This section describe the file format when loading karajo environment from
@@ -56,8 +55,7 @@ There are three configuration sections: one to configure the server, one to
 configure the internal Job, and another one to configure the external Job HTTP
 to be executed.
 
-
-###  Environment (the server)
+### Environment (the server)
 
 The global environment section has the following format,
 
@@ -169,7 +167,7 @@ If start with '$' it will read from system environment.
 `smtp_password`:: password for smtp_user submission.
 If start with '$' it will read from system environment.
 
-`smtp_insecure`::  if set to true it will disable verifying remote
+`smtp_insecure`:: if set to true it will disable verifying remote
 certificate when connecting with TLS or STARTTLS.
 
 `from`:: the from address that send the email.
@@ -177,7 +175,7 @@ certificate when connecting with TLS or STARTTLS.
 `to`:: email address that will receive notification, can be defined more
 than one.
 
-###  User
+### User
 
 The Karajo WUI can be secured with login, where user must authenticated
 using name and password before they can view the dashboard.
@@ -211,8 +209,7 @@ env := karajo.Environment{
 }
 ```
 
-
-###  Job
+### Job
 
 Job is the worker that run a function or list of commands triggered from
 external HTTP request or by timer.
@@ -248,24 +245,22 @@ This field is required and should unique between Job.
 `description`:: The description of the Job.
 It could be plain text or simple HTML.
 
-
 `schedule`:: A timer that run periodically based on calendar or day time.
 
 A schedule is divided into monthly, weekly, daily, hourly, and minutely.
 A date and time in schedule is in UTC.
 Example of schedules,
 
-* monthly@1,15@18:00 = on day 1 and 15 every month at 6 PM UTC.
-* weekly@Sunday,Tuesday,Friday@15:00 = every Sunday, Tuesday, and Friday on
+- monthly@1,15@18:00 = on day 1 and 15 every month at 6 PM UTC.
+- weekly@Sunday,Tuesday,Friday@15:00 = every Sunday, Tuesday, and Friday on
   each week at 3 PM UTC.
-* daily@00:00,06:00,12:00,18:00 = every day at midnight, 6 AM, and 12 PM UTC.
-* hourly@0,15,30,45 = on minutes 0, 15, 30, 45 every hour.
+- daily@00:00,06:00,12:00,18:00 = every day at midnight, 6 AM, and 12 PM UTC.
+- hourly@0,15,30,45 = on minutes 0, 15, 30, 45 every hour.
 
 See
 [time.Schedule](https://pkg.go.dev/git.sr.ht/~shulhan/pakakeh.go/lib/time#Scheduler)
 for format of schedule.
 If both Schedule and Interval set, only Schedule will be processed.
-
 
 `interval`:: Define the duration when job will be repeatedly executed.
 This field is optional, if not set the Job can only run when receiving HTTP
@@ -282,15 +277,15 @@ This field is optional and must unique between Job.
 `auth_kind`:: Define the kind of authorization to trigger Job.
 Supported AuthKind are
 
-* `github`: the signature read from "X-Hub-Signature-256" and
+- `github`: the signature read from "X-Hub-Signature-256" and
   compare it by signing request body with Secret using HMAC-SHA256.
   If the header is empty, it will check another header "X-Hub-Signature" and
   then sign the request body with Secret using HMAC-SHA1.
 
-* `hmac-sha256` (default): the signature read from HeaderSign and compare it
+- `hmac-sha256` (default): the signature read from HeaderSign and compare it
   by signing request body with Secret using HMAC-SHA256.
 
-* `sourcehut`: See [man.sr.ht](https://man.sr.ht/api-conventions.md#webhooks)
+- `sourcehut`: See [man.sr.ht](https://man.sr.ht/)
 
 `header_sign`:: Define custom HTTP header where the signature is read.
 Default to "X-Karajo-Sign" if its empty.
@@ -315,7 +310,6 @@ This option can be defined multiple times.
 `notif_on_failed`:: List of notification that will be triggered when job
 finish with status "failed".
 This option can be defined multiple times.
-
 
 ### JobHttp
 
@@ -360,11 +354,9 @@ It could be plain text or simple HTML.
 The signature is sent on HTTP header "X-Karajo-Sign" as hex string.
 If its empty, it will be set to global Secret from Environment.
 
-
 `header_sign`:: Define the HTTP header where the signature will be written in
 request.
 Default to "X-Karajo-Sign" if its empty.
-
 
 `schedule`:: A timer that run periodically based on calendar or day time.
 
@@ -372,17 +364,16 @@ A schedule is divided into monthly, weekly, daily, hourly, and minutely.
 A date and time in schedule is in UTC.
 Example of schedules,
 
-* monthly@1,15@18:00 = on day 1 and 15 every month at 6 PM UTC.
-* weekly@Sunday,Tuesday,Friday@15:00 = every Sunday, Tuesday, and Friday on
+- monthly@1,15@18:00 = on day 1 and 15 every month at 6 PM UTC.
+- weekly@Sunday,Tuesday,Friday@15:00 = every Sunday, Tuesday, and Friday on
   each week at 3 PM UTC.
-* daily@00:00,06:00,12:00,18:00 = every day at midnight, 6 AM, and 12 PM UTC.
-* hourly@0,15,30,45 = on minutes 0, 15, 30, 45 every hour.
+- daily@00:00,06:00,12:00,18:00 = every day at midnight, 6 AM, and 12 PM UTC.
+- hourly@0,15,30,45 = on minutes 0, 15, 30, 45 every hour.
 
 See
 [time.Schedule](https://pkg.go.dev/git.sr.ht/~shulhan/pakakeh.go/lib/time#Scheduler)
 for format of schedule.
 If both Schedule and Interval set, only Schedule will be processed.
-
 
 `interval`:: Define the interval when job will be executed.
 This field is required, if not set or invalid it will set to 30 seconds.
@@ -403,10 +394,10 @@ request.
 
 Its accept,
 
-* (empty string): no header Content-Type to be set.
-* query: no header Content-Type to be set, reserved for future use.
-* form: header Content-Type set to "application/x-www-form-urlencoded",
-* json: header Content-Type set to "application/json".
+- (empty string): no header Content-Type to be set.
+- query: no header Content-Type to be set, reserved for future use.
+- form: header Content-Type set to "application/x-www-form-urlencoded",
+- json: header Content-Type set to "application/json".
 
 The type "form" and "json" only applicable if the http_method is POST or PUT.
 This field is optional, default to query.
@@ -439,7 +430,6 @@ This option can be defined multiple times.
 `notif_on_failed`:: List of notification that will be triggered when job
 finish with status "failed".
 This option can be defined multiple times.
-
 
 ## Examples
 
@@ -492,7 +482,6 @@ func main() {
 	}
 }
 ```
-
 
 ### Job with interval
 
@@ -552,7 +541,6 @@ $ curl \
 (Change the path to /karajo/api/job_exec/run/hello-world-code to trigger the
 code one)
 
-
 ### Job with schedule
 
 The following job will run command `echo "Hello world from schedule"` in
@@ -586,7 +574,6 @@ func helloWorldFromSchedule(log io.Writer, epr *libhttp.EndpointRequest) error {
 }
 ...
 ```
-
 
 ### Job as webhook
 
@@ -626,11 +613,10 @@ func webhookWithGithub(log io.Writer, epr *libhttp.EndpointRequest) error {
 Once the server running, you can register the following webhook path to
 Github,
 
-* `https://<YOUR_KARAJO_IP>/karajo/api/job_exec/run/webhook-github`, or
-* `https://<YOUR_KARAJO_IP/karajo/api/job_exec/run/webhook-github-code`
+- `https://<YOUR_KARAJO_IP>/karajo/api/job_exec/run/webhook-github`, or
+- `https://<YOUR_KARAJO_IP/karajo/api/job_exec/run/webhook-github-code`
 
 using the secret: `s3cret`.
-
 
 ### JobHttp by interval
 
@@ -669,7 +655,6 @@ The same configuration can be created using code as below,
 ...
 ```
 
-
 ### JobHttp by schedule
 
 The following configuration create JobHttp that trigger the POST request to
@@ -705,13 +690,13 @@ The same configuration can be created using code as below,
 ...
 ```
 
-
 ## Development
 
-[CHANGELOG](CHANGELOG.html) - History of each releases.
+[CHANGELOG](https://kilabit.info/project/karajo/CHANGELOG.html) - History of
+each releases.
 
-[HTTP APIs](http_api.html) - The exposed HTTP API documentation for karajo
-server.
+[HTTP APIs](https://kilabit.info/project/karajo/http_api.html) - The exposed
+HTTP API documentation for karajo server.
 
 [Repository](https://git.sr.ht/~shulhan/karajo) - The source code repository.
 
@@ -721,21 +706,9 @@ sending patches.
 [Issues](https://todo.sr.ht/~shulhan/karajo) - Link to open an issue or
 request for new feature.
 
-
 ## License
 
-Copyright 2021-2023, M. Shulhan (ms@kilabit.info).
+Copyright 2021-2023, M. Shulhan &lt;ms@kilabit.info&gt;.
 
-This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later
-version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with
-this program.  If not, see <https://www.gnu.org/licenses/>.
+This program is licensed under GNU General Public License version 3.0 or
+later.
