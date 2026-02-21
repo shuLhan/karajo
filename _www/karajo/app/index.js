@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2022 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2022 M. Shulhan <ms@kilabit.info>
 
 let _env = {};
 let _httpJobs = {};
@@ -74,7 +74,10 @@ async function jobCancel(id) {
   renderJobs([job]);
 }
 
-function expandOrCollapse(jobID) {
+function expandOrCollapse(event, jobID) {
+  if (event) {
+    event.preventDefault();
+  }
   let job = _jobs[jobID];
   if (!job) {
     job = _httpJobs[jobID];
@@ -360,7 +363,7 @@ function renderJobs(jobs) {
     let out = `
       <div id="${job._id}" class="job">
         <div id="${job._idStatus}" class="name ${job.status}">
-          <a href="#${job._id}" onclick='expandOrCollapse("${job.id}")'>
+          <a href="#${job._id}" onclick='expandOrCollapse(event, "${job.id}")'>
             ${job.name}
           </a>
           <span id="${job._idStatusRight}" class="status_right"></span>
@@ -501,7 +504,7 @@ function renderHttpJobs(httpJobs) {
     out = `
       <div id="${httpJob._id}" class="jobhttp">
         <div id="${httpJob._idStatus}" class="name ${httpJob.status}">
-          <a href="#${httpJob._id}" onclick='expandOrCollapse("${httpJob.id}")'>
+          <a href="#${httpJob._id}" onclick='expandOrCollapse(event, "${httpJob.id}")'>
             ${httpJob.name}
           </a>
           <span id="${httpJob._idStatusRight}" class="status_right"></span>
@@ -555,7 +558,7 @@ function handleFragment(jobs, http_jobs) {
     } else {
       return;
     }
-    const el = expandOrCollapse(job_id);
+    const el = expandOrCollapse(null, job_id);
     el.scrollIntoView();
   }, 500);
 }
