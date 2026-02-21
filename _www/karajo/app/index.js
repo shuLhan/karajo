@@ -243,42 +243,73 @@ function renderJobAttributes(job) {
   let out = ``;
 
   if (job.description) {
-    out += `<div>${job.description}</div><br/>`;
+    out += `<div class="row desc">${job.description}</div><br/>`;
   }
 
   out += `
-    <div>ID: ${job.id}</div>
-    <div>Path: ${job.path}</div>
-    <div>Status: ${job.status || "-"}</div>
-    <div>Last run: ${job.last_run}</div>
+    <div class="row">
+      <span class="key">ID:</span>
+      <span class="val">${job.id}</div>
+    </div>
+    <div class="row">
+      <span class="key">Path:</span>
+      <span class="val">${job.path}</div>
+    </div>
+    <div class="row">
+      <span class="key">Status:</span>
+      <span class="val">${job.status || "-"}</span>
+    </div>
+    <div class="row">
+      <span class="key">Last run:</span>
+      <span class="val">${job.last_run}</span>
+    </div>
   `;
 
   if (job.schedule) {
     out += `
-      <div>Schedule: ${job.schedule}</div>
-      <div>Next run: ${job.next_run}</div>
+      <div class="row">
+        <span class="key">Schedule:</span>
+        <span class="val">${job.schedule}</span>
+      </div>
+      <div class="row">
+        <span class="key">Next run:</span>
+        <span class="val">${job.next_run}</span>
+      </div>
     `;
   } else if (job.interval > 0) {
     out += `
-      <div>Interval: ${job.interval / 1e9} seconds</div>
-      <div>Next run: ${job.next_run}</div>
+      <div class="row">
+        <span class="key">Interval:</span>
+        <span class="val">${job.interval / 1e9} seconds</span>
+      </div>
+      <div class="row">
+        <span class="key">Next run:</span>
+        <span class="val">${job.next_run}</span>
+      </div>
     `;
   }
 
   if (job.commands) {
     out += `
       <br/>
-      <div class="job_commands">commands:
+      <div class="row job_commands">Commands:</div>
+      <div class="job_commands">
     `;
     job.commands.forEach(function (cmd, idx, list) {
-      out += `<div> ${idx}: <tt>${cmd}</tt> </div>`;
+      out += `
+        <div class="row">
+          <span class="key">${idx}:</span>
+          <span class="val"><tt>${cmd}</tt></span>
+        </div>`;
     });
     out += `</div>`;
   }
 
   out += `
     <br/>
-    <div>Log:
+    <br/>
+    <div class="row logs">Logs:</div>
+    <div class="logs">
   `;
 
   if (job.logs == null) {
@@ -286,21 +317,30 @@ function renderJobAttributes(job) {
   }
 
   job.logs.forEach(function (log, idx, list) {
-    out += `<a
-      href="/karajo/job_exec/log/?id=${job.id}&counter=${log.counter}"
-      target="_blank"
-      class="job-log ${log.status}"
-    >
-        #${log.counter}
-    </a>`;
+    out += `
+      <div class="row">
+        <span class="key">
+          <a
+            href="/karajo/job_exec/log/?id=${job.id}&counter=${log.counter}"
+            target="_blank"
+            class="job-log ${log.status}"
+          >
+            #${log.counter}
+          </a>
+        </span>
+        <span class="val"></span>
+      </div>
+    `;
   });
 
-  out += `&nbsp;<button onclick="jobRunNow('${job.id}', '${job.path}')">Run now</button>`;
-  out += `&nbsp;<button onclick="jobCancel('${job.id}')">Cancel</button>`;
-  out += `&nbsp;<button onclick="jobPause('${job.id}')">Pause</button>`;
-  out += `&nbsp;<button onclick="jobResume('${job.id}')">Resume</button>`;
-
-  out += "</div>";
+  out += `
+    </div>
+    <div class="row actions">
+      <button onclick="jobRunNow('${job.id}', '${job.path}')">Run now</button>
+      <button onclick="jobCancel('${job.id}')">Cancel</button>
+      <button onclick="jobPause('${job.id}')">Pause</button>
+      <button onclick="jobResume('${job.id}')">Resume</button>
+    </div>`;
 
   el.innerHTML = out;
 }
@@ -394,33 +434,65 @@ function renderJobHttpAttrs(job) {
   let out = ``;
 
   if (job.description) {
-    out += `<div>${job.description}</div><br/>`;
+    out += `<div class="row desc">${job.description}</div><br/>`;
   }
 
   out += `
-    <div>ID: ${job.id}</div>
-    <div>HTTP URL: ${job.http_url}</div>
+    <div class="row">
+      <span class="key">ID:</span>
+      <span class="val">${job.id}</span>
+    </div>
+    <div class="row">
+      <span class="key">HTTP URL:</span>
+      <span class="val">${job.http_url}</span>
+    </div>
   `;
 
   if (job.http_headers) {
-    out += `<div>HTTP headers: ${job.http_headers}</div>`;
-  }
-
-  out += `<div>HTTP timeout: ${job.http_timeout / 1e9}</div>`;
-
-  if (job.interval) {
-    out += `<div>Interval: ${job.interval / 1e9}s</div>`;
+    out += `
+      <div class="row">
+        <span class="key">HTTP headers:</span>
+        <span class="val">${job.http_headers}</span>
+      </div>
+    `;
   }
 
   out += `
-    <div>Last run: ${job.last_run}</div>
-    <div>Next run: ${job.next_run}</div>
-    <div>Status: ${job.status || ""}</div>
+    <div class="row">
+      <span class="key">HTTP timeout:</span>
+      <span class="val">${job.http_timeout / 1e9}</span>
+    </div>
+  `;
+
+  if (job.interval) {
+    out += `
+      <div class="row">
+        <span class="key">Interval:</span>
+        <span class="val">${job.interval / 1e9}s</span>
+      </div>
+    `;
+  }
+
+  out += `
+    <div class="row">
+      <span class="key">Last run:</span>
+      <span class="val">${job.last_run}</span>
+    </div>
+    <div class="row">
+      <span class="key">Next run:</span>
+      <span class="val">${job.next_run}</span>
+    </div>
+    <div class="row">
+      <span class="key">Status:</span>
+      <span class="val">${job.status || ""}</span>
+    </div>
   `;
 
   out += `
     <br/>
-    <div>Log:
+    <br/>
+    <div class="row logs">Logs:</div>
+    <div class="logs">
   `;
 
   if (job.logs == null) {
@@ -428,16 +500,24 @@ function renderJobHttpAttrs(job) {
   }
 
   job.logs.forEach(function (log, idx, list) {
-    out += `<a
-      href="/karajo/job_http/log/?id=${job.id}&counter=${log.counter}"
-      target="_blank"
-      class="job-log ${log.status}"
-    >
-        #${log.counter}
-    </a>`;
+    out += `
+      <div class="row">
+        <span class="key">
+          <a
+            href="/karajo/job_http/log/?id=${job.id}&counter=${log.counter}"
+            target="_blank"
+            class="job-log ${log.status}"
+          >#${log.counter}</a>
+        </span>
+        <span class="val"></span>
+      </div>
+    `;
   });
 
-  out += `<div class="actions">`;
+  out += `
+    </div>
+    <div class="row actions">
+  `;
 
   if (job.status == "paused") {
     out += `<button onclick="jobHttpResume('${job.id}')">Resume</button>`;

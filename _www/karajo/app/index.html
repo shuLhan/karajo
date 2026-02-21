@@ -23,6 +23,19 @@
         font-size: 12px;
       }
 
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .row .key {
+        flex: 0 1 8rem;
+        text-align: right;
+      }
+      .row .val {
+        flex: 1 1 auto;
+      }
+
       .auth {
         margin: 1em 0;
       }
@@ -86,6 +99,21 @@
       .job,
       .jobhttp {
         margin-bottom: 1em;
+      }
+
+      .job .attrs,
+      .jobhttp .attrs {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .row.desc {
+        margin-bottom: 1rem;
+      }
+      .job_commands .key,
+      .logs .key {
+        flex: 0 1 auto;
+        text-align: left;
       }
 
       .job-log {
