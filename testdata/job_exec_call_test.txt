@@ -17,6 +17,7 @@ Test running JobExec with Call.
       "job_id": "test_job_timer",
       "name": "test_job_timer.1.success",
       "status": "success",
+      "finished_at": "2023-01-09T00:00:00Z",
       "counter": 1
     }
   ],

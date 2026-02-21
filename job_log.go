@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2022 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2022 M. Shulhan <ms@kilabit.info>
 
 package karajo
 
@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // JobLog contains the content, status, and counter for job's log.
@@ -26,10 +27,14 @@ import (
 // If status is missing its considered fail.
 type JobLog struct {
 	jobKind jobKind
-	JobID   string `json:"job_id"`
-	Name    string `json:"name"`
-	path    string
-	Status  string `json:"status,omitempty"`
+
+	JobID  string `json:"job_id"`
+	Name   string `json:"name"`
+	path   string
+	Status string `json:"status,omitempty"`
+
+	FinishedAt time.Time `json:"finished_at"`
+
 	Content []byte `json:"content,omitempty"` // Only used to transfrom from/to JSON.
 	content []byte
 
@@ -42,15 +47,17 @@ type JobLog struct {
 	sync.Mutex
 }
 
-// parseJobLogName parse the log file name to unpack the name, counter, and
+// newJobLog parse the log file name to unpack the name, counter, and
 // status.
 // If the name is not valid, the file is removed and it will return nil.
-func parseJobLogName(dir, name string) (jlog *JobLog) {
+func newJobLog(dir string, fi os.FileInfo) (jlog *JobLog) {
+	name := fi.Name()
 	var logFields = strings.Split(name, `.`)
 
 	jlog = &JobLog{
-		Name: name,
-		path: filepath.Join(dir, name),
+		Name:       name,
+		path:       filepath.Join(dir, name),
+		FinishedAt: fi.ModTime().Round(time.Second).UTC(),
 	}
 
 	if len(logFields) <= 1 {

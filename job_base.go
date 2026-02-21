@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
 
 package karajo
 
@@ -240,7 +240,7 @@ func (job *JobBase) initLogs() (err error) {
 	}
 
 	for _, fi = range fis {
-		hlog = parseJobLogName(job.dirLog, fi.Name())
+		hlog = newJobLog(job.dirLog, fi)
 		if hlog == nil {
 			// Skip log with invalid file name.
 			continue
@@ -411,6 +411,7 @@ func (job *JobBase) finish(jlog *JobLog, err error) {
 	}
 
 	job.LastRun = timeNow()
+	jlog.FinishedAt = job.LastRun
 	if job.scheduler != nil {
 		job.NextRun = job.scheduler.Next()
 	} else if job.Interval > 0 {

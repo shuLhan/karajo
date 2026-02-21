@@ -36,6 +36,7 @@ Test running Job with handleHTTP.
       "job_id": "test_job_handle_http",
       "name": "test_job_handle_http.1.success",
       "status": "success",
+      "finished_at": "2023-01-09T00:00:00Z",
       "counter": 1
     }
   ],

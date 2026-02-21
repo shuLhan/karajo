@@ -328,7 +328,7 @@ function renderJobAttributes(job) {
             #${log.counter}
           </a>
         </span>
-        <span class="val"></span>
+        <span class="val">Finished at ${log.finished_at}</span>
       </div>
     `;
   });
@@ -509,7 +509,7 @@ function renderJobHttpAttrs(job) {
             class="job-log ${log.status}"
           >#${log.counter}</a>
         </span>
-        <span class="val"></span>
+        <span class="val">Finished at ${log.finished_at}</span>
       </div>
     `;
   });
