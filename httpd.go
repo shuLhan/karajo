@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 
 package karajo
 
@@ -41,6 +41,7 @@ const (
 
 // List of known pathes.
 const (
+	pathKarajo    = `/karajo/`
 	pathKarajoAPI = `/karajo/api/`
 	pathKarajoApp = `/karajo/app/`
 )
@@ -226,9 +227,9 @@ func (k *Karajo) registerJobsHook() (err error) {
 	return nil
 }
 
-// handleFSAuth authorize access to resource based on the request path and
+// handleFSAuth authorizes access to resource based on the request path and
 // cookie.
-// If env.Users is empty, all request are accepted.
+// If [Env.Users] is empty, running without users, all requests are accepted.
 func (k *Karajo) handleFSAuth(
 	node *memfs.Node, w http.ResponseWriter, req *http.Request,
 ) (
@@ -247,9 +248,8 @@ func (k *Karajo) handleFSAuth(
 		return node, 0
 	}
 	if isRequireAuth(path) {
-		statusCode = http.StatusUnauthorized
-		w.WriteHeader(statusCode)
-		fmt.Fprintf(w, `Unauthorized`)
+		statusCode = http.StatusSeeOther
+		http.Redirect(w, req, pathKarajo, statusCode)
 		return nil, statusCode
 	}
 	// Return the node as-is.

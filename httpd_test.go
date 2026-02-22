@@ -180,12 +180,12 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 		desc:          `to app without cookie`,
 		path:          `/karajo/app/index.html`,
 		exp:           false,
-		expStatusCode: http.StatusUnauthorized,
+		expStatusCode: http.StatusSeeOther,
 	}, {
 		desc:          `to app with cookie not exist`,
 		path:          `/karajo/app/index.html`,
 		exp:           false,
-		expStatusCode: http.StatusUnauthorized,
+		expStatusCode: http.StatusSeeOther,
 		cookie: &http.Cookie{
 			Name:  cookieName,
 			Value: `notexist`,
@@ -199,7 +199,7 @@ func testHandleFSAuthWithUser(t *testing.T, k *Karajo) {
 		desc:          `to api without cookie`,
 		path:          `/karajo/api/environment`,
 		exp:           false,
-		expStatusCode: http.StatusUnauthorized,
+		expStatusCode: http.StatusSeeOther,
 	}, {
 		desc:   `to api with cookie`,
 		path:   `/karajo/api/environment`,
