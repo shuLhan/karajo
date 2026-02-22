@@ -12,15 +12,12 @@
     <style>
       body {
         margin: 0;
-        padding: 20px 0 0 0;
+        padding: 2rem 0 0 0;
+        font-size: 16px;
       }
 
       a {
         text-decoration: none;
-      }
-
-      #timer {
-        font-size: 12px;
       }
 
       .row {
@@ -39,15 +36,12 @@
       .auth {
         margin: 1em 0;
       }
-
       .auth label {
         width: 10em;
       }
-
       .auth input {
         width: calc(100% - 10em);
       }
-
       .auth .hint {
         background-color: antiquewhite;
         padding: 4px;
@@ -57,11 +51,25 @@
       .header-fixed {
         background-color: whitesmoke;
         border-bottom: 1px solid silver;
-        padding: 4px;
         position: fixed;
         text-align: center;
-        top: 0;
         width: 100%;
+      }
+      .header-fixed#timer {
+        padding: 4px;
+        top: 0;
+      }
+      .header-fixed#error {
+        background-color: salmon;
+        display: none;
+        padding: 4px;
+        top: 1.8rem;
+      }
+      .header-fixed#info {
+        background-color: antiquewhite;
+        display: none;
+        padding: 4px;
+        top: 1.8rem;
       }
 
       .content {
@@ -141,7 +149,6 @@
       }
 
       .log {
-        font-size: 12px;
         height: 18em;
         overflow: auto;
         font-family: monospace;
@@ -171,9 +178,9 @@
   </head>
 
   <body onload="main()">
-    <div class="header-fixed">
-      <span id="timer"> </span>
-    </div>
+    <div class="header-fixed" id="timer"></div>
+    <div class="header-fixed" id="error"></div>
+    <div class="header-fixed" id="info"></div>
 
     <div class="content">
       <h2>
@@ -193,9 +200,6 @@
 
       <h3>HTTP Jobs</h3>
       <div id="http_jobs"></div>
-
-      <div id="out"></div>
-      <div id="err"></div>
     </div>
 
     <div class="footer">

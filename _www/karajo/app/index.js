@@ -4,23 +4,47 @@
 let _env = {};
 let _httpJobs = {};
 let _jobs = {};
+let _elError = null;
+let _elInfo = null;
 
 async function main() {
   runTimer();
 
-  let wout = document.getElementById("out");
-  wout.innerHTML = "";
-  let werr = document.getElementById("err");
-  werr.innerHTML = "";
+  _elInfo = document.getElementById("info");
+  _elError = document.getElementById("error");
 
   doRefresh();
+}
+
+function showError(msg) {
+  _elInfo.style.display = "none";
+  _elError.style.display = "block";
+  _elError.innerHTML = `${msg} <button onclick="clearError(event)">X</button>`;
+}
+
+function clearError(ev) {
+  ev.preventDefault();
+  _elError.style.display = "none";
+  _elError.innerText = "";
+}
+
+function showInfo(msg) {
+  _elError.style.display = "none";
+  _elInfo.style.display = "block";
+  _elInfo.innerHTML = `${msg} <button onclick="clearInfo(event)">X</button>`;
+}
+
+function clearInfo(ev) {
+  ev.preventDefault();
+  _elInfo.style.display = "none";
+  _elInfo.innerText = "";
 }
 
 async function doRefresh() {
   let fres = await fetch("/karajo/api/environment");
   let res = await fres.json();
   if (res.code != 200) {
-    werr.innerHTML = res.message;
+    showError(`Failed to fetch environment ${ree.message}.`);
     return;
   }
 
@@ -66,10 +90,11 @@ async function jobCancel(id) {
 
   let res = await fres.json();
   if (res.code !== 200) {
-    console.error(res.message);
+    showError(`Failed to cancel the job ${id}: ${res.message}.`);
     return;
   }
 
+  showInfo(`Job ${id} has been cancelled.`);
   let job = res.data;
   renderJobs([job]);
 }
@@ -119,10 +144,11 @@ async function jobRunNow(jobID, jobPath) {
 
   let res = await fres.json();
   if (res.code !== 200) {
-    console.error(res.message);
+    showError(`Failed to run new job ${jobID}: ${res.message}.`);
     return;
   }
 
+  showInfo(`New job ${jobID} has been queued for execution.`);
   job = res.data;
   renderJobs([job]);
 }
@@ -146,10 +172,11 @@ async function jobPause(id) {
 
   let res = await fres.json();
   if (res.code !== 200) {
-    console.error(res.message);
+    showError(`Failed to pause the job ${id}: ${res.message}.`);
     return;
   }
 
+  showInfo(`Job ${id} has been paused.`);
   let job = res.data;
   renderJobs([job]);
 }
@@ -173,10 +200,11 @@ async function jobResume(id) {
 
   let res = await fres.json();
   if (res.code !== 200) {
-    console.error(res.message);
+    showError(`Failed to resume the job ${id}: ${res.message}.`);
     return;
   }
 
+  showInfo(`Job ${id} has been resumed.`);
   let job = res.data;
   renderJobs([job]);
 }
@@ -197,10 +225,11 @@ async function jobHttpPause(id) {
   });
   let res = await fres.json();
   if (res.code !== 200) {
-    console.error(res.message);
+    showError(`Failed to pause HTTP job ${id}: ${res.message}.`);
     return;
   }
 
+  showInfo(`HTTP job ${id} has been paused.`);
   let job = _httpJobs[id];
   job = Object.assign(job, res.data);
   renderJobHttp(job);
@@ -222,10 +251,11 @@ async function jobHttpResume(id) {
   });
   let res = await fres.json();
   if (res.code !== 200) {
-    console.error(res.message);
+    showError(`Failed to resume HTTP job ${id}: ${res.message}.`);
     return;
   }
 
+  showInfo(`HTTP job ${id} has been resumed.`);
   let job = _httpJobs[id];
   job = Object.assign(job, res.data);
   renderJobHttp(job);
@@ -324,9 +354,13 @@ function renderJobAttributes(job) {
             #${log.counter}
           </a>
         </span>
-        <span class="val">Finished at ${log._finishedAt.toUTCString()}</span>
-      </div>
     `;
+    if (log._finishedAt > 0) {
+      out += `<span class="val">${log.status} at ${log._finishedAt.toUTCString()}</span>`;
+    } else {
+      out += `<span class="val">${log.status}</span>`;
+    }
+    out += `</div>`;
   });
 
   out += `
@@ -509,9 +543,13 @@ function renderJobHttpAttrs(job) {
             class="job-log ${log.status}"
           >#${log.counter}</a>
         </span>
-        <span class="val">Finished at ${log._finishedAt.toUTCString()}</span>
-      </div>
     `;
+    if (log._finishedAt > 0) {
+      out += `<span class="val">${log.status} at ${log._finishedAt.toUTCString()}</span>`;
+    } else {
+      out += `<span class="val">${log.status}</span>`;
+    }
+    out += `</div>`;
   });
 
   out += `
