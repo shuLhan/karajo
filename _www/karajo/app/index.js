@@ -261,7 +261,7 @@ function renderJobAttributes(job) {
     </div>
     <div class="row">
       <span class="key">Last run:</span>
-      <span class="val">${job.last_run}</span>
+      <span class="val">${job._lastRun.toUTCString()}</span>
     </div>
   `;
 
@@ -273,7 +273,7 @@ function renderJobAttributes(job) {
       </div>
       <div class="row">
         <span class="key">Next run:</span>
-        <span class="val">${job.next_run}</span>
+        <span class="val">${job._nextRun.toUTCString()}</span>
       </div>
     `;
   } else if (job.interval > 0) {
@@ -284,7 +284,7 @@ function renderJobAttributes(job) {
       </div>
       <div class="row">
         <span class="key">Next run:</span>
-        <span class="val">${job.next_run}</span>
+        <span class="val">${job._nextRun.toUTCString()}</span>
       </div>
     `;
   }
@@ -312,10 +312,6 @@ function renderJobAttributes(job) {
     <div class="logs">
   `;
 
-  if (job.logs == null) {
-    job.logs = [];
-  }
-
   job.logs.forEach(function (log, idx, list) {
     out += `
       <div class="row">
@@ -328,7 +324,7 @@ function renderJobAttributes(job) {
             #${log.counter}
           </a>
         </span>
-        <span class="val">Finished at ${log.finished_at}</span>
+        <span class="val">Finished at ${log._finishedAt.toUTCString()}</span>
       </div>
     `;
   });
@@ -352,9 +348,8 @@ function renderJobStatusRight(job) {
   let nextRun = new Date(job.next_run);
 
   if (nextRun <= 0) {
-    let lastRun = new Date(job.last_run);
-    if (lastRun > 0) {
-      elNextRun.innerText = `Last run ${lastRun.toUTCString()}`;
+    if (job._lastRun > 0) {
+      elNextRun.innerText = `Last run ${job._lastRun.toUTCString()}`;
     }
     return;
   }
@@ -384,6 +379,15 @@ function renderJobs(jobs) {
     job._idStatusRight = `job_${job.id}_status_right`;
     job._idStatus = `job_${job.id}_status`;
     job._display = "none";
+    job._lastRun = new Date(job.last_run);
+    job._nextRun = new Date(job.next_run);
+
+    if (job.logs == null) {
+      job.logs = [];
+    }
+    job.logs.forEach(function (log, idx, list) {
+      log._finishedAt = new Date(log.finished_at);
+    });
 
     if (_jobs != null) {
       let prevJob = _jobs[job.id];
@@ -476,11 +480,11 @@ function renderJobHttpAttrs(job) {
   out += `
     <div class="row">
       <span class="key">Last run:</span>
-      <span class="val">${job.last_run}</span>
+      <span class="val">${job._lastRun.toUTCString()}</span>
     </div>
     <div class="row">
       <span class="key">Next run:</span>
-      <span class="val">${job.next_run}</span>
+      <span class="val">${job._nextRun.toUTCString()}</span>
     </div>
     <div class="row">
       <span class="key">Status:</span>
@@ -495,10 +499,6 @@ function renderJobHttpAttrs(job) {
     <div class="logs">
   `;
 
-  if (job.logs == null) {
-    job.logs = [];
-  }
-
   job.logs.forEach(function (log, idx, list) {
     out += `
       <div class="row">
@@ -509,7 +509,7 @@ function renderJobHttpAttrs(job) {
             class="job-log ${log.status}"
           >#${log.counter}</a>
         </span>
-        <span class="val">Finished at ${log.finished_at}</span>
+        <span class="val">Finished at ${log._finishedAt.toUTCString()}</span>
       </div>
     `;
   });
@@ -565,6 +565,15 @@ function renderHttpJobs(httpJobs) {
     httpJob._idStatus = `jobhttp_${httpJob.id}_status`;
     httpJob._idStatusRight = `jobhttp_${httpJob.id}_status_right`;
     httpJob._display = "none";
+    httpJob._lastRun = new Date(httpJob.last_run);
+    httpJob._nextRun = new Date(httpJob.next_run);
+
+    if (httpJob.logs == null) {
+      httpJob.logs = [];
+    }
+    httpJob.logs.forEach(function (log, idx, list) {
+      log._finishedAt = new Date(log.finished_at);
+    });
 
     if (_httpJobs != null) {
       let prevJob = _httpJobs[httpJob.id];
